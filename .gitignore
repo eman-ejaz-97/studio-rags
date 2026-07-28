@@ -33,9 +33,7 @@ yarn-error.log*
 !.vscode/extensions.json
 *.swp
 
-# Data (corpus + vector dumps are large; keep them out of git)
-data/raw/
-data/processed/
+# Local databases
 *.sqlite
 *.db
 

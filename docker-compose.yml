@@ -1,6 +1,6 @@
 services:
   postgres:
-    image: pgvector/pgvector:pg17
+    image: postgres:17-alpine
     container_name: studio_rags_db
     restart: unless-stopped
     environment:
@@ -11,12 +11,21 @@ services:
       - '5432:5432'
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      - ./backend/db/init:/docker-entrypoint-initdb.d
     healthcheck:
       test: ['CMD-SHELL', 'pg_isready -U ${POSTGRES_USER:-studio}']
       interval: 5s
       timeout: 5s
       retries: 10
+
+  # Catches every outbound email in development so nothing reaches a real
+  # inbox. Web UI on http://localhost:8025, SMTP on :1025.
+  mailpit:
+    image: axllent/mailpit:latest
+    container_name: studio_rags_mail
+    restart: unless-stopped
+    ports:
+      - '8025:8025'
+      - '1025:1025'
 
 volumes:
   postgres_data:
