@@ -17,6 +17,26 @@ const prisma = new PrismaClient();
  * capacities, and her real class copy lives on Eventbrite. Marked clearly so
  * nobody mistakes this text for her words.
  */
+/**
+ * The client's own listing copy, taken from her live Eventbrite pages on
+ * 2026-09-12. Her words, not ours. Refresh with
+ * `tools/fetch_eventbrite_content.py`.
+ */
+const SUMMARIES: Record<string, string> = {
+  "batik-workshop":
+    "Welcome to Studio Rags! Let's Batik to try the amazing cultural heritage of Indonesian fabric printing art. Enjoy a relaxing creative day.",
+  "shibori-workshop":
+    "It's the perfect time to make some cool Indigo Shibori  pieces and create a new look both in your wardrobe and interiors !",
+  "pakistani-woodblock-printing":
+    "Explore the ancient art of Block printing from the Indus Valley Civilization and create stunning fabrics for your projects or wardrobe.",
+  "batik-online":
+    "Learn the amazing Indonesian Batik printing at home and reboot your Positive energy with an immersive unique art!",
+  "shibori-online":
+    "Relax & re-energise your spirits through this Shibori dyeing kit and online class!",
+  "kids-and-parents-paint-together":
+    "Learn painting in this family friendly class. Cherish your bonding and paint a sweet memory together !",
+};
+
 const WORKSHOPS = [
   {
     slug: 'batik-workshop',
@@ -166,6 +186,10 @@ async function main() {
       where: { slug: w.slug },
       update: {
         title: w.title,
+        // Kept in the update path too, otherwise re-seeding leaves stale copy
+        // on rows that already exist.
+        summary: SUMMARIES[w.slug] ?? w.title,
+        description: SUMMARIES[w.slug] ?? w.title,
         basePriceCents: w.priceCents,
         productType: w.productType,
         deliveryMode: w.deliveryMode,
@@ -176,8 +200,8 @@ async function main() {
       create: {
         slug: w.slug,
         title: w.title,
-        summary: `PLACEHOLDER — replace with the client's own copy from her Eventbrite listing.`,
-        description: `PLACEHOLDER — replace with the client's own copy from her Eventbrite listing.`,
+        summary: SUMMARIES[w.slug] ?? w.title,
+        description: SUMMARIES[w.slug] ?? w.title,
         productType: w.productType,
         deliveryMode: w.deliveryMode,
         status: WorkshopStatus.PUBLISHED,

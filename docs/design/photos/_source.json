@@ -1,0 +1,114 @@
+[
+  {
+    "slug": "batik-workshop",
+    "eventId": "388035002137",
+    "priceCents": 8200,
+    "title": "Indonesian Batik Workshop",
+    "summary": "Welcome to Studio Rags! Let's Batik to try the amazing cultural heritage of Indonesian fabric printing art. Enjoy a relaxing creative day.",
+    "location": "Sefton Park",
+    "photos": [
+      {
+        "file": "eb/img/batik-workshop-1.jpg",
+        "bytes": 153957
+      }
+    ]
+  },
+  {
+    "slug": "shibori-workshop",
+    "eventId": "344599956747",
+    "priceCents": 8200,
+    "title": "Indigo Shibori Dyeing Workshop",
+    "summary": "It's the perfect time to make some cool Indigo Shibori  pieces and create a new look both in your wardrobe and interiors !",
+    "location": "Sefton Park",
+    "photos": [
+      {
+        "file": "eb/img/shibori-workshop-1.jpg",
+        "bytes": 72940
+      }
+    ]
+  },
+  {
+    "slug": "pakistani-woodblock-printing",
+    "eventId": "1993227812042",
+    "priceCents": 6500,
+    "title": "Block Printing on Fabric",
+    "summary": "Explore the ancient art of Block printing from the Indus Valley Civilization and create stunning fabrics for your projects or wardrobe.",
+    "location": "Sefton Park",
+    "photos": [
+      {
+        "file": "eb/img/pakistani-woodblock-printing-1.jpg",
+        "bytes": 238618
+      }
+    ]
+  },
+  {
+    "slug": "paint-with-mate",
+    "eventId": "1992272302086",
+    "priceCents": 6500,
+    "title": "Paint with Mate Class",
+    "summary": "Discover yourself with mix media on the canvas as you paint the theme of the day!",
+    "location": "Studio Rags",
+    "photos": [
+      {
+        "file": "eb/img/paint-with-mate-1.jpg",
+        "bytes": 174860
+      }
+    ]
+  },
+  {
+    "slug": "batik-online",
+    "eventId": "1547211293629",
+    "priceCents": 10200,
+    "title": "Learn Indonesian Batik  at Home",
+    "summary": "Learn the amazing Indonesian Batik printing at home and reboot your Positive energy with an immersive unique art!",
+    "location": "",
+    "photos": [
+      {
+        "file": "eb/img/batik-online-1.jpg",
+        "bytes": 135900
+      }
+    ]
+  },
+  {
+    "slug": "shibori-online",
+    "eventId": "669256643637",
+    "priceCents": 10200,
+    "title": "Learn Shibori Dyeing at Home",
+    "summary": "Relax & re-energise your spirits through this Shibori dyeing kit and online class!",
+    "location": "",
+    "photos": [
+      {
+        "file": "eb/img/shibori-online-1.jpg",
+        "bytes": 161083
+      }
+    ]
+  },
+  {
+    "slug": "kids-and-parents-paint-together",
+    "eventId": "409857463707",
+    "priceCents": 4200,
+    "title": "Kids & Parents Paint Together",
+    "summary": "Learn painting in this family friendly class. Cherish your bonding and paint a sweet memory together !",
+    "location": "Studio Rags",
+    "photos": [
+      {
+        "file": "eb/img/kids-and-parents-paint-together-1.jpg",
+        "bytes": 125923
+      }
+    ]
+  },
+  {
+    "slug": "kids-tie-dye",
+    "eventId": "623394107557",
+    "priceCents": 3800,
+    "title": "Kids'  Tie Dye Class",
+    "summary": "Tie Dye is Trending,  make your own Fashion Statement with  Studio Rags and impress friends & family !",
+    "location": "12 Ferguson Ave",
+    "photos": [
+      {
+        "file": "eb/img/kids-tie-dye-1.jpg",
+        "bytes": 86898
+      }
+    ]
+  }
+]
