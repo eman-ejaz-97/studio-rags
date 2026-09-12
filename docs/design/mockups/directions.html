@@ -207,7 +207,11 @@ a{color:inherit}
    44px, errors in words beside the field rather than colour alone.          */
 .auth-wrap{padding-block:34px 70px}
 .auth-intro{margin:0 0 30px;max-width:60ch;line-height:1.6}
-.screens{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:26px;align-items:start}
+/* Multi-column rather than grid: the screens are different heights, and a
+   grid row would stretch to the tallest and leave dead space beneath the
+   short ones. */
+.screens{columns:310px 3;column-gap:26px}
+.screen{break-inside:avoid;margin-bottom:26px;width:100%}
 .screen{border-radius:4px;overflow:hidden}
 .screen-label{font-family:var(--ui);font-size:.72rem;letter-spacing:.14em;
   text-transform:uppercase;font-weight:700;padding:10px 16px}
