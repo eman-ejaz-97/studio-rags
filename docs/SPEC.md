@@ -1,6 +1,6 @@
 # Studio Rags — Living Specification
 
-**Status:** v0.6 · Last updated 2026-09-12
+**Status:** v0.7 · Last updated 2026-09-12
 **Source of truth.** If this file and any other document disagree, this file wins
 (except the client-signed SRS on scope — see § 2).
 
@@ -911,6 +911,45 @@ Mermaid sources in `docs/diagrams/src/`. Regenerate with
 
 Sources are text, so a requirement change edits one file and re-renders rather
 than reopening a drawing tool.
+
+### Brand kit (received 2026-09-12)
+
+Assets in `docs/design/brand/`. Policy document at `docs/client/Policies.pdf`.
+
+**Colours.** Contrast measured against WCAG 2.2 AA (NFR-9), not eyeballed:
+
+| Hex | Name | On white | Verdict |
+| --- | --- | --- | --- |
+| `#3b2955` | dark indigo | 12.85:1 | Body text, headings, UI |
+| `#4e2b4b` | deep plum | 11.86:1 | Body text, headings, UI |
+| `#5b3460` | mid purple | 9.98:1 | Body text, headings, UI |
+| `#ca7f3a` | burnt orange | 3.18:1 | **Large text only** (24px+), never body |
+| `#e8a134` | gold | 2.19:1 | **Never text on white.** Decorative, or text on purple |
+
+Gold reaches 4.55–5.86:1 on the three purples, so gold-on-purple — the logo's own
+combination — is compliant and is where gold belongs. Gold on white is the trap,
+and it is the pairing a designer reaches for first.
+
+Working rule: **purples carry the text, gold only appears on dark ground.**
+
+**Typefaces.** Her brand uses Trajan Pro Bold (wordmark) and Kozuka Mincho Pro
+(Heavy, Bold). Both are Adobe commercial fonts and cannot be self-hosted on a
+public site — confirming the licence concern raised in August. She has approved
+substitutes: *"we can use the similar fonts"*.
+
+Substitution plan, and note it is three tiers rather than two:
+
+| Role | Face | Why |
+| --- | --- | --- |
+| Brand display | **Cinzel** | Roman inscriptional capitals, the standard open substitute for Trajan. Matches the wordmark closely. Caps only, used sparingly |
+| Editorial serif | **Noto Serif** / **Shippori Mincho** | Mincho-style high-contrast serif in the spirit of Kozuka, for headings and lead copy |
+| Interface | **Inter** or **Source Sans 3** | Forms, buttons, dates, tables, the admin dashboard |
+
+The third tier is the point. Trajan is all-caps and Kozuka Mincho is a display
+face; neither is usable for a checkout form or a data table. A booking platform
+is mostly interface, and the audience skews older (NFR-1, NFR-9), so the working
+text needs a face built for screen legibility. The brand faces set the tone on
+the marketing surfaces; the interface face does the work.
 
 ### Still not started
 
