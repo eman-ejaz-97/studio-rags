@@ -1,0 +1,480 @@
+// Studio Rags — workshop booking platform.
+// See docs/SPEC.md § 5 for the reasoning behind this model.
+//
+// Money is ALWAYS integer cents in AUD. Never a float, anywhere.
+// Timestamps are stored UTC; Australia/Adelaide is a presentation concern.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─── Enums ──────────────────────────────────────────────────────────────────
+
+enum Role {
+  CUSTOMER
+  ADMIN
+}
+
+/// ONE_OFF and KIDS are in-person; ONLINE is delivered over Zoom.
+/// The COURSE type was removed when the client withdrew the Master Class
+/// (ADR-013). Do not reintroduce it without reading § 10 item 7 first.
+enum ProductType {
+  ONE_OFF
+  ONLINE
+  KIDS
+}
+
+enum DeliveryMode {
+  IN_PERSON
+  ONLINE
+}
+
+enum WorkshopStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+enum SessionStatus {
+  SCHEDULED
+  CANCELLED
+  COMPLETED
+}
+
+enum BookingStatus {
+  PENDING
+  CONFIRMED
+  CANCELLED
+  REFUNDED
+  EXPIRED
+}
+
+enum PaymentStatus {
+  REQUIRES_PAYMENT
+  PROCESSING
+  SUCCEEDED
+  FAILED
+  REFUNDED
+  PARTIALLY_REFUNDED
+}
+
+/// One credit mechanism, two sources (§ 5). GIFT_CARD is bought for money and
+/// carries a legal minimum expiry; VOUCHER is issued instead of a refund.
+enum CreditKind {
+  GIFT_CARD
+  VOUCHER
+}
+
+enum CreditStatus {
+  ACTIVE
+  SPENT
+  EXPIRED
+  VOID
+}
+
+enum ReviewStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum EmailStatus {
+  QUEUED
+  SENT
+  FAILED
+}
+
+enum EnquiryKind {
+  GENERAL
+  PRIVATE_EVENT
+}
+
+// ─── Identity ───────────────────────────────────────────────────────────────
+
+model User {
+  id                 String    @id @default(cuid())
+  /// Always stored lower-cased; normalise before write and before lookup.
+  email              String    @unique
+  passwordHash       String
+  firstName          String
+  lastName           String
+  phone              String?
+  role               Role      @default(CUSTOMER)
+  emailVerifiedAt    DateTime?
+  /// Null means no consent. FR-M2 requires an explicit opt-in, so this is
+  /// never defaulted to "now".
+  marketingConsentAt DateTime?
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+
+  refreshTokens    RefreshToken[]
+  passwordResets   PasswordResetToken[]
+  bookings         Booking[]
+  reviews          Review[]
+  creditsPurchased Credit[]             @relation("CreditPurchaser")
+  creditsOwned     Credit[]             @relation("CreditOwner")
+
+  @@index([role])
+  @@map("users")
+}
+
+model RefreshToken {
+  id        String    @id @default(cuid())
+  userId    String
+  /// The token itself is never stored, only its hash.
+  tokenHash String    @unique
+  expiresAt DateTime
+  revokedAt DateTime?
+  userAgent String?
+  ip        String?
+  createdAt DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
+  @@map("refresh_tokens")
+}
+
+model PasswordResetToken {
+  id        String    @id @default(cuid())
+  userId    String
+  tokenHash String    @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("password_reset_tokens")
+}
+
+// ─── Catalogue ──────────────────────────────────────────────────────────────
+
+model Workshop {
+  id           String         @id @default(cuid())
+  slug         String         @unique
+  title        String
+  summary      String
+  description  String
+  productType  ProductType
+  deliveryMode DeliveryMode
+  status       WorkshopStatus @default(DRAFT)
+
+  durationMinutes Int
+  /// Default price. A session may override it. Both are admin-editable
+  /// (ADR-012) — never treat these as constants.
+  basePriceCents  Int
+  defaultCapacity Int
+
+  skillLevel    String?
+  whatsIncluded String?
+  whatToBring   String?
+
+  /// Kids classes only. Validated at booking, not at the door.
+  minAge                    Int?
+  maxAge                    Int?
+  /// True only for the kids class. When true, capacity counts CHILDREN and the
+  /// accompanying adult is implied (ADR-016).
+  requiresAccompanyingAdult Boolean @default(false)
+
+  /// Null means the studio-wide policy applies.
+  refundPolicyId String?
+  refundPolicy   RefundPolicy? @relation(fields: [refundPolicyId], references: [id])
+
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  images   WorkshopImage[]
+  sessions Session[]
+  reviews  Review[]
+
+  @@index([status, sortOrder])
+  @@index([productType])
+  @@map("workshops")
+}
+
+model WorkshopImage {
+  id         String  @id @default(cuid())
+  workshopId String
+  url        String
+  /// Required and non-empty. Accessibility is not optional (NFR-9).
+  alt        String
+  width      Int?
+  height     Int?
+  position   Int     @default(0)
+  isHero     Boolean @default(false)
+
+  workshop Workshop @relation(fields: [workshopId], references: [id], onDelete: Cascade)
+
+  @@index([workshopId, position])
+  @@map("workshop_images")
+}
+
+model Session {
+  id                 String        @id @default(cuid())
+  workshopId         String
+  startsAt           DateTime
+  endsAt             DateTime
+  /// For a workshop with requiresAccompanyingAdult this counts CHILDREN.
+  capacity           Int
+  priceCentsOverride Int?
+  location           String?
+  /// Zoom link for online sessions (ADR-015). Released only to holders of a
+  /// CONFIRMED booking; never returned by the public catalogue API.
+  onlineJoinUrl      String?
+  status             SessionStatus @default(SCHEDULED)
+  createdAt          DateTime      @default(now())
+  updatedAt          DateTime      @updatedAt
+
+  workshop Workshop  @relation(fields: [workshopId], references: [id], onDelete: Cascade)
+  bookings Booking[]
+
+  @@index([workshopId, startsAt])
+  @@index([startsAt, status])
+  @@map("sessions")
+}
+
+// ─── Booking ────────────────────────────────────────────────────────────────
+
+model Booking {
+  id        String        @id @default(cuid())
+  /// Human-readable, e.g. SR-7K4M2. Given to the customer, used in emails.
+  reference String        @unique
+  sessionId String
+  userId    String
+  /// Number of places. For a kids class this is the number of CHILDREN;
+  /// each implies one accompanying adult (ADR-016).
+  seats     Int
+  status    BookingStatus @default(PENDING)
+
+  /// Snapshotted at purchase and NEVER recomputed. Changing a workshop's price
+  /// later must not alter what a past customer paid (§ 5).
+  subtotalCents Int
+  discountCents Int @default(0)
+  totalCents    Int
+
+  attendeeNotes      String?
+  /// True when the customer declined photography (ADR-018). Surfaced on the
+  /// admin attendee list so she knows before the class, not at the door.
+  photoConsentOptOut Boolean @default(false)
+
+  /// A PENDING booking holds its seats until this moment. Swept by cron.
+  holdExpiresAt       DateTime?
+  confirmedAt         DateTime?
+  cancelledAt         DateTime?
+  cancellationReason  String?
+  refundedAmountCents Int       @default(0)
+  refundedAt          DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  session       Session            @relation(fields: [sessionId], references: [id])
+  user          User               @relation(fields: [userId], references: [id])
+  attendees     BookingAttendee[]
+  payments      Payment[]
+  redemptions   CreditRedemption[]
+  creditsIssued Credit[]           @relation("CreditOrigin")
+  review        Review?
+
+  /// Seat counting reads (sessionId, status, holdExpiresAt) inside the locking
+  /// transaction — see § 5, FR-A5.
+  @@index([sessionId, status, holdExpiresAt])
+  @@index([userId, createdAt])
+  @@index([status, holdExpiresAt])
+  @@map("bookings")
+}
+
+/// Captured for the kids class so the admin knows who is coming and the age
+/// range is validated at the point of sale.
+model BookingAttendee {
+  id        String @id @default(cuid())
+  bookingId String
+  firstName String
+  age       Int?
+
+  booking Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+
+  @@index([bookingId])
+  @@map("booking_attendees")
+}
+
+model Payment {
+  id                    String        @id @default(cuid())
+  bookingId             String
+  stripePaymentIntentId String        @unique
+  amountCents           Int
+  currency              String        @default("aud")
+  status                PaymentStatus @default(REQUIRES_PAYMENT)
+  receiptUrl            String?
+  failureReason         String?
+  refundedCents         Int           @default(0)
+  /// Raw Stripe event, kept for audit and dispute handling.
+  rawEvent              Json?
+  createdAt             DateTime      @default(now())
+  updatedAt             DateTime      @updatedAt
+
+  booking Booking @relation(fields: [bookingId], references: [id])
+
+  @@index([bookingId])
+  @@map("payments")
+}
+
+// ─── Credits: gift cards and refund vouchers ────────────────────────────────
+
+model Credit {
+  id     String       @id @default(cuid())
+  kind   CreditKind
+  code   String       @unique
+  status CreditStatus @default(ACTIVE)
+
+  initialValueCents Int
+  balanceCents      Int
+
+  /// Who paid for it (gift cards).
+  purchaserUserId String?
+  purchaser       User?   @relation("CreditPurchaser", fields: [purchaserUserId], references: [id])
+  /// Who holds it. Set once a recipient has an account.
+  ownerUserId     String?
+  owner           User?   @relation("CreditOwner", fields: [ownerUserId], references: [id])
+
+  recipientName  String?
+  recipientEmail String?
+  message        String?
+
+  /// For VOUCHER: the cancelled booking that produced it.
+  originBookingId String?
+  originBooking   Booking? @relation("CreditOrigin", fields: [originBookingId], references: [id])
+
+  issuedAt  DateTime  @default(now())
+  /// Gift cards default to 36 months — Australian Consumer Law sets a 3-year
+  /// minimum (ADR-017). Vouchers default to 6 months per the client's policy.
+  expiresAt DateTime?
+
+  redemptions CreditRedemption[]
+
+  @@index([kind, status])
+  @@index([ownerUserId])
+  @@map("credits")
+}
+
+model CreditRedemption {
+  id          String   @id @default(cuid())
+  creditId    String
+  bookingId   String
+  amountCents Int
+  createdAt   DateTime @default(now())
+
+  credit  Credit  @relation(fields: [creditId], references: [id])
+  booking Booking @relation(fields: [bookingId], references: [id])
+
+  @@unique([creditId, bookingId])
+  @@index([bookingId])
+  @@map("credit_redemptions")
+}
+
+// ─── Policy and settings ────────────────────────────────────────────────────
+
+/// The client's published cancellation terms, as data rather than constants
+/// (ADR-014). She edits these herself.
+model RefundPolicy {
+  id   String @id @default(cuid())
+  name String
+
+  /// Her policy is written in BUSINESS days, not calendar days. Computed
+  /// against the PublicHoliday table.
+  cutoffBusinessDays          Int     @default(14)
+  /// $15.00 per person inside the cutoff.
+  lateFeeCentsPerPerson       Int     @default(1500)
+  voucherValidityMonths       Int     @default(6)
+  allowVoucherInsteadOfRefund Boolean @default(true)
+  /// Gift cards sold for money: 36 months (ADR-017).
+  giftCardValidityMonths      Int     @default(36)
+
+  isDefault Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  workshops Workshop[]
+
+  @@map("refund_policies")
+}
+
+/// South Australian public holidays, so "14 business days" means what the
+/// client's published policy says it means.
+model PublicHoliday {
+  id     String   @id @default(cuid())
+  date   DateTime @unique @db.Date
+  name   String
+  region String   @default("SA")
+
+  @@index([date])
+  @@map("public_holidays")
+}
+
+// ─── Reviews, email, enquiries ──────────────────────────────────────────────
+
+model Review {
+  id         String       @id @default(cuid())
+  workshopId String
+  userId     String
+  /// One review per attended booking, which makes reviews verified by
+  /// construction.
+  bookingId  String       @unique
+  rating     Int
+  body       String
+  status     ReviewStatus @default(PENDING)
+  createdAt  DateTime     @default(now())
+  updatedAt  DateTime     @updatedAt
+
+  workshop Workshop @relation(fields: [workshopId], references: [id], onDelete: Cascade)
+  user     User     @relation(fields: [userId], references: [id])
+  booking  Booking  @relation(fields: [bookingId], references: [id])
+
+  @@index([workshopId, status])
+  @@map("reviews")
+}
+
+model EmailLog {
+  id                String      @id @default(cuid())
+  to                String
+  template          String
+  subject           String
+  bookingId         String?
+  providerMessageId String?
+  status            EmailStatus @default(QUEUED)
+  error             String?
+  sentAt            DateTime?
+  createdAt         DateTime    @default(now())
+
+  @@index([bookingId])
+  @@index([to, createdAt])
+  @@map("email_logs")
+}
+
+/// Contact form and private-event enquiries. Private events are not bookable
+/// online (ADR-019) — they arrive here and the client quotes offline.
+model Enquiry {
+  id            String      @id @default(cuid())
+  kind          EnquiryKind @default(GENERAL)
+  name          String
+  email         String
+  phone         String?
+  message       String
+  /// Private events only.
+  preferredDate DateTime?
+  guestCount    Int?
+  handledAt     DateTime?
+  createdAt     DateTime    @default(now())
+
+  @@index([kind, handledAt])
+  @@map("enquiries")
+}
