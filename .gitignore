@@ -39,3 +39,9 @@ yarn-error.log*
 
 # Docker volumes
 .postgres-data/
+
+# Diagram tooling (installed on demand by tools/render-diagrams.sh)
+.diagram-tools/
+
+# macOS
+.DS_Store
