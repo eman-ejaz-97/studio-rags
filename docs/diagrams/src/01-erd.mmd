@@ -1,0 +1,200 @@
+---
+title: Studio Rags — Entity Relationship Diagram
+config:
+  er:
+    layoutDirection: TB
+---
+erDiagram
+    USER ||--o{ REFRESH_TOKEN : "holds sessions"
+    USER ||--o{ PASSWORD_RESET_TOKEN : "requests"
+    USER ||--o{ BOOKING : places
+    USER ||--o{ REVIEW : writes
+    USER ||--o{ CREDIT : "buys (gift card)"
+    USER ||--o{ CREDIT : owns
+
+    REFUND_POLICY ||--o{ WORKSHOP : governs
+    WORKSHOP ||--o{ WORKSHOP_IMAGE : "illustrated by"
+    WORKSHOP ||--o{ SESSION : "scheduled as"
+    WORKSHOP ||--o{ REVIEW : receives
+
+    SESSION ||--o{ BOOKING : "is booked by"
+    BOOKING ||--o{ BOOKING_ATTENDEE : lists
+    BOOKING ||--o{ PAYMENT : "paid by"
+    BOOKING ||--o| REVIEW : "entitles one"
+    BOOKING ||--o{ CREDIT_REDEMPTION : "discounted by"
+    BOOKING ||--o{ CREDIT : "issues voucher on cancel"
+    CREDIT ||--o{ CREDIT_REDEMPTION : "spent through"
+
+    USER {
+        string id PK
+        string email UK "lower-cased"
+        string passwordHash "argon2id"
+        string firstName
+        string lastName
+        string phone
+        enum   role "CUSTOMER or ADMIN"
+        date   emailVerifiedAt
+        date   marketingConsentAt "null means no consent"
+        date   createdAt
+    }
+
+    REFRESH_TOKEN {
+        string id PK
+        string userId FK
+        string tokenHash UK "sha256, rotated on use"
+        date   expiresAt
+        date   revokedAt
+        string userAgent
+        string ip
+    }
+
+    PASSWORD_RESET_TOKEN {
+        string id PK
+        string userId FK
+        string tokenHash UK
+        date   expiresAt "one hour"
+        date   usedAt "single use"
+    }
+
+    REFUND_POLICY {
+        string id PK
+        int    cutoffBusinessDays "14"
+        int    lateFeeCentsPerPerson "1500"
+        int    voucherValidityMonths "6"
+        int    giftCardValidityMonths "36"
+        bool   allowVoucherInsteadOfRefund
+        bool   isDefault
+    }
+
+    WORKSHOP {
+        string id PK
+        string slug UK
+        string title
+        string description
+        enum   productType "ONE_OFF, ONLINE, KIDS"
+        enum   deliveryMode "IN_PERSON or ONLINE"
+        enum   status "DRAFT, PUBLISHED, ARCHIVED"
+        int    durationMinutes
+        int    basePriceCents "admin editable"
+        int    defaultCapacity "admin editable"
+        int    minAge
+        int    maxAge
+        bool   requiresAccompanyingAdult "kids class"
+        string refundPolicyId FK
+    }
+
+    WORKSHOP_IMAGE {
+        string id PK
+        string workshopId FK
+        string url
+        string alt "required, non-empty"
+        int    position
+        bool   isHero
+    }
+
+    SESSION {
+        string id PK
+        string workshopId FK
+        date   startsAt
+        date   endsAt
+        int    capacity "counts children for kids class"
+        int    priceCentsOverride "null uses workshop price"
+        string location
+        string onlineJoinUrl "Zoom, confirmed bookings only"
+        enum   status "SCHEDULED, CANCELLED, COMPLETED"
+    }
+
+    BOOKING {
+        string id PK
+        string reference UK "e.g. SR-7K4M2"
+        string sessionId FK
+        string userId FK
+        int    seats
+        enum   status "PENDING, CONFIRMED, CANCELLED, REFUNDED, EXPIRED"
+        int    subtotalCents "snapshotted, never recomputed"
+        int    discountCents
+        int    totalCents
+        bool   photoConsentOptOut
+        date   holdExpiresAt "15 min seat hold"
+        date   confirmedAt "set only by Stripe webhook"
+        date   cancelledAt
+        int    refundedAmountCents
+    }
+
+    BOOKING_ATTENDEE {
+        string id PK
+        string bookingId FK
+        string firstName
+        int    age "validated 7-15 for kids class"
+    }
+
+    PAYMENT {
+        string id PK
+        string bookingId FK
+        string stripePaymentIntentId UK "idempotency key"
+        int    amountCents
+        string currency "aud"
+        enum   status
+        string receiptUrl
+        int    refundedCents
+        json   rawEvent "audit trail"
+    }
+
+    CREDIT {
+        string id PK
+        enum   kind "GIFT_CARD or VOUCHER"
+        string code UK
+        int    initialValueCents
+        int    balanceCents
+        string purchaserUserId FK
+        string ownerUserId FK
+        string originBookingId FK "vouchers only"
+        date   expiresAt "36 months card, 6 months voucher"
+        enum   status
+    }
+
+    CREDIT_REDEMPTION {
+        string id PK
+        string creditId FK
+        string bookingId FK
+        int    amountCents
+    }
+
+    REVIEW {
+        string id PK
+        string workshopId FK
+        string userId FK
+        string bookingId UK "one review per attended booking"
+        int    rating "1-5"
+        string body
+        enum   status "PENDING, APPROVED, REJECTED"
+    }
+
+    PUBLIC_HOLIDAY {
+        string id PK
+        date   date UK
+        string name
+        string region "SA"
+    }
+
+    EMAIL_LOG {
+        string id PK
+        string to
+        string template
+        string bookingId
+        string providerMessageId
+        enum   status "QUEUED, SENT, FAILED"
+        date   sentAt
+    }
+
+    ENQUIRY {
+        string id PK
+        enum   kind "GENERAL or PRIVATE_EVENT"
+        string name
+        string email
+        string phone
+        string message
+        date   preferredDate
+        int    guestCount
+        date   handledAt
+    }

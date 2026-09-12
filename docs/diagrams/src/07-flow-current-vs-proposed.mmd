@@ -1,0 +1,50 @@
+---
+title: Booking Journey — today versus the new platform
+---
+flowchart TB
+    subgraph now["TODAY — the customer leaves the website"]
+        direction LR
+        n1["Facebook or<br/>Instagram ad"] --> n2["Basic Wix site"]
+        n2 --> n3["Redirected<br/>to Eventbrite"]
+        n3 --> n4["Pays on<br/>Eventbrite"]
+        n4 --> n5["Confirmed by<br/>Eventbrite"]
+        n3 -.->|"some drop out here"| nx(["Lost booking"])
+    end
+
+    subgraph problems["What this costs the business"]
+        direction TB
+        p1["Customers abandon<br/>mid-journey"]
+        p2["Facebook cannot see<br/>which ad worked"]
+        p3["No customer email list<br/>of her own"]
+        p4["Eventbrite owns the<br/>relationship"]
+    end
+
+    subgraph soon["PROPOSED — the customer never leaves"]
+        direction LR
+        s1["Facebook or<br/>Instagram ad"] --> s2["Studio Rags<br/>website"]
+        s2 --> s3["Browse and<br/>view details"]
+        s3 --> s4["Pick a date<br/>from the calendar"]
+        s4 --> s5["Book and pay<br/>on the same site"]
+        s5 --> s6["Confirmed,<br/>email sent"]
+    end
+
+    subgraph gains["What she gets back"]
+        direction TB
+        g1["Fewer drop-outs —<br/>one site, fewer clicks"]
+        g2["Conversions tracked<br/>back to each ad"]
+        g3["Her own email list,<br/>with consent"]
+        g4["She owns the<br/>customer relationship"]
+    end
+
+    now --> problems
+    problems ~~~ soon
+    soon --> gains
+
+    classDef old fill:#F6E0DC,stroke:#9B4A38,color:#4A1E16
+    classDef new fill:#DCE8DC,stroke:#3F6B46,color:#1E3A24
+    classDef pain fill:#FBEAE6,stroke:#B5705E,color:#5A2A1E
+    classDef win fill:#E4F0E4,stroke:#4F7D57,color:#1E3A24
+    class n1,n2,n3,n4,n5,nx old
+    class s1,s2,s3,s4,s5,s6 new
+    class p1,p2,p3,p4 pain
+    class g1,g2,g3,g4 win

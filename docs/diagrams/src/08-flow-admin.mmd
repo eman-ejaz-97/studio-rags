@@ -1,0 +1,48 @@
+---
+title: Admin Workflow — what Rehana does, without a developer
+---
+flowchart TB
+    login(["Signs in to<br/>the dashboard"]) --> home["<b>Today and this week</b><br/><i>upcoming classes, who is coming,<br/>who has paid</i>"]
+
+    home --> setup["Set up a class"]
+    home --> cal["Manage the calendar"]
+    home --> book["Manage bookings"]
+    home --> money["Money and vouchers"]
+    home --> content["Reviews and enquiries"]
+
+    setup --> s1["Create or edit a workshop<br/><i>title, photos, description</i>"]
+    s1 --> s2["Set the default price<br/>and number of places"]
+    s2 --> s3{"Publish?"}
+    s3 -->|"Online class<br/>with no Zoom link"| s4["Blocked — add the link first"]
+    s4 --> s2
+    s3 -->|Yes| s5(["Live on the website"])
+
+    cal --> c1["Add a date"]
+    c1 --> c2["Override price or places<br/>for this date only"]
+    c2 --> c3{"Need to cancel<br/>a date?"}
+    c3 -->|Yes| c4["Cancel session →<br/>everyone refunded automatically"]
+    c3 -->|No| c5(["Date is bookable"])
+
+    book --> b1["Filter by class,<br/>date or status"]
+    b1 --> b2["See name, email, phone,<br/>payment status"]
+    b2 --> b3["Attendee list<br/><i>incl. photo opt-outs and<br/>child names and ages</i>"]
+    b2 --> b4["Cancel or refund<br/><i>policy default, overridable</i>"]
+
+    money --> m1["Payments per booking"]
+    money --> m2["Gift cards issued<br/>and redeemed"]
+    money --> m3["Credit vouchers<br/>outstanding"]
+
+    content --> r1["Approve or reject<br/>reviews"]
+    content --> r2["Private event enquiries<br/><i>quoted offline</i>"]
+    content --> r3["Export the consented<br/>email list"]
+
+    classDef entry fill:#F5EEE6,stroke:#8A6E4B,color:#3B2E1E
+    classDef hub fill:#E8EDF4,stroke:#1F3A5F,color:#152A46
+    classDef decision fill:#FDF6E3,stroke:#B5914A,color:#463A22
+    classDef stop fill:#F6E0DC,stroke:#9B4A38,color:#4A1E16
+    classDef done fill:#DCE8DC,stroke:#3F6B46,color:#1E3A24
+    class login entry
+    class home hub
+    class s3,c3 decision
+    class s4 stop
+    class s5,c5 done

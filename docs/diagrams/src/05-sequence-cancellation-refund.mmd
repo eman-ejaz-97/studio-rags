@@ -1,0 +1,64 @@
+---
+title: Cancellation and Refund — the client's published policy
+---
+sequenceDiagram
+    autonumber
+    actor C as Customer
+    participant W as Next.js
+    participant A as NestJS API
+    participant D as PostgreSQL
+    participant S as Stripe
+    participant M as Email
+
+    C->>W: Cancel my booking
+    W->>A: POST /bookings/:id/cancel
+    activate A
+    A->>D: Load booking, session, and the workshop's RefundPolicy
+    A->>D: Load SA public holidays
+    A->>A: Business days between now and session.startsAt
+
+    alt More than 14 business days
+        A-->>W: Offer a choice
+        W-->>C: Full refund, or a credit voucher valid 6 months?
+        alt Customer chooses refund
+            C->>W: Refund to my card
+            W->>A: confirm
+            A->>S: Refund 100% of the amount stored on the booking
+            Note right of A: Always the snapshotted amount,<br/>never the current price
+            A->>D: Booking → REFUNDED, record refundedAmountCents
+        else Customer chooses voucher
+            C->>W: Give me a voucher
+            W->>A: confirm
+            A->>D: INSERT credit (kind VOUCHER, expires in 6 months)
+            A->>D: Booking → CANCELLED
+        end
+    else 14 business days or less
+        A->>A: Apply $15 per person late fee
+        A->>D: INSERT credit for the balance after the fee
+        A->>D: Booking → CANCELLED
+        Note right of A: Open question — voucher or cash?<br/>Her policy implies voucher. Confirm.
+    end
+
+    rect rgb(232, 237, 244)
+    Note over A,D: Whatever the outcome, the seat goes back
+    A->>D: Release seats in the same locking transaction that took them
+    end
+
+    A->>M: Send cancellation confirmation
+    A-->>W: outcome
+    deactivate A
+    W-->>C: Cancelled, with what you receive
+
+    rect rgb(253, 246, 227)
+    Note over C,M: The other three cases
+    opt Customer does not turn up
+        Note right of A: No refund, no voucher, no reschedule
+    end
+    opt Studio cancels the session
+        A->>S: Full refund
+        Note right of A: Or reschedule, or a gift card —<br/>the customer chooses
+    end
+    opt Admin overrides
+        Note right of A: Rehana can always be generous.<br/>The policy is a default, not a lock.
+    end
+    end

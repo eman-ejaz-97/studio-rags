@@ -1,0 +1,49 @@
+---
+title: End-to-end Customer Journey
+---
+flowchart TB
+    start(["Sees an Instagram or<br/>Facebook post"]) --> land["Lands on the<br/>Studio Rags home page"]
+    land --> browse["Browses the classes"]
+    browse --> detail["Opens a class page<br/><i>photos, price, what to bring</i>"]
+    detail --> cal["Checks the calendar<br/><i>dates and places left</i>"]
+
+    cal --> avail{"Any date<br/>that suits?"}
+    avail -->|No| notify["Contact page<br/><i>ask about future dates</i>"]
+    notify --> endq(["Enquiry emailed<br/>to Rehana"])
+
+    avail -->|Yes| acct{"Signed in?"}
+    acct -->|No| reg["Register or sign in"]
+    reg --> hold
+    acct -->|Yes| hold
+
+    hold["Seats held for 15 minutes"] --> kids{"Kids class?"}
+    kids -->|Yes| child["Enter child name and age<br/><i>7 to 15 checked here</i>"]
+    kids -->|No| photo
+    child --> photo
+
+    photo["Photo consent checkbox"] --> credit{"Gift card or<br/>voucher code?"}
+    credit -->|Yes| apply["Balance applied<br/>to the total"]
+    credit -->|No| pay
+    apply --> pay
+
+    pay["Pay in full by card<br/><i>Stripe, no deposits</i>"] --> ok{"Payment<br/>succeeded?"}
+    ok -->|No| retry["Try again<br/><i>seats still held</i>"]
+    retry --> pay
+    ok -->|"No, and time ran out"| released["Hold expires,<br/>seats released"]
+
+    ok -->|Yes| conf["Booking CONFIRMED<br/><i>by Stripe webhook, server side</i>"]
+    conf --> email["Confirmation email<br/><i>plus Zoom link if online</i>"]
+    email --> remind["Reminder email<br/>before the class"]
+    remind --> attend(["Attends the workshop"])
+    attend --> review["Invited to leave a review"]
+    review --> moderate["Rehana approves it"]
+    moderate --> shown(["Review appears<br/>on the class page"])
+
+    classDef start fill:#F5EEE6,stroke:#8A6E4B,color:#3B2E1E
+    classDef decision fill:#FDF6E3,stroke:#B5914A,color:#463A22
+    classDef good fill:#DCE8DC,stroke:#3F6B46,color:#1E3A24
+    classDef bad fill:#F6E0DC,stroke:#9B4A38,color:#4A1E16
+    class start,attend,shown,endq start
+    class avail,acct,ok,credit,kids decision
+    class conf,email,remind good
+    class released,retry bad

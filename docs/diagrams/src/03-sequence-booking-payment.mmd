@@ -1,0 +1,68 @@
+---
+title: Booking and Payment — no overbooking, no unpaid confirmations
+---
+sequenceDiagram
+    autonumber
+    actor C as Customer
+    participant W as Next.js
+    participant A as NestJS API
+    participant D as PostgreSQL
+    participant S as Stripe
+    participant M as Email
+
+    C->>W: Choose a session and seats
+    W->>A: POST /bookings
+    activate A
+
+    rect rgb(232, 237, 244)
+    Note over A,D: One transaction. Concurrent attempts on the<br/>same session queue behind the row lock.
+    A->>D: BEGIN
+    A->>D: SELECT id FROM sessions WHERE id = $1 FOR UPDATE
+    A->>D: Count seats: CONFIRMED + (PENDING AND holdExpiresAt > now)
+    alt Not enough seats left
+        A->>D: ROLLBACK
+        A-->>W: 409 — this session is now full
+        W-->>C: Offer the next available date
+    else Seats available
+        A->>D: INSERT booking (PENDING, holdExpiresAt = now + 15 min)
+        A->>D: COMMIT
+    end
+    end
+
+    A->>S: Create PaymentIntent (amount snapshotted on the booking)
+    S-->>A: client_secret
+    A-->>W: booking reference + client_secret
+    deactivate A
+
+    W->>C: Stripe Elements — card fields inside Stripe's iframe
+    Note over W,S: Card details never touch our servers (NFR-4, SAQ-A)
+    C->>S: Submit card
+
+    par Browser is only a hint
+        S-->>W: redirect to confirmation page
+        W->>A: GET /bookings/:reference (poll)
+    and Server-side truth
+        S->>A: webhook payment_intent.succeeded
+        activate A
+        A->>A: Verify signature, idempotent on paymentIntentId
+        A->>D: Booking → CONFIRMED, record Payment
+        A->>M: Send confirmation (+ Zoom link if online)
+        A->>D: Write EmailLog row
+        deactivate A
+    end
+
+    A-->>W: status CONFIRMED
+    W-->>C: Booking confirmed
+
+    rect rgb(253, 246, 227)
+    Note over A,D: Failure paths
+    opt Customer abandons payment
+        A->>D: Cron sweeps expired PENDING holds every minute
+        Note right of D: Seats released automatically
+    end
+    opt Webhook arrives after the hold expired
+        A->>S: Refund automatically
+        A->>M: Alert the admin
+        Note right of A: Never silently overbook
+    end
+    end

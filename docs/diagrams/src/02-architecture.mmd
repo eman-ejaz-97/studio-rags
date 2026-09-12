@@ -1,0 +1,50 @@
+---
+title: Studio Rags — System Architecture
+---
+flowchart TB
+    subgraph clients["People"]
+        cust["Customer<br/><i>phone first</i>"]
+        admin["Rehana<br/><i>admin dashboard</i>"]
+    end
+
+    subgraph edge["Vercel · Sydney (syd1)"]
+        next["<b>Next.js 16</b> — App Router<br/>Public site · Booking journey · Admin SPA<br/><i>Static catalogue pages, live seat counts</i>"]
+    end
+
+    subgraph app["Fly.io · Sydney (syd)"]
+        api["<b>NestJS 11 API</b> — /api/v1<br/>auth · catalogue · booking · payments<br/>credits · email · admin"]
+    end
+
+    subgraph data["Neon · ap-southeast-2"]
+        pg[("<b>PostgreSQL 17</b><br/>Prisma ORM<br/><i>row-level seat locking</i>")]
+    end
+
+    subgraph third["Third parties"]
+        stripe["<b>Stripe</b><br/>Payment Intents<br/>Hosted card fields"]
+        resend["<b>Resend</b><br/>Transactional email"]
+        r2["<b>Cloudflare R2</b><br/>Workshop photography"]
+        zoom["<b>Zoom</b><br/><i>links pasted by admin</i>"]
+        meta["<b>Meta Pixel</b><br/><i>consent gated</i>"]
+    end
+
+    cust --> next
+    admin --> next
+    next -->|"REST · httpOnly cookie auth"| api
+    api -->|Prisma| pg
+    api -->|"create PaymentIntent"| stripe
+    stripe -.->|"webhook: payment_intent.succeeded<br/><b>the only thing that confirms a booking</b>"| api
+    api -->|"confirmations · reminders"| resend
+    next -->|"images"| r2
+    api -->|"uploads"| r2
+    next -.->|"conversion events"| meta
+    next -->|"Stripe Elements (iframe)"| stripe
+    api -.->|"stores join URL only"| zoom
+
+    classDef person fill:#F5EEE6,stroke:#8A6E4B,color:#3B2E1E
+    classDef web fill:#E8EDF4,stroke:#1F3A5F,color:#152A46
+    classDef svc fill:#DCE8DC,stroke:#3F6B46,color:#1E3A24
+    classDef store fill:#EFE4F0,stroke:#6B3F72,color:#3A1E40
+    class cust,admin person
+    class next,api web
+    class stripe,resend,r2,zoom,meta svc
+    class pg store

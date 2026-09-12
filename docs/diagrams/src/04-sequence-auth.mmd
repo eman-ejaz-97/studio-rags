@@ -1,0 +1,55 @@
+---
+title: Authentication — rotating refresh tokens and reuse detection
+---
+sequenceDiagram
+    autonumber
+    actor C as Customer
+    participant W as Next.js
+    participant A as NestJS API
+    participant D as PostgreSQL
+
+    rect rgb(232, 237, 244)
+    Note over C,D: Registration
+    C->>W: email, password, name
+    W->>A: POST /auth/register
+    A->>A: argon2id hash (never store the password)
+    A->>D: INSERT user (role CUSTOMER)
+    A->>D: INSERT refresh_token (sha256 hash only)
+    A-->>W: Set-Cookie sr_access (15 min) + sr_refresh (30 days)
+    Note right of W: httpOnly, SameSite=Lax.<br/>XSS cannot read either cookie.
+    end
+
+    rect rgb(220, 232, 220)
+    Note over C,D: Normal use
+    C->>W: Open account page
+    W->>A: GET /auth/me (cookie attached automatically)
+    A->>A: Verify access JWT
+    A-->>W: user profile
+    end
+
+    rect rgb(253, 246, 227)
+    Note over C,D: Access token expires after 15 minutes
+    W->>A: POST /auth/refresh
+    A->>D: Look up sha256(presented token)
+    alt Token valid and unspent
+        A->>D: Mark old token revoked
+        A->>D: INSERT replacement token
+        A-->>W: new cookie pair
+    else Token already spent — it leaked
+        A->>D: Revoke EVERY session for that user
+        A-->>W: 401 — sign in again
+        Note right of A: One replay ends all sessions,<br/>not just the stolen one.
+    end
+    end
+
+    rect rgb(239, 228, 240)
+    Note over C,D: Forgotten password
+    C->>W: Enter email address
+    W->>A: POST /auth/forgot-password
+    A->>D: Store single-use token, one hour expiry
+    A-->>W: 202 — identical response whether or not the account exists
+    Note right of A: No account enumeration
+    C->>W: Open emailed link, choose new password
+    W->>A: POST /auth/reset-password
+    A->>D: Update hash, mark token used, revoke all sessions
+    end
