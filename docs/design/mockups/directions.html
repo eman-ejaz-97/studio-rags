@@ -1,0 +1,626 @@
+<!-- Published at https://claude.ai/code/artifact/740a7fc1-df45-4725-913d-3484d20a3128 -->
+<title>Studio Rags Design Directions</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,400&family=Spectral:ital,wght@0,300;0,400;0,600;1,300&family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,900&family=Inter:wght@400;500;600;700&display=swap">
+<style>
+/* ── Shared ───────────────────────────────────────────────────────────────
+   Her brand kit, measured against WCAG AA:
+     #3b2955 12.85:1 · #4e2b4b 11.86:1 · #5b3460 9.98:1  → text safe
+     #ca7f3a  3.18:1 → large display only
+     #e8a134  2.19:1 → NEVER text on light. Gold lives on purple (4.5–5.9:1).
+   This page commits to three fixed visual worlds, so every colour is explicit
+   and nothing responds to the viewer's OS theme — a design proposal has to look
+   the same on every screen it lands on.
+--------------------------------------------------------------------------- */
+:root{
+  --indigo:#3b2955; --plum:#4e2b4b; --purple:#5b3460;
+  --ochre:#ca7f3a;  --gold:#e8a134;
+  --ui:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+  --brand:'Cinzel',Georgia,serif;
+}
+*,*::before,*::after{box-sizing:border-box}
+body{margin:0;background:#15101C;color:#EDE6F0;font-family:var(--ui);
+     -webkit-font-smoothing:antialiased}
+img{max-width:100%;display:block}
+a{color:inherit}
+:focus-visible{outline:3px solid var(--gold);outline-offset:3px;border-radius:2px}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+/* ── Chrome: the bit that is us talking, not the design ─────────────────── */
+.chrome{background:#15101C;border-bottom:1px solid #342740;padding-block:18px 0;
+        position:sticky;top:0;z-index:50}
+.chrome-in{max-width:1180px;margin-inline:auto;padding-inline:20px}
+.chrome h1{font-family:var(--ui);font-size:.72rem;letter-spacing:.16em;
+           text-transform:uppercase;color:#B9A6C6;margin:0 0 6px;font-weight:600}
+.chrome p{margin:0 0 16px;font-size:.95rem;line-height:1.55;color:#D6CADC;max-width:62ch}
+.chrome p b{color:#fff;font-weight:600}
+.tabs{display:flex;gap:4px;flex-wrap:wrap}
+.tabs button{appearance:none;border:0;background:transparent;cursor:pointer;
+  font-family:var(--ui);font-size:.9rem;font-weight:600;color:#B9A6C6;
+  padding:11px 18px;border-radius:8px 8px 0 0;border-bottom:3px solid transparent}
+.tabs button:hover{color:#fff;background:#1E1729}
+.tabs button[aria-selected="true"]{color:#fff;background:#241B31;border-bottom-color:var(--gold)}
+.tabs button span{display:block;font-weight:400;font-size:.74rem;color:#9D8BAB;margin-top:2px}
+.tabs button[aria-selected="true"] span{color:#C7B4D3}
+.note{font-size:.78rem;color:#9D8BAB;padding:10px 20px 12px;max-width:1180px;
+      margin-inline:auto;line-height:1.5}
+
+/* ── Structure shared by all three directions ───────────────────────────── */
+.dir{padding-bottom:0}
+.wrap{max-width:1180px;margin-inline:auto;padding-inline:20px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:28px}
+.card-media{aspect-ratio:4/3;overflow:hidden}
+.card-media img{width:100%;height:100%;object-fit:cover}
+.price{font-variant-numeric:tabular-nums}
+.dates{display:flex;flex-wrap:wrap;gap:6px;list-style:none;margin:0;padding:0}
+.dates li{font-size:.76rem;padding:4px 9px;border-radius:999px;white-space:nowrap}
+.sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+
+/* ══ A · ATELIER ═════════════════════════════════════════════════════════
+   Cool violet-tinted paper rather than the usual warm cream. Photography is
+   the loudest thing on the page; type is quiet and wide-tracked.            */
+.dir-a{background:#F7F5F8;color:#241A2B;font-family:'Cormorant Garamond',Georgia,serif}
+.dir-a .bar{display:flex;align-items:center;justify-content:space-between;gap:20px;
+  padding-block:22px;border-bottom:1px solid #DCD3E2}
+.dir-a .bar img{height:52px;width:auto}
+.dir-a nav{display:flex;gap:26px;font-family:var(--ui);font-size:.82rem;
+  letter-spacing:.09em;text-transform:uppercase;color:var(--plum);font-weight:500}
+.dir-a .book{background:var(--plum);color:#fff;padding:11px 20px;border-radius:2px;
+  font-family:var(--ui);font-size:.8rem;letter-spacing:.09em;text-transform:uppercase;font-weight:600}
+.dir-a .hero{display:grid;grid-template-columns:1fr 1fr;gap:56px;align-items:center;
+  padding-block:76px 84px}
+.dir-a .hero h2{font-size:clamp(2.5rem,5.2vw,4.1rem);line-height:1.02;margin:0 0 22px;
+  font-weight:400;text-wrap:balance;color:#1D1424}
+.dir-a .hero h2 em{font-style:italic;color:var(--purple)}
+.dir-a .eyebrow{font-family:var(--brand);font-size:.78rem;letter-spacing:.34em;
+  color:var(--plum);margin:0 0 20px;text-transform:uppercase}
+.dir-a .hero p{font-size:1.28rem;line-height:1.62;color:#4A3B54;margin:0 0 30px;max-width:38ch}
+.dir-a .hero-img{aspect-ratio:4/5;overflow:hidden;position:relative}
+.dir-a .hero-img img{width:100%;height:100%;object-fit:cover}
+.dir-a .hero-img::after{content:"";position:absolute;inset:12px;border:1px solid rgba(232,161,52,.55);
+  pointer-events:none}
+.dir-a .rule{height:1px;background:linear-gradient(90deg,var(--gold),rgba(232,161,52,0));margin-bottom:14px}
+.dir-a .sec-head{display:flex;align-items:baseline;justify-content:space-between;gap:20px;
+  margin-bottom:34px;flex-wrap:wrap}
+.dir-a .sec-head h3{font-family:var(--brand);font-size:1.05rem;letter-spacing:.2em;
+  text-transform:uppercase;margin:0;color:var(--indigo);font-weight:600}
+.dir-a .sec-head span{font-family:var(--ui);font-size:.82rem;color:#6B5A76}
+.dir-a .card{background:transparent}
+.dir-a .card-media{aspect-ratio:3/4}
+.dir-a .card h4{font-size:1.62rem;margin:20px 0 8px;font-weight:500;line-height:1.18;color:#1D1424}
+.dir-a .card p{font-size:1.02rem;line-height:1.55;color:#54455F;margin:0 0 16px}
+.dir-a .card .meta{display:flex;align-items:baseline;gap:12px;font-family:var(--ui);
+  margin-bottom:12px;border-top:1px solid #DCD3E2;padding-top:12px}
+.dir-a .card .price{font-size:1.15rem;font-weight:600;color:var(--plum)}
+.dir-a .card .dur{font-size:.8rem;color:#6B5A76}
+.dir-a .dates li{background:#EDE7F1;color:var(--indigo);font-family:var(--ui)}
+.dir-a .about{background:var(--indigo);color:#F0E9F3;margin-top:84px;padding-block:74px}
+.dir-a .about .wrap{display:grid;grid-template-columns:1fr 1.25fr;gap:56px;align-items:center}
+.dir-a .about img{aspect-ratio:1;object-fit:cover}
+.dir-a .about h3{font-family:var(--brand);font-size:1.9rem;margin:0 0 18px;color:var(--gold);font-weight:600}
+.dir-a .about p{font-size:1.2rem;line-height:1.68;margin:0 0 14px;color:#E3D8E8}
+.dir-a footer{background:#2A1E33;color:#C9BBD1;padding-block:40px;font-family:var(--ui);font-size:.86rem}
+
+/* ══ B · INDIGO VAT ══════════════════════════════════════════════════════
+   Named for the dye vat. Everything sits in near-black violet and the
+   photographs are the only light, with gold doing what it does on her logo.  */
+.dir-b{background:#1B1226;color:#EFE7F2;font-family:'Spectral',Georgia,serif}
+.dir-b .bar{display:flex;align-items:center;justify-content:space-between;gap:20px;padding-block:20px}
+.dir-b .bar img{height:56px;width:auto}
+.dir-b nav{display:flex;gap:26px;font-family:var(--ui);font-size:.82rem;letter-spacing:.09em;
+  text-transform:uppercase;color:#C4B2CF;font-weight:500}
+.dir-b .book{border:1px solid var(--gold);color:var(--gold);padding:10px 20px;
+  font-family:var(--ui);font-size:.8rem;letter-spacing:.1em;text-transform:uppercase;font-weight:600}
+.dir-b .hero{position:relative;min-height:520px;display:grid;align-items:end;
+  border-radius:3px;overflow:hidden;margin-top:8px}
+.dir-b .hero>img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:.62}
+.dir-b .hero::after{content:"";position:absolute;inset:0;
+  background:linear-gradient(180deg,rgba(27,18,38,.25) 0%,rgba(27,18,38,.55) 45%,rgba(27,18,38,.97) 100%)}
+.dir-b .hero-copy{position:relative;z-index:2;padding:0 clamp(20px,5vw,56px) 52px;max-width:42ch}
+.dir-b .hero h2{font-family:var(--brand);font-size:clamp(2.1rem,4.6vw,3.5rem);line-height:1.1;
+  margin:0 0 18px;color:#fff;font-weight:600;text-wrap:balance;letter-spacing:.01em}
+.dir-b .hero p{font-size:1.2rem;line-height:1.62;color:#DCCFE3;margin:0 0 26px}
+.dir-b .gold-btn{display:inline-block;background:var(--gold);color:#241733;padding:14px 26px;
+  font-family:var(--ui);font-weight:700;font-size:.86rem;letter-spacing:.07em;text-transform:uppercase;border-radius:2px}
+.dir-b .sec-head{margin:76px 0 30px}
+.dir-b .sec-head h3{font-family:var(--brand);font-size:1rem;letter-spacing:.24em;text-transform:uppercase;
+  color:var(--gold);margin:0 0 10px;font-weight:600}
+.dir-b .sec-head p{margin:0;font-size:1.18rem;color:#C9B9D2;max-width:52ch;line-height:1.6}
+.dir-b .card{background:#241833;border:1px solid #382649;border-radius:3px;overflow:hidden;
+  display:flex;flex-direction:column}
+.dir-b .card-media{aspect-ratio:16/10}
+.dir-b .card-body{padding:22px;display:flex;flex-direction:column;gap:12px;flex:1}
+.dir-b .card h4{font-family:var(--brand);font-size:1.22rem;margin:0;color:#fff;font-weight:600;line-height:1.28}
+.dir-b .card p{margin:0;font-size:1.02rem;line-height:1.55;color:#BFAECA;flex:1}
+.dir-b .card .meta{display:flex;align-items:center;justify-content:space-between;
+  border-top:1px solid #382649;padding-top:14px;font-family:var(--ui)}
+.dir-b .card .price{color:var(--gold);font-size:1.24rem;font-weight:700}
+.dir-b .card .dur{font-size:.78rem;color:#A492B0}
+.dir-b .dates li{background:#31204333;border:1px solid #3F2B52;color:#D5C6DD;font-family:var(--ui)}
+.dir-b .about{margin-top:84px;padding-block:70px;border-top:1px solid #33234400;
+  background:linear-gradient(180deg,#1B1226,#251836)}
+.dir-b .about .wrap{display:grid;grid-template-columns:.85fr 1.15fr;gap:50px;align-items:center}
+.dir-b .about img{aspect-ratio:1;object-fit:cover;border-radius:3px;border:1px solid #3F2B52}
+.dir-b .about h3{font-family:var(--brand);font-size:1.85rem;color:var(--gold);margin:0 0 18px;font-weight:600}
+.dir-b .about p{font-size:1.2rem;line-height:1.68;color:#D3C4DB;margin:0 0 14px}
+.dir-b footer{background:#150E1E;color:#9E8CAA;padding-block:40px;font-family:var(--ui);font-size:.86rem}
+
+/* ══ C · FABRIC FUN ══════════════════════════════════════════════════════
+   Her own tagline. Softer, chunkier, built around a quatrefoil lifted from
+   the woodblocks in her own photograph — the motif is the structure here.    */
+.dir-c{background:#FFFCF6;color:#2B2033;font-family:var(--ui)}
+.dir-c .bar{display:flex;align-items:center;justify-content:space-between;gap:20px;padding-block:18px}
+.dir-c .bar img{height:54px;width:auto}
+.dir-c nav{display:flex;gap:22px;font-size:.92rem;font-weight:600;color:var(--purple)}
+.dir-c .book{background:var(--gold);color:#33203A;padding:12px 22px;border-radius:999px;
+  font-weight:700;font-size:.9rem}
+.dir-c .motif{height:46px;background-repeat:repeat-x;background-size:46px 46px;opacity:.9}
+.dir-c .hero{display:grid;grid-template-columns:1.05fr .95fr;gap:48px;align-items:center;padding-block:52px 60px}
+.dir-c .hero h2{font-family:'Fraunces',Georgia,serif;font-size:clamp(2.6rem,5.6vw,4.3rem);
+  line-height:1.02;margin:0 0 20px;font-weight:900;color:var(--plum);text-wrap:balance}
+.dir-c .hero h2 span{color:var(--ochre);display:block}
+.dir-c .hero p{font-size:1.15rem;line-height:1.62;color:#4E4057;margin:0 0 28px;max-width:40ch}
+.dir-c .pill-row{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:28px}
+.dir-c .pill{background:#F3ECF6;color:var(--purple);font-size:.84rem;font-weight:600;
+  padding:7px 14px;border-radius:999px}
+.dir-c .hero-stack{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.dir-c .hero-stack img{border-radius:18px;aspect-ratio:1;object-fit:cover}
+.dir-c .hero-stack img:first-child{grid-row:span 2;aspect-ratio:auto;height:100%}
+.dir-c .sec-head{text-align:center;margin:22px 0 34px}
+.dir-c .sec-head h3{font-family:'Fraunces',Georgia,serif;font-size:2.1rem;margin:0 0 8px;
+  color:var(--plum);font-weight:600}
+.dir-c .sec-head p{margin:0;color:#5C4D66;font-size:1.06rem}
+.dir-c .card{background:#fff;border:2px solid #EFE6F2;border-radius:22px;overflow:hidden;
+  display:flex;flex-direction:column}
+.dir-c .card-media{aspect-ratio:5/4}
+.dir-c .card-body{padding:20px 20px 22px;display:flex;flex-direction:column;gap:10px;flex:1}
+.dir-c .card h4{font-family:'Fraunces',Georgia,serif;font-size:1.28rem;margin:0;
+  color:var(--plum);font-weight:600;line-height:1.25}
+.dir-c .card p{margin:0;font-size:.98rem;line-height:1.56;color:#5C4D66;flex:1}
+.dir-c .card .meta{display:flex;align-items:center;justify-content:space-between;padding-top:12px}
+.dir-c .card .price{background:var(--purple);color:#fff;font-weight:700;font-size:1rem;
+  padding:6px 14px;border-radius:999px}
+.dir-c .card .dur{font-size:.82rem;color:#6D5D77}
+.dir-c .dates li{background:#FBF2E2;color:#6B4A1B;font-weight:600}
+.dir-c .about{margin-top:70px;background:var(--purple);color:#fff;padding-block:62px}
+.dir-c .about .wrap{display:grid;grid-template-columns:.8fr 1.2fr;gap:46px;align-items:center}
+.dir-c .about img{border-radius:22px;aspect-ratio:1;object-fit:cover}
+.dir-c .about h3{font-family:'Fraunces',Georgia,serif;font-size:2rem;margin:0 0 16px;
+  color:var(--gold);font-weight:600}
+.dir-c .about p{font-size:1.14rem;line-height:1.68;margin:0 0 14px;color:#F2E9F5}
+.dir-c footer{background:#2B2033;color:#CFC2D6;padding-block:38px;font-size:.88rem}
+
+/* ── Narrow screens: this is where most of her customers arrive ─────────── */
+@media (max-width:860px){
+  .dir-a .hero,.dir-c .hero,.dir-a .about .wrap,.dir-b .about .wrap,.dir-c .about .wrap{
+    grid-template-columns:1fr;gap:30px}
+  .dir-a .hero{padding-block:44px 50px}
+  .dir-b .hero{min-height:440px}
+  .dir-a .bar nav,.dir-b .bar nav,.dir-c .bar nav{display:none}
+  .dir-c .hero-stack img:first-child{grid-row:auto;aspect-ratio:1;height:auto}
+}
+
+/* ── Sign-in screens ─────────────────────────────────────────────────────
+   Shared markup, restyled per direction. Form rules held constant across all
+   three: labels always visible (never placeholder-as-label), targets at least
+   44px, errors in words beside the field rather than colour alone.          */
+.auth-wrap{padding-block:34px 70px}
+.auth-intro{margin:0 0 30px;max-width:60ch;line-height:1.6}
+.screens{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:26px;align-items:start}
+.screen{border-radius:4px;overflow:hidden}
+.screen-label{font-family:var(--ui);font-size:.72rem;letter-spacing:.14em;
+  text-transform:uppercase;font-weight:700;padding:10px 16px}
+.screen-body{padding:26px 22px 28px;display:flex;flex-direction:column;gap:16px}
+.screen-body h5{margin:0;font-size:1.45rem;line-height:1.22;font-weight:600}
+.screen-body .lede{margin:0;font-size:.98rem;line-height:1.55}
+.field{display:flex;flex-direction:column;gap:6px}
+.field label{font-family:var(--ui);font-size:.82rem;font-weight:600;letter-spacing:.01em}
+.field input{font-family:var(--ui);font-size:1rem;padding:13px 14px;border-radius:4px;
+  border:1.5px solid;width:100%;min-height:48px}
+.two-up{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.hint{font-family:var(--ui);font-size:.78rem;line-height:1.45;margin:0}
+.err{font-family:var(--ui);font-size:.84rem;font-weight:600;display:flex;gap:7px;
+  align-items:flex-start;padding:11px 13px;border-radius:4px;line-height:1.4}
+.btn{font-family:var(--ui);font-weight:700;font-size:.95rem;min-height:50px;border:0;
+  border-radius:4px;cursor:pointer;width:100%;padding:0 18px}
+.btn-ghost{background:transparent;border:1.5px solid;font-weight:600}
+.consent{display:flex;gap:11px;align-items:flex-start;font-family:var(--ui);
+  font-size:.88rem;line-height:1.45}
+.consent input{width:20px;height:20px;margin:1px 0 0;flex:none}
+.alt{font-family:var(--ui);font-size:.9rem;text-align:center;margin:0;padding-top:4px}
+.alt a{font-weight:700}
+.sent{display:flex;gap:12px;align-items:flex-start;padding:15px;border-radius:4px;
+  font-family:var(--ui);font-size:.92rem;line-height:1.5}
+.sent svg{flex:none;margin-top:1px}
+
+/* Atelier */
+.dir-a .auth-intro{color:#54455F;font-size:1.12rem}
+.dir-a .screen{background:#fff;border:1px solid #DCD3E2}
+.dir-a .screen-label{background:#F1ECF4;color:var(--plum)}
+.dir-a .screen-body h5{font-family:'Cormorant Garamond',Georgia,serif;color:#1D1424;font-size:1.7rem}
+.dir-a .screen-body .lede{color:#54455F}
+.dir-a .field label{color:var(--indigo)}
+.dir-a .field input{border-color:#CFC2D8;background:#FDFCFE;color:#241A2B}
+.dir-a .field input:focus{border-color:var(--purple);outline:none;box-shadow:0 0 0 3px #E4D8EC}
+.dir-a .hint{color:#6B5A76}
+.dir-a .err{background:#FBEAE7;color:#7A2718;border:1px solid #E8C4BC}
+.dir-a .btn{background:var(--plum);color:#fff}
+.dir-a .btn-ghost{background:transparent;color:var(--plum);border-color:var(--plum)}
+.dir-a .alt,.dir-a .consent{color:#54455F}
+.dir-a .alt a{color:var(--purple)}
+.dir-a .sent{background:#EDF3EC;color:#2C4A2C;border:1px solid #C7DCC6}
+
+/* Indigo Vat */
+.dir-b .auth-intro{color:#C9B9D2;font-size:1.12rem}
+.dir-b .screen{background:#241833;border:1px solid #382649}
+.dir-b .screen-label{background:#2E1F40;color:var(--gold)}
+.dir-b .screen-body h5{font-family:var(--brand);color:#fff;font-size:1.35rem}
+.dir-b .screen-body .lede{color:#BFAECA}
+.dir-b .field label{color:#E0D2E7}
+.dir-b .field input{border-color:#4A3460;background:#1B1226;color:#F2EAF5}
+.dir-b .field input:focus{border-color:var(--gold);outline:none;box-shadow:0 0 0 3px #3C2A4F}
+.dir-b .hint{color:#A492B0}
+.dir-b .err{background:#3A1F24;color:#F3BDB2;border:1px solid #6B3540}
+.dir-b .btn{background:var(--gold);color:#241733}
+.dir-b .btn-ghost{background:transparent;color:var(--gold);border-color:var(--gold)}
+.dir-b .alt,.dir-b .consent{color:#C4B2CF}
+.dir-b .alt a{color:var(--gold)}
+.dir-b .sent{background:#1F2E24;color:#B4DCBE;border:1px solid #37563F}
+
+/* Fabric Fun */
+.dir-c .auth-intro{color:#5C4D66;font-size:1.08rem}
+.dir-c .screen{background:#fff;border:2px solid #EFE6F2;border-radius:22px}
+.dir-c .screen-label{background:#F7F1FA;color:var(--purple)}
+.dir-c .screen-body h5{font-family:'Fraunces',Georgia,serif;color:var(--plum);font-size:1.5rem}
+.dir-c .screen-body .lede{color:#5C4D66}
+.dir-c .field label{color:var(--plum)}
+.dir-c .field input{border-color:#E2D6E8;background:#FFFDFB;color:#2B2033;border-radius:12px}
+.dir-c .field input:focus{border-color:var(--purple);outline:none;box-shadow:0 0 0 3px #F0E4F5}
+.dir-c .hint{color:#6D5D77}
+.dir-c .err{background:#FDECE7;color:#8A3419;border:1.5px solid #F2CBBC;border-radius:12px}
+.dir-c .btn{background:var(--purple);color:#fff;border-radius:999px}
+.dir-c .btn-ghost{background:transparent;color:var(--purple);border-color:var(--purple);border-radius:999px}
+.dir-c .alt,.dir-c .consent{color:#5C4D66}
+.dir-c .alt a{color:var(--ochre)}
+.dir-c .sent{background:#EFF7EF;color:#2F5133;border:1.5px solid #CDE4CE;border-radius:12px}
+
+@media (max-width:520px){.two-up{grid-template-columns:1fr}}
+
+/* Two rows of tabs: which look, then which screen. */
+.tabs.screens-row{border-top:1px solid #342740;padding-top:10px;margin-top:4px}
+.tabs.screens-row button{border-radius:8px;border-bottom:0;padding:8px 15px;font-size:.85rem}
+.tabs.screens-row button[aria-selected="true"]{background:var(--gold);color:#241733}
+
+</style>
+
+<div class="chrome">
+  <div class="chrome-in">
+    <h1>Studio Rags · Website design</h1>
+    <p>Three directions for the same six classes. Everything you see is <b>your own
+      photography, your own words and your real prices</b> — so the only thing that
+      changes between them is the look. Have a tap through each one, on your phone
+      if you can, and tell us which feels most like Studio Rags.</p>
+    <div class="tabs" role="tablist">
+      <button role="tab" id="tab-a" aria-controls="a" aria-selected="true">Atelier<span>quiet &amp; gallery-like</span></button>
+      <button role="tab" id="tab-b" aria-controls="b" aria-selected="false">Indigo Vat<span>dark &amp; dramatic</span></button>
+      <button role="tab" id="tab-c" aria-controls="c" aria-selected="false">Fabric Fun<span>warm &amp; playful</span></button>
+    </div>
+    <div class="tabs screens-row" role="tablist" aria-label="Which screens">
+      <button type="button" data-screen="home" aria-selected="true">Home page</button>
+      <button type="button" data-screen="auth" aria-selected="false">Signing in &amp; accounts</button>
+    </div>
+  </div>
+</div>
+<p class="note">Dates and “places left” below are examples, to show how booking will look. Nothing here is live yet.</p>
+
+<main>
+<!-- ════ A · ATELIER ════ -->
+<section class="dir dir-a" id="a" role="tabpanel" aria-labelledby="tab-a">
+  <div class="wrap">
+    <header class="bar">
+      <img src="../brand/logo-full.png" alt="Studio Rags — Fabric Fun">
+      <nav><span>Workshops</span><span>Online</span><span>Gift cards</span><span>Contact</span></nav>
+      <a class="book" href="#a">Book a class</a>
+    </header>
+    <div class="hero">
+      <div>
+        <p class="eyebrow">Sefton Park, South Australia</p>
+        <h2>Traditional textile art, taught <em>by hand</em>.</h2>
+        <p>Batik, Shibori and woodblock printing — small classes with Rehana Usman,
+          the only artist teaching Indonesian Batik in Adelaide.</p>
+        <a class="book" href="#a">See upcoming dates</a>
+      </div>
+      <div class="hero-img"><img src="../photos/pakistani-woodblock-printing-1.jpg" alt="Hand-carved woodblocks and teal ink on printed cotton"></div>
+    </div>
+    <div class="rule"></div>
+    <div class="sec-head">
+      <h3>Upcoming Classes</h3>
+      <span>All materials included · Small groups</span>
+    </div>
+    <div class="grid" id="grid-a"></div>
+  </div>
+  <div class="wrap auth-wrap" data-screen="auth" hidden>
+    <p class="auth-intro">These are the screens customers see when they make an
+      account, sign in, or forget their password. Every word here is the wording
+      the website will actually use.</p>
+    <div class="screens" id="auth-a"></div>
+  </div>
+  <section class="about">
+    <div class="wrap">
+      <img src="../photos/batik-workshop-1.jpg" alt="Wax-resist batik in progress">
+      <div>
+        <h3>About Rehana</h3>
+        <p>Twenty years in the textile industry, a degree in Textile Design, and a
+          career as a fashion designer and university lecturer before founding
+          Studio Rags in Adelaide.</p>
+        <p>She teaches these crafts to keep them alive — and she is the only artist
+          teaching Indonesian Batik in the area.</p>
+      </div>
+    </div>
+  </section>
+  <footer><div class="wrap">Studio Rags · Sefton Park SA · hello@studiorags.com.au</div></footer>
+</section>
+
+<!-- ════ B · INDIGO VAT ════ -->
+<section class="dir dir-b" id="b" role="tabpanel" aria-labelledby="tab-b" hidden>
+  <div class="wrap">
+    <header class="bar">
+      <img src="../brand/logo-full.png" alt="Studio Rags — Fabric Fun">
+      <nav><span>Workshops</span><span>Online</span><span>Gift cards</span><span>Contact</span></nav>
+      <a class="book" href="#b">Book a class</a>
+    </header>
+    <div class="hero">
+      <img src="../photos/shibori-workshop-1.jpg" alt="Indigo-dyed shibori cloth">
+      <div class="hero-copy">
+        <h2>Indigo, wax and woodblock</h2>
+        <p>Traditional textile workshops in Sefton Park. Come for a day, leave with
+          fabric you made yourself.</p>
+        <a class="gold-btn" href="#b">See upcoming dates</a>
+      </div>
+    </div>
+    <div class="sec-head">
+      <h3>The Classes</h3>
+      <p>Six classes, in the studio and online. Every one includes your materials,
+        and you take your work home the same day.</p>
+    </div>
+    <div class="grid" id="grid-b"></div>
+  </div>
+  <div class="wrap auth-wrap" data-screen="auth" hidden>
+    <p class="auth-intro">These are the screens customers see when they make an
+      account, sign in, or forget their password. Every word here is the wording
+      the website will actually use.</p>
+    <div class="screens" id="auth-b"></div>
+  </div>
+  <section class="about">
+    <div class="wrap">
+      <img src="../photos/batik-workshop-1.jpg" alt="Wax-resist batik in progress">
+      <div>
+        <h3>Taught by Rehana Usman</h3>
+        <p>Twenty years in textiles, a degree in Textile Design, and years as a
+          fashion designer and university lecturer.</p>
+        <p>She founded Studio Rags after moving to Australia, to keep traditional
+          textile crafts alive — and is the only artist teaching Indonesian Batik
+          in Adelaide.</p>
+      </div>
+    </div>
+  </section>
+  <footer><div class="wrap">Studio Rags · Sefton Park SA · hello@studiorags.com.au</div></footer>
+</section>
+
+<!-- ════ C · FABRIC FUN ════ -->
+<section class="dir dir-c" id="c" role="tabpanel" aria-labelledby="tab-c" hidden>
+  <div class="wrap">
+    <header class="bar">
+      <img src="../brand/logo-full.png" alt="Studio Rags — Fabric Fun">
+      <nav><span>Workshops</span><span>Online</span><span>Kids</span><span>Gift cards</span></nav>
+      <a class="book" href="#c">Book a class</a>
+    </header>
+  </div>
+  <div class="motif" id="motif"></div>
+  <div class="wrap">
+    <div class="hero">
+      <div>
+        <h2>Make something<span>with your hands.</span></h2>
+        <p>Batik, Shibori, block printing and painting — for grown-ups, for kids,
+          and for the two of you together.</p>
+        <div class="pill-row">
+          <span class="pill">Materials included</span>
+          <span class="pill">No experience needed</span>
+          <span class="pill">Ages 7+ welcome</span>
+        </div>
+        <a class="book" href="#c">Find a class</a>
+      </div>
+      <div class="hero-stack">
+        <img src="../photos/kids-and-parents-paint-together-1.jpg" alt="Parents and children painting together">
+        <img src="../photos/pakistani-woodblock-printing-1.jpg" alt="Carved woodblocks and printed fabric">
+        <img src="../photos/shibori-workshop-1.jpg" alt="Indigo shibori cloth">
+      </div>
+    </div>
+    <div class="sec-head">
+      <h3>Pick your class</h3>
+      <p>Six to choose from, in the studio or at home.</p>
+    </div>
+    <div class="grid" id="grid-c"></div>
+  </div>
+  <div class="wrap auth-wrap" data-screen="auth" hidden>
+    <p class="auth-intro">These are the screens customers see when they make an
+      account, sign in, or forget their password. Every word here is the wording
+      the website will actually use.</p>
+    <div class="screens" id="auth-c"></div>
+  </div>
+  <section class="about">
+    <div class="wrap">
+      <img src="../photos/batik-workshop-1.jpg" alt="Wax-resist batik in progress">
+      <div>
+        <h3>Hello, I’m Rehana</h3>
+        <p>I’ve spent twenty years in textiles — as a designer, and as a university
+          lecturer — and I started Studio Rags to share crafts I grew up with.</p>
+        <p>I’m the only artist teaching Indonesian Batik in Adelaide, and I’d love
+          to teach you.</p>
+      </div>
+    </div>
+  </section>
+  <footer><div class="wrap">Studio Rags · Sefton Park SA · hello@studiorags.com.au</div></footer>
+</section>
+</main>
+
+<script>
+/* Her six classes: real titles, her own listing copy, her real prices.
+   Dates and remaining places are illustrative — flagged above the fold. */
+const CLASSES = [
+  {img:'../photos/batik-workshop-1.jpg', name:'Indonesian Batik Workshop', price:82, dur:'3 hours · in the studio',
+   blurb:"Welcome to Studio Rags! Let's Batik to try the amazing cultural heritage of Indonesian fabric printing art. Enjoy a relaxing creative day.",
+   dates:['Sat 27 Sep','Sat 11 Oct · 3 places left','Sat 25 Oct']},
+  {img:'../photos/shibori-workshop-1.jpg', name:'Japanese Shibori Workshop', price:82, dur:'3 hours · in the studio',
+   blurb:"It's the perfect time to make some cool Indigo Shibori pieces and create a new look both in your wardrobe and interiors.",
+   dates:['Sun 28 Sep · 2 places left','Sun 12 Oct','Sun 26 Oct']},
+  {img:'../photos/pakistani-woodblock-printing-1.jpg', name:'Pakistani Woodblock Printing', price:65, dur:'3 hours · in the studio',
+   blurb:'Explore the ancient art of Block printing from the Indus Valley Civilization and create stunning fabrics for your projects or wardrobe.',
+   dates:['Sat 4 Oct','Sat 18 Oct','Sat 1 Nov']},
+  {img:'../photos/kids-and-parents-paint-together-1.jpg', name:'Kids and Parents Paint Together', price:42, dur:'90 minutes · ages 7–15',
+   blurb:'Learn painting in this family friendly class. Cherish your bonding and paint a sweet memory together.',
+   dates:['Sat 27 Sep · 1 place left','Sat 11 Oct','Sat 25 Oct']},
+  {img:'../photos/batik-online-1.jpg', name:'Indonesian Batik — Online', price:102, dur:'2 hours · live on Zoom',
+   blurb:'Learn the amazing Indonesian Batik printing at home and reboot your Positive energy with an immersive unique art!',
+   dates:['Wed 1 Oct','Wed 15 Oct','Wed 29 Oct']},
+  {img:'../photos/shibori-online-1.jpg', name:'Japanese Shibori — Online', price:102, dur:'2 hours · live on Zoom',
+   blurb:'Relax and re-energise your spirits through this Shibori dyeing kit and online class.',
+   dates:['Thu 2 Oct','Thu 16 Oct · 4 places left','Thu 30 Oct']},
+];
+
+const card = c => `
+  <article class="card">
+    <div class="card-media"><img src="${c.img}" alt="${c.name}" loading="lazy"></div>
+    <div class="card-body">
+      <h4>${c.name}</h4>
+      <p>${c.blurb}</p>
+      <div class="meta"><span class="price">$${c.price}</span><span class="dur">${c.dur}</span></div>
+      <ul class="dates">${c.dates.map(d => `<li>${d}</li>`).join('')}</ul>
+    </div>
+  </article>`;
+
+for (const id of ['grid-a','grid-b','grid-c']) {
+  document.getElementById(id).innerHTML = CLASSES.map(card).join('');
+}
+
+/* Atelier puts the title above the image, so it needs its own card shape. */
+document.getElementById('grid-a').innerHTML = CLASSES.map(c => `
+  <article class="card">
+    <div class="card-media"><img src="${c.img}" alt="${c.name}" loading="lazy"></div>
+    <h4>${c.name}</h4>
+    <p>${c.blurb}</p>
+    <div class="meta"><span class="price">$${c.price}</span><span class="dur">${c.dur}</span></div>
+    <ul class="dates">${c.dates.map(d => `<li>${d}</li>`).join('')}</ul>
+  </article>`).join('');
+
+/* Quatrefoil taken from the woodblocks in her own photograph. */
+const motif = encodeURIComponent(
+  `<svg xmlns="http://www.w3.org/2000/svg" width="46" height="46" viewBox="0 0 46 46">
+     <g fill="none" stroke="#ca7f3a" stroke-width="1.6">
+       <path d="M23 8c4 0 7 3 7 7s-3 8-7 8-7-3-7-8 3-7 7-7z"/>
+       <path d="M23 23c4 0 7 3 7 8s-3 7-7 7-7-3-7-7 3-8 7-8z"/>
+       <circle cx="23" cy="23" r="2.4"/>
+     </g>
+   </svg>`);
+document.getElementById('motif').style.backgroundImage = `url("data:image/svg+xml,${motif}")`;
+
+
+/* One set of screens, restyled by whichever direction is showing.
+   The copy matches what the API already returns — the "if that email address
+   has an account" wording is deliberate: it never reveals who is registered. */
+const AUTH_SCREENS = [
+  {label:'Sign in', html:`
+    <h5>Welcome back</h5>
+    <p class="lede">Sign in to see your bookings and book a new class.</p>
+    <div class="field"><label for="si-e">Email address</label><input id="si-e" type="email" autocomplete="email" value="rehana@example.com"></div>
+    <div class="field"><label for="si-p">Password</label><input id="si-p" type="password" autocomplete="current-password" value="••••••••••"></div>
+    <button class="btn" type="button">Sign in</button>
+    <p class="alt"><a href="#">Forgot your password?</a></p>`},
+
+  {label:'Sign in · wrong password', html:`
+    <h5>Welcome back</h5>
+    <div class="err"><span aria-hidden="true">!</span><span>Email or password is incorrect. Please try again.</span></div>
+    <div class="field"><label for="se-e">Email address</label><input id="se-e" type="email" value="rehana@example.com"></div>
+    <div class="field"><label for="se-p">Password</label><input id="se-p" type="password" value="••••"></div>
+    <button class="btn" type="button">Sign in</button>
+    <p class="alt"><a href="#">Forgot your password?</a></p>`},
+
+  {label:'Create an account', html:`
+    <h5>Create your account</h5>
+    <p class="lede">So you can see your bookings and book faster next time.</p>
+    <div class="two-up">
+      <div class="field"><label for="cr-f">First name</label><input id="cr-f" type="text" autocomplete="given-name" value="Amelia"></div>
+      <div class="field"><label for="cr-l">Last name</label><input id="cr-l" type="text" autocomplete="family-name" value="Nguyen"></div>
+    </div>
+    <div class="field"><label for="cr-e">Email address</label><input id="cr-e" type="email" autocomplete="email" value="amelia@example.com"></div>
+    <div class="field"><label for="cr-p">Password</label><input id="cr-p" type="password" autocomplete="new-password" value="••••••••••••">
+      <p class="hint">At least 10 characters. A short phrase works well.</p></div>
+    <label class="consent"><input type="checkbox" id="cr-c"><span>Email me when Studio Rags adds new classes or dates.</span></label>
+    <button class="btn" type="button">Create account</button>
+    <p class="alt">Already have one? <a href="#">Sign in</a></p>`},
+
+  {label:'Forgot password', html:`
+    <h5>Reset your password</h5>
+    <p class="lede">Enter your email address and we will send you a link to set a new one.</p>
+    <div class="field"><label for="fp-e">Email address</label><input id="fp-e" type="email" autocomplete="email" value="amelia@example.com"></div>
+    <button class="btn" type="button">Send me a link</button>
+    <p class="alt"><a href="#">Back to sign in</a></p>`},
+
+  {label:'Link sent', html:`
+    <h5>Check your email</h5>
+    <div class="sent"><svg width="19" height="19" viewBox="0 0 20 20" aria-hidden="true"><path d="M2 5h16v10H2z" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M2 5l8 6 8-6" fill="none" stroke="currentColor" stroke-width="1.7"/></svg>
+      <span>If that email address has an account, a reset link is on its way.</span></div>
+    <p class="hint">The link works once and expires after an hour. If it does not arrive in a few minutes, check your junk folder.</p>
+    <button class="btn btn-ghost" type="button">Back to sign in</button>`},
+
+  {label:'Set a new password', html:`
+    <h5>Choose a new password</h5>
+    <div class="field"><label for="np-p">New password</label><input id="np-p" type="password" autocomplete="new-password" value="••••••••••••">
+      <p class="hint">At least 10 characters.</p></div>
+    <div class="field"><label for="np-c">Type it again</label><input id="np-c" type="password" autocomplete="new-password" value="••••••••••••"></div>
+    <p class="hint">Changing your password signs you out everywhere else.</p>
+    <button class="btn" type="button">Save and sign in</button>`},
+];
+
+const screenCard = s => `
+  <section class="screen">
+    <p class="screen-label">${s.label}</p>
+    <div class="screen-body">${s.html}</div>
+  </section>`;
+
+for (const letter of ['a','b','c']) {
+  document.getElementById('auth-' + letter).innerHTML =
+    AUTH_SCREENS.map(screenCard).join('').replace(/id="([a-z]{2}-[a-z])"/g, `id="$1-${letter}"`)
+                .replace(/for="([a-z]{2}-[a-z])"/g, `for="$1-${letter}"`);
+}
+
+const screenTabs = [...document.querySelectorAll('.screens-row button')];
+let screen = 'home';
+function applyScreen(){
+  document.querySelectorAll('.dir').forEach(dir => {
+    dir.querySelectorAll('[data-screen]').forEach(p => { p.hidden = p.dataset.screen !== screen; });
+    dir.querySelectorAll('.wrap:not([data-screen]), .about, footer').forEach(el => {
+      el.hidden = screen !== 'home';
+    });
+  });
+}
+screenTabs.forEach(t => t.addEventListener('click', () => {
+  screen = t.dataset.screen;
+  screenTabs.forEach(x => x.setAttribute('aria-selected', String(x === t)));
+  applyScreen();
+  window.scrollTo({top: 0, behavior: 'instant'});
+}));
+applyScreen();
+
+const tabs = [...document.querySelectorAll('.tabs[role="tablist"]:not(.screens-row) button')];
+tabs.forEach(tab => tab.addEventListener('click', () => {
+  tabs.forEach(t => {
+    const panel = document.getElementById(t.getAttribute('aria-controls'));
+    const on = t === tab;
+    t.setAttribute('aria-selected', String(on));
+    panel.hidden = !on;
+  });
+  window.scrollTo({top: 0, behavior: 'instant'});
+}));
+</script>
