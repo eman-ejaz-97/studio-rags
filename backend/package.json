@@ -13,11 +13,15 @@
     "start:debug": "nest start --debug --watch",
     "start:prod": "node dist/main",
     "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
+    "lint:check": "eslint \"{src,apps,libs,test}/**/*.ts\"",
+    "typecheck": "tsc --noEmit",
     "test": "jest",
     "test:watch": "jest --watch",
     "test:cov": "jest --coverage",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
-    "test:e2e": "jest --config ./test/jest-e2e.json",
+    "test:e2e": "dotenv -o -e .env.test -- jest --config ./test/jest-e2e.json --runInBand",
+    "test:e2e:prepare": "dotenv -o -e .env.test -- node scripts/assert-test-database.js && dotenv -o -e .env.test -- prisma migrate deploy",
+    "smoke:neon": "ts-node scripts/smoke-neon.ts",
     "prisma": "dotenv -e ../.env -- prisma",
     "db:generate": "prisma generate",
     "db:migrate": "dotenv -e ../.env -- prisma migrate dev",
@@ -27,6 +31,8 @@
     "db:seed": "dotenv -e ../.env -- ts-node prisma/seed.ts"
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.1161.0",
+    "@aws-sdk/s3-request-presigner": "^3.1161.0",
     "@nestjs/common": "^11.0.1",
     "@nestjs/config": "^12.0.0",
     "@nestjs/core": "^11.0.1",
@@ -86,6 +92,9 @@
     "transform": {
       "^.+\\.(t|j)s$": "ts-jest"
     },
+    "transformIgnorePatterns": [
+      "/node_modules/(?!@nestjs/(config|jwt|passport)/)"
+    ],
     "collectCoverageFrom": [
       "**/*.(t|j)s"
     ],

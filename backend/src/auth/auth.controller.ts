@@ -15,7 +15,7 @@ import type { Request, Response } from 'express';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import type { AuthenticatedUser } from '../common/decorators/current-user.decorator';
 import { Public } from '../common/decorators/public.decorator';
-import { AuthService } from './auth.service';
+import { AuthService, RefreshRaceLostException } from './auth.service';
 import type { IssuedSession } from './auth.service';
 import {
   REFRESH_COOKIE,
@@ -83,7 +83,16 @@ export class AuthController {
       this.applySession(res, session);
       return { ok: true };
     } catch (error) {
-      clearAuthCookies(res, this.isProduction);
+      // Another tab spent this same cookie moments ago and holds the new
+      // session. The tabs share one cookie jar, so clearing it here could
+      // delete the winner's fresh cookies if this answer arrives second.
+      // If instead this is a retry whose first attempt won but never got its
+      // answer, the spent token stays in the jar, and its next refresh ends
+      // this one session and no other (AuthService.rotateLocked).
+      // Every other failure means this browser's session is over.
+      if (!(error instanceof RefreshRaceLostException)) {
+        clearAuthCookies(res, this.isProduction);
+      }
       throw error;
     }
   }

@@ -5,5 +5,11 @@
   "testRegex": ".e2e-spec.ts$",
   "transform": {
     "^.+\\.(t|j)s$": "ts-jest"
-  }
+  },
+  "transformIgnorePatterns": [
+    "/node_modules/(?!@nestjs/(config|jwt|passport)/)"
+  ],
+  "setupFiles": ["<rootDir>/utils/assert-test-env.ts"],
+  "restoreMocks": true,
+  "testTimeout": 30000
 }

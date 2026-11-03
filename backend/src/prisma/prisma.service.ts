@@ -2,12 +2,16 @@ import {
   INestApplication,
   Injectable,
   Logger,
+  OnModuleDestroy,
   OnModuleInit,
 } from '@nestjs/common';
 import { PrismaClient } from '@prisma/client';
 
 @Injectable()
-export class PrismaService extends PrismaClient implements OnModuleInit {
+export class PrismaService
+  extends PrismaClient
+  implements OnModuleInit, OnModuleDestroy
+{
   private readonly logger = new Logger(PrismaService.name);
 
   constructor() {
@@ -22,6 +26,15 @@ export class PrismaService extends PrismaClient implements OnModuleInit {
   async onModuleInit() {
     await this.$connect();
     this.logger.log('Database connected');
+  }
+
+  /**
+   * Release the connection pool when the app closes. Without this the pool
+   * outlives app.close(): a Jest worker waits on its open connections after
+   * the last test, and on Neon they hold pooler slots until they time out.
+   */
+  async onModuleDestroy() {
+    await this.$disconnect();
   }
 
   /**

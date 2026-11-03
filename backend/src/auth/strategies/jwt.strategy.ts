@@ -5,7 +5,7 @@ import type { Request } from 'express';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 import type { AuthenticatedUser } from '../../common/decorators/current-user.decorator';
 import { ACCESS_COOKIE } from '../auth.cookies';
-import type { AccessTokenPayload } from '../token.service';
+import type { AccessTokenClaims } from '../token.service';
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
@@ -26,8 +26,15 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
     });
   }
 
-  validate(payload: AccessTokenPayload): AuthenticatedUser {
-    if (!payload?.sub) throw new UnauthorizedException();
+  /**
+   * Runs only after the signature and expiry have been checked. The typ check
+   * is what keeps a refresh token out if both JWT secrets were ever the same
+   * value; validateEnv refuses that at boot, and this is the second line.
+   */
+  validate(payload: AccessTokenClaims): AuthenticatedUser {
+    if (!payload?.sub || payload.typ !== 'access') {
+      throw new UnauthorizedException();
+    }
     return { id: payload.sub, email: payload.email, role: payload.role };
   }
 }
