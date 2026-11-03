@@ -1,26 +1,31 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+/*
+ * Fabric Fun tokens (ADR-021), only the ones in use so far. The full set lives
+ * in Figma and gets mirrored here when the real frontend build starts.
+ *
+ * The colour rule: the purples carry text. Gold (#E8A134) only ever sits on a
+ * dark ground, and ochre (#CA7F3A) is for text 24px and larger. Both fail AA
+ * as body text on paper.
+ */
+@theme {
+  --color-paper: #fffcf6;
+  --color-ink: #2b2033;
+  --color-plum: #4e2b4b;
+  --color-purple: #5b3460;
 }
 
+/* inline: these point at the CSS variables next/font puts on <html>. */
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-fraunces), ui-serif, Georgia, serif;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--color-paper);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  /* 17px base: the agreed minimum for body text is 16px, the target 17-18. */
+  font-size: 1.0625rem;
+  line-height: 1.6;
 }
