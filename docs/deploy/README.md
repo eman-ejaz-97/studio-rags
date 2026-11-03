@@ -82,6 +82,9 @@ Each needs the other's address, so expect to fix one value at the end.
 - The repo root has `.env.local`, created by Neon's CLI.
   It holds the real staging credentials.
   Copy values from it only into Render's secret fields; never into a file, a chat or a commit.
+- Never run `vercel link`, `vercel pull` or `vercel env pull` in the repo root.
+  Each one writes a `.env.local` in the folder it runs in, which would collide with the Neon credentials.
+  If you ever need them, run them in a throwaway copy of the repo.
 
 ### 1. Render (the API)
 
@@ -133,6 +136,9 @@ To change one later, use the service's **Environment** tab.
 
 ### 2. Vercel (the frontend)
 
+Already done for this project on 2026-11-03, with the Vercel CLI: project `studio-rags`, root directory `frontend`, Node 24.x, both variables below, the GitHub repo connected, functions in Singapore, and previews behind Vercel login.
+The steps stay here for rebuilding it from scratch.
+
 1. Sign in to [Vercel](https://vercel.com) with GitHub, on the Hobby plan.
    Skip any card prompt.
 2. Choose **Add New**, then **Project**, and import the `studio_rags` repository.
@@ -151,6 +157,8 @@ To change one later, use the service's **Environment** tab.
    - Under **Build and Deployment**, set the Node.js version to 24.x, to match `.nvmrc`.
    - Under **Functions**, set the function region to Singapore (`sin1`).
      The status page is rendered next to the API, so its health call stays short.
+   - Under **Deployment Protection**, set Vercel Authentication to **Only Preview Deployments**.
+     The default also protects the production `.vercel.app` address, which would ask Rehana to log in to Vercel.
 7. Copy the production address, `https://<project-name>.vercel.app`.
    If it differs from what you gave Render, update `CORS_ORIGIN` and `APP_URL` there.
 
@@ -350,6 +358,13 @@ With `TRUST_PROXY=2`, such a caller may be able to choose their own address with
 To see it, run the test above with `SITE=https://studio-rags-api.onrender.com`.
 It is acceptable on staging, which holds no real accounts.
 The real launch should close it, for example by only accepting API traffic from the frontend.
+
+### Vercel build is green, then the deploy fails with ENOENT
+
+The log ends with `Deploying outputs...` and the error names `.next/routes-manifest-deterministic.json` at the repo root.
+Vercel's Next.js build adapter finds the app by its path from `outputFileTracingRoot`.
+Pinning that root to `frontend/` makes the path empty, so it looks for `.next` in the wrong folder.
+`frontend/src/lib/build-roots.ts` therefore pins the roots everywhere except Vercel; keep it that way.
 
 ### Render build fails at `npm ci`
 

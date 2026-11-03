@@ -1,6 +1,7 @@
 import path from "node:path";
 import type { NextConfig } from "next";
 import { apiOrigin } from "./src/lib/api-origin";
+import { pinnedRoots } from "./src/lib/build-roots";
 
 // This file is evaluated at build time, and the output keeps the result: the
 // rewrite destination and the headers below are fixed when `next build` runs.
@@ -8,18 +9,14 @@ import { apiOrigin } from "./src/lib/api-origin";
 // redeploy), not just a restart.
 const isProductionSite = process.env.SITE_ENV === "production";
 
-// The repo root has its own package-lock.json (Neon's CLI). Left alone, Next
-// finds two lockfiles, warns, and treats the repo root as the project root:
-// Turbopack watches the whole repo and the standalone output nests the app
-// under frontend/. Pinning both roots here keeps the app self-contained.
+// Pinned to frontend/ everywhere except Vercel: see build-roots.ts for why.
 const frontendRoot = path.resolve(__dirname);
 
 const nextConfig: NextConfig = {
   // A self-contained server (.next/standalone) for the Docker image. Vercel
   // ignores this and uses its own output.
   output: "standalone",
-  turbopack: { root: frontendRoot },
-  outputFileTracingRoot: frontendRoot,
+  ...pinnedRoots(frontendRoot),
 
   poweredByHeader: false,
 

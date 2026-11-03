@@ -61,6 +61,8 @@ by eye.
 - **`.env.local` at the repo root holds real Neon credentials** for staging.
   Never print, copy or commit it. Do not run migrations or writes against Neon
   without the developer's go-ahead — Render applies migrations when it deploys.
+  `vercel link`, `vercel pull` and `vercel env pull` all write a `.env.local`
+  where they run, so never run them in the repo root.
 - Local dev uses Docker Postgres 17 on port 5433 (`studio_rags`). Never write
   to it from tests. Tests use databases ending in `_test`, and the harness
   refuses anything else.
