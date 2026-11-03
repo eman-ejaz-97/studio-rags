@@ -1,0 +1,9 @@
+# Keeps the build context small and secret-free. Dependencies and dist are
+# rebuilt inside the image; .env files must never be baked into a layer.
+node_modules
+dist
+coverage
+.env*
+test
+*.log
+.git

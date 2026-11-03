@@ -1,0 +1,214 @@
+# Continuous integration for the Studio Rags monorepo.
+#
+# backend and frontend run side by side. docker only starts once both pass, so
+# a broken test never wastes an image build. Nothing is pushed or deployed from
+# this workflow. Deploys happen outside it: Render deploys main only after
+# every check here passes (autoDeployTrigger: checksPass in render.yaml), and
+# Vercel builds main itself.
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+# One run per branch or PR: a newer push makes the older run pointless.
+# Revisit when a deploy job is added here, because cancelling a deploy halfway
+# is worse than letting it finish.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  backend:
+    name: Backend
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: backend
+    services:
+      postgres:
+        # The same major version as the Neon staging database.
+        image: postgres:18-alpine
+        env:
+          POSTGRES_USER: studio
+          POSTGRES_PASSWORD: studio
+          POSTGRES_DB: studio_rags_test
+        # Host port 5433, the same as the local Docker container, so the
+        # committed backend/.env.test works unchanged on a laptop and here.
+        ports:
+          - '5433:5432'
+        options: >-
+          --health-cmd "pg_isready -U studio -d studio_rags_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      # The Prisma CLI and seed steps below call the tools directly, so they
+      # read the URL from here. The npm test scripts (test:e2e:prepare and
+      # test:e2e) do not: they run `dotenv -o -e .env.test`, and -o makes
+      # backend/.env.test override these values. Keep both URLs here equal to
+      # the ones in .env.test, or the e2e steps would migrate and test one
+      # database while the drift check and the seed used another.
+      DATABASE_URL: postgresql://studio:studio@localhost:5433/studio_rags_test
+      # schema.prisma's directUrl, which Prisma Migrate connects through. On
+      # Neon it is the direct (unpooled) connection; with no pooler here, both
+      # variables hold the same URL.
+      DATABASE_URL_UNPOOLED: postgresql://studio:studio@localhost:5433/studio_rags_test
+      # For the psql calls in the drift check and the seed smoke test.
+      PGHOST: localhost
+      PGPORT: '5433'
+      PGUSER: studio
+      PGPASSWORD: studio
+      PGDATABASE: studio_rags_test
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+          cache-dependency-path: backend/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Validate Prisma schema
+        run: npx prisma validate
+
+      - name: Generate Prisma client
+        run: npx prisma generate
+
+      # Replays every committed migration into an empty shadow database and
+      # compares the result with schema.prisma. A difference means someone
+      # edited the schema without creating a migration. The app would build,
+      # but production (which only ever runs migrations) would never get the
+      # change. Exit code 2 = drift, 1 = the check itself failed.
+      - name: Check migrations match schema.prisma
+        run: |
+          psql -v ON_ERROR_STOP=1 -c 'CREATE DATABASE studio_rags_shadow'
+          status=0
+          npx prisma migrate diff \
+            --from-migrations ./prisma/migrations \
+            --to-schema-datamodel ./prisma/schema.prisma \
+            --shadow-database-url postgresql://studio:studio@localhost:5433/studio_rags_shadow \
+            --exit-code || status=$?
+          if [ "$status" -eq 2 ]; then
+            echo "::error file=backend/prisma/schema.prisma::schema.prisma has changes no migration covers. In backend/, run: npm run db:migrate -- --name <what-changed> and commit the new prisma/migrations folder."
+          fi
+          exit "$status"
+
+      - name: Lint
+        run: npm run lint:check
+
+      - name: Type-check
+        run: npm run typecheck
+
+      - name: Unit tests with coverage
+        run: npm run test:cov
+
+      - name: Migrate the test database
+        run: npm run test:e2e:prepare
+
+      - name: End-to-end tests
+        run: npm run test:e2e
+
+      # The seed says it is idempotent, and every environment re-runs it, so
+      # prove it: the second run must leave every row count exactly where the
+      # first left it. npm run db:seed is not used because it reads ../.env,
+      # which does not exist here and is the developer's real file locally.
+      - name: Seed smoke test (run twice)
+        env:
+          SEED_ADMIN_PASSWORD: ci-throwaway-password-not-used-anywhere
+        run: |
+          counts() {
+            psql -v ON_ERROR_STOP=1 -Atc "SELECT
+              (SELECT count(*) FROM refund_policies) || ' policies, ' ||
+              (SELECT count(*) FROM users) || ' users, ' ||
+              (SELECT count(*) FROM workshops) || ' workshops, ' ||
+              (SELECT count(*) FROM sessions) || ' sessions, ' ||
+              (SELECT count(*) FROM public_holidays) || ' holidays'"
+          }
+          npx dotenv -e .env.test -- ts-node prisma/seed.ts
+          first="$(counts)"
+          npx dotenv -e .env.test -- ts-node prisma/seed.ts
+          second="$(counts)"
+          echo "After run 1: $first"
+          echo "After run 2: $second"
+          if [ "$first" != "$second" ]; then
+            echo "::error file=backend/prisma/seed.ts::The seed is not idempotent: its second run changed the row counts."
+            exit 1
+          fi
+
+      - name: Build
+        run: npm run build
+
+  frontend:
+    name: Frontend
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: frontend
+    env:
+      # Set for the whole job, not just the build: next typegen (inside
+      # npm run typecheck) loads next.config.ts too, and the /api/v1 rewrite
+      # and the noindex header read these there.
+      API_ORIGIN: http://localhost:3001
+      SITE_ENV: staging
+      NEXT_TELEMETRY_DISABLED: '1'
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Type-check
+        run: npm run typecheck
+
+      # The X-Forwarded-For preload the Docker image starts the server with.
+      - name: Unit tests
+        run: npm test
+
+      - name: Build
+        run: npm run build
+
+  # Proves both images still build. Nothing is pushed: Render builds its own
+  # image from backend/Dockerfile, and staging serves the frontend from Vercel.
+  # Pushing to a registry would come in a separate workflow with its own
+  # permissions.
+  docker:
+    name: Docker images (build only)
+    needs: [backend, frontend]
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Build backend image
+        run: docker build --file backend/Dockerfile --tag studio-rags-api:ci backend
+
+      # api.invalid is a reserved name that never resolves. The image cannot
+      # bake in a real API address, and any build-time call to the API fails
+      # instead of reaching a real server.
+      - name: Build frontend image
+        run: >-
+          docker build
+          --file frontend/Dockerfile
+          --build-arg API_ORIGIN=http://api.invalid
+          --build-arg SITE_ENV=staging
+          --tag studio-rags-web:ci
+          frontend

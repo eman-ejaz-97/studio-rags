@@ -1,0 +1,13 @@
+# Keeps the build context small and secret-free. Dependencies and the build
+# output are recreated inside the image; .env files must never reach a layer.
+node_modules
+.next
+out
+coverage
+.env*
+*.log
+*.tsbuildinfo
+.git
+.vercel
+Dockerfile
+.dockerignore

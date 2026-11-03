@@ -10,6 +10,7 @@ import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
 import { RolesGuard } from './common/guards/roles.guard';
 import { validateEnv } from './config/env.validation';
 import { PrismaModule } from './prisma/prisma.module';
+import { StorageModule } from './storage/storage.module';
 
 @Module({
   imports: [
@@ -17,11 +18,18 @@ import { PrismaModule } from './prisma/prisma.module';
       isGlobal: true,
       // One .env at the repo root serves both the API and the web client.
       envFilePath: ['../.env', '.env'],
+      // Tests get their whole environment from backend/.env.test. Reading
+      // ../.env as well would back-fill any variable that file leaves out
+      // from the developer's real secrets (Stripe, mail) or dev database.
+      // Read at import time, so NODE_ENV must already be set: dotenv sets it
+      // from .env.test, and Jest sets it to "test" when it is unset.
+      ignoreEnvFile: process.env.NODE_ENV === 'test',
       validate: validateEnv,
       cache: true,
     }),
     ThrottlerModule.forRoot([{ name: 'default', ttl: 60_000, limit: 120 }]),
     PrismaModule,
+    StorageModule,
     AuthModule,
   ],
   controllers: [AppController],

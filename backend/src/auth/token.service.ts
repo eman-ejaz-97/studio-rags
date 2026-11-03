@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { JwtService } from '@nestjs/jwt';
+import { JsonWebTokenError, JwtService } from '@nestjs/jwt';
 import { Role } from '@prisma/client';
 import { createHash, randomBytes } from 'node:crypto';
 
@@ -10,9 +10,20 @@ export interface AccessTokenPayload {
   role: Role;
 }
 
+/**
+ * Every token says which kind it is in a typ claim. The two kinds are signed
+ * with different keys already, but if both keys were ever set to the same
+ * value, the claim is what stops a 30-day refresh token passing as an access
+ * token, which logout could not revoke.
+ */
+export interface AccessTokenClaims extends AccessTokenPayload {
+  typ: 'access';
+}
+
 export interface RefreshTokenPayload {
   sub: string;
   jti: string;
+  typ: 'refresh';
 }
 
 @Injectable()
@@ -23,7 +34,15 @@ export class TokenService {
   ) {}
 
   signAccessToken(payload: AccessTokenPayload): Promise<string> {
-    return this.jwt.signAsync(payload, {
+    // Copied field by field, so nothing else on the caller's object (or a typ
+    // of its own) can end up inside the signed token.
+    const claims: AccessTokenClaims = {
+      sub: payload.sub,
+      email: payload.email,
+      role: payload.role,
+      typ: 'access',
+    };
+    return this.jwt.signAsync(claims, {
       secret: this.config.getOrThrow<string>('JWT_ACCESS_SECRET'),
       expiresIn: Math.floor(this.accessTtlMs() / 1000),
     });
@@ -31,21 +50,25 @@ export class TokenService {
 
   signRefreshToken(userId: string): Promise<{ token: string; jti: string }> {
     const jti = randomBytes(24).toString('hex');
+    const claims: RefreshTokenPayload = { sub: userId, jti, typ: 'refresh' };
     return this.jwt
-      .signAsync(
-        { sub: userId, jti },
-        {
-          secret: this.config.getOrThrow<string>('JWT_REFRESH_SECRET'),
-          expiresIn: Math.floor(this.refreshTtlMs() / 1000),
-        },
-      )
+      .signAsync(claims, {
+        secret: this.config.getOrThrow<string>('JWT_REFRESH_SECRET'),
+        expiresIn: Math.floor(this.refreshTtlMs() / 1000),
+      })
       .then((token) => ({ token, jti }));
   }
 
-  verifyRefreshToken(token: string): Promise<RefreshTokenPayload> {
-    return this.jwt.verifyAsync<RefreshTokenPayload>(token, {
+  async verifyRefreshToken(token: string): Promise<RefreshTokenPayload> {
+    const payload = await this.jwt.verifyAsync<RefreshTokenPayload>(token, {
       secret: this.config.getOrThrow<string>('JWT_REFRESH_SECRET'),
     });
+    // A good signature only proves which key signed it. Tokens issued before
+    // the typ claim existed fail here too, which signs those sessions out once.
+    if (payload.typ !== 'refresh') {
+      throw new JsonWebTokenError('jwt is not a refresh token');
+    }
+    return payload;
   }
 
   /**

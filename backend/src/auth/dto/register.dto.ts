@@ -6,6 +6,7 @@ import {
   IsString,
   Length,
   MaxLength,
+  MinLength,
 } from 'class-validator';
 
 export class RegisterDto {
@@ -22,7 +23,9 @@ export class RegisterDto {
    * substitutions; a longer minimum is the better trade.
    */
   @IsString()
-  @Length(10, 128, { message: 'Password must be at least 10 characters' })
+  @MinLength(10, { message: 'Password must be at least 10 characters' })
+  // The cap bounds the argon2 work one anonymous request can cause.
+  @MaxLength(128, { message: 'Password must be at most 128 characters' })
   password: string;
 
   @IsString()

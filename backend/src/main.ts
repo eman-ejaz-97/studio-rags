@@ -1,44 +1,30 @@
-import { Logger, ValidationPipe } from '@nestjs/common';
+import { Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { NestFactory } from '@nestjs/core';
-import cookieParser from 'cookie-parser';
-import helmet from 'helmet';
+import type { NestExpressApplication } from '@nestjs/platform-express';
 import { AppModule } from './app.module';
+import { configureApp } from './app.setup';
 import { PrismaService } from './prisma/prisma.service';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule, { bufferLogs: true });
+  const app = await NestFactory.create<NestExpressApplication>(AppModule, {
+    bufferLogs: true,
+  });
   const config = app.get(ConfigService);
   const logger = new Logger('Bootstrap');
 
-  app.use(helmet());
-  app.use(cookieParser());
-
-  app.enableCors({
-    origin: config.getOrThrow<string>('CORS_ORIGIN'),
-    // Required for the httpOnly auth cookies to travel cross-origin in dev,
-    // where the web client is on :3000 and the API on :3001.
-    credentials: true,
-  });
-
-  app.setGlobalPrefix('api/v1');
-
-  app.useGlobalPipes(
-    new ValidationPipe({
-      whitelist: true,
-      forbidNonWhitelisted: true,
-      transform: true,
-      transformOptions: { enableImplicitConversion: false },
-    }),
-  );
+  configureApp(app);
 
   app.enableShutdownHooks();
   app.get(PrismaService).enableShutdownHooks(app);
 
+  // Both validated in env.validation.ts. Render sets PORT itself and only
+  // routes to a server bound on 0.0.0.0, hence HOST's default.
   const port = config.get<number>('PORT') ?? 3001;
-  await app.listen(port);
+  const host = config.get<string>('HOST') ?? '0.0.0.0';
+  await app.listen(port, host);
 
-  logger.log(`API listening on http://localhost:${port}/api/v1`);
+  logger.log(`API listening on http://${host}:${port}/api/v1`);
 }
 
 void bootstrap();

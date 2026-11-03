@@ -3,9 +3,29 @@
  * refund policy (ADR-014) and a South Australian public-holiday calendar.
  *
  * Idempotent — safe to run repeatedly. `npm run db:seed`.
+ *
+ * Admin password: SEED_ADMIN_PASSWORD (at least 12 characters). Without it the
+ * seed falls back to a public development password, and only for a database on
+ * localhost. An existing admin keeps its password unless SEED_ADMIN_ROTATE=1.
  */
-import { DeliveryMode, PrismaClient, ProductType, Role, WorkshopStatus } from '@prisma/client';
+import {
+  DeliveryMode,
+  PrismaClient,
+  ProductType,
+  RefreshTokenRevocation,
+  Role,
+  WorkshopStatus,
+} from '@prisma/client';
 import * as argon2 from 'argon2';
+import { planExistingAccount, planSeedAdmin } from './seed-guard';
+import type { SeedAdminPlan } from './seed-guard';
+
+// Decided before the client exists, so a refused run never reaches the database.
+const adminPlan = planSeedAdmin(process.env);
+if (!adminPlan.ok) {
+  console.error(`✖ Seed refused: ${adminPlan.reason}`);
+  process.exit(1);
+}
 
 const prisma = new PrismaClient();
 
@@ -141,7 +161,7 @@ function upcomingDates(count: number, startOffsetDays: number, everyDays: number
   return dates;
 }
 
-async function main() {
+async function main(admin: Extract<SeedAdminPlan, { ok: true }>) {
   // ── Refund policy ─────────────────────────────────────────────────────────
   const existingPolicy = await prisma.refundPolicy.findFirst({ where: { isDefault: true } });
   const policy =
@@ -161,23 +181,59 @@ async function main() {
 
   // ── Admin account ─────────────────────────────────────────────────────────
   const adminEmail = (process.env.SEED_ADMIN_EMAIL ?? 'admin@studiorags.com.au').toLowerCase();
-  const adminPassword = process.env.SEED_ADMIN_PASSWORD ?? 'ChangeMe-Studio2026';
-
-  await prisma.user.upsert({
+  const hashAdminPassword = () => argon2.hash(admin.password, { type: argon2.argon2id });
+  const existing = await prisma.user.findUnique({
     where: { email: adminEmail },
-    update: { role: Role.ADMIN },
-    create: {
-      email: adminEmail,
-      passwordHash: await argon2.hash(adminPassword, { type: argon2.argon2id }),
-      firstName: 'Rehana',
-      lastName: 'Usman',
-      role: Role.ADMIN,
-      emailVerifiedAt: new Date(),
-    },
+    select: { id: true, role: true },
   });
-  console.log(`✔ admin: ${adminEmail}`);
-  if (!process.env.SEED_ADMIN_PASSWORD) {
-    console.log('  ⚠ using the default development password — never seed production with it');
+
+  if (!existing) {
+    await prisma.user.create({
+      data: {
+        email: adminEmail,
+        passwordHash: await hashAdminPassword(),
+        firstName: 'Rehana',
+        lastName: 'Usman',
+        role: Role.ADMIN,
+        emailVerifiedAt: new Date(),
+      },
+    });
+    console.log(`✔ admin: ${adminEmail} (created)`);
+  } else {
+    const plan = planExistingAccount(existing.role === Role.ADMIN, admin.rotatePassword);
+    if (plan.action === 'refuse') {
+      throw new Error(`Seed refused: ${plan.reason}`);
+    }
+
+    if (plan.action === 'rotate') {
+      // A password is usually rotated because it leaked, so the sessions
+      // opened with it end too, as they do after a password reset.
+      const passwordHash = await hashAdminPassword();
+      await prisma.$transaction([
+        prisma.user.update({
+          where: { id: existing.id },
+          data: { role: Role.ADMIN, passwordHash },
+        }),
+        prisma.refreshToken.updateMany({
+          where: { userId: existing.id, revokedAt: null },
+          data: {
+            revokedAt: new Date(),
+            revokedReason: RefreshTokenRevocation.PASSWORD_RESET,
+          },
+        }),
+      ]);
+      console.log(`✔ admin: ${adminEmail} (password replaced, every session signed out)`);
+    } else {
+      console.log(
+        `✔ admin: ${adminEmail} (already exists and keeps its current password; set SEED_ADMIN_ROTATE=1 to replace it)`,
+      );
+    }
+  }
+
+  const wroteDefault =
+    admin.usingDefaultPassword && (!existing || admin.rotatePassword);
+  if (wroteDefault) {
+    console.log('  ⚠ used the public development password; this is allowed on localhost only');
   }
 
   // ── Catalogue ─────────────────────────────────────────────────────────────
@@ -254,7 +310,7 @@ async function main() {
   console.log(`✔ ${PUBLIC_HOLIDAYS.length} SA public holidays (⚠ verify before launch)`);
 }
 
-main()
+main(adminPlan)
   .catch((error) => {
     console.error(error);
     process.exit(1);

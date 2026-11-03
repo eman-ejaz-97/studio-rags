@@ -37,21 +37,43 @@ studio_rags/
 
 ## Prerequisites
 
-- Node.js 20 (`.nvmrc` pins it — run `nvm use`)
+- Node.js 24 LTS (`.nvmrc` pins it — run `nvm use`)
 - Docker Desktop
 - A Stripe account in test mode
 
 ## Getting started
 
 ```bash
-nvm use                      # switches to Node 20
+nvm use                      # switches to Node 24
 cp .env.example .env         # then fill in the secrets
 
 docker compose up -d         # Postgres on :5432, Mailpit on :8025
 
-cd backend  && npm install && npm run start:dev   # API on :3001
+cd backend  && npm install && npm run db:deploy && npm run start:dev   # API on :3001
 cd frontend && npm install && npm run dev         # Web on :3000
 ```
+
+## Tests
+
+```bash
+cd backend
+npm run lint:check && npm run typecheck
+npx jest                                     # unit tests
+npm run test:e2e:prepare && npm run test:e2e # end-to-end, real Postgres
+```
+
+The end-to-end suite runs against `studio_rags_test` (create it once:
+`docker exec studio_rags_db psql -U studio -d studio_rags -c 'CREATE DATABASE studio_rags_test'`).
+It refuses to touch any database whose name does not end in `_test`.
+
+CI (`.github/workflows/ci.yml`) runs all of this, the frontend checks and both
+Docker builds on every pull request and on `main`.
+
+## Staging
+
+A free staging site for client demos: Vercel (frontend) → Render (API, Docker)
+→ Neon (Postgres + file storage). Nothing here is production, and nothing costs
+the client. Setup, operation and troubleshooting: [docs/deploy/README.md](docs/deploy/README.md).
 
 ## Documentation
 

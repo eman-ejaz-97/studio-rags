@@ -1,0 +1,81 @@
+# Render Blueprint for the Studio Rags STAGING API. Spec:
+# https://render.com/docs/blueprint-spec
+#
+# Staging only, on Render's free plan. The capstone allows no production
+# deployment and nothing that costs the client. Setup steps: docs/deploy/README.md.
+#
+# What the free plan means here:
+# - No pre-deploy command. Migrations therefore run when the container starts
+#   (backend/docker-entrypoint.sh), before the API listens.
+# - The service sleeps after 15 minutes without visitors and takes about a
+#   minute to wake on the next request. Open the site early before a demo.
+# - Singapore is the nearest Render region to Adelaide (there is no Sydney),
+#   and it sits next to the Neon database in aws-ap-southeast-1, so each query
+#   is a short hop rather than a trip across the Pacific.
+services:
+  - type: web
+    name: studio-rags-api
+    runtime: docker
+    plan: free
+    region: singapore
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
+    # Liveness only. Render calls it every few seconds, so it must not touch
+    # the database: that would keep Neon awake around the clock and spend the
+    # free plan's monthly compute hours on health checks alone.
+    healthCheckPath: /api/v1/health/live
+    # Deploy a commit only once its GitHub checks (.github/workflows/ci.yml)
+    # have passed, so a red build never reaches staging.
+    autoDeployTrigger: checksPass
+    # Frontend-only or docs-only commits do not rebuild the API.
+    buildFilter:
+      paths:
+        - backend/**
+    envVars:
+      - key: NODE_ENV
+        value: production
+      # Render routes traffic to 0.0.0.0 only; localhost would never answer.
+      - key: HOST
+        value: 0.0.0.0
+      # Proxy hops in front of the API, so req.ip is the visitor rather than a
+      # proxy and the login throttle limits each visitor separately. Assumes
+      # browser -> Vercel (the /api/v1 rewrite) -> Render's proxy -> API.
+      # An assumption until checked: verify it after the first deploy
+      # (docs/deploy/README.md, "Check TRUST_PROXY").
+      - key: TRUST_PROXY
+        value: "2"
+      # Two independent random values, generated once by Render. They must
+      # differ: one key must never verify the other kind of token.
+      - key: JWT_ACCESS_SECRET
+        generateValue: true
+      - key: JWT_REFRESH_SECRET
+        generateValue: true
+      - key: JWT_ACCESS_TTL
+        value: 15m
+      - key: JWT_REFRESH_TTL
+        value: 30d
+      # The private bucket declared in neon.ts.
+      - key: STORAGE_BUCKET
+        value: assets
+      # sync: false = secrets and per-deploy URLs, never stored in git.
+      # Render asks for each value once, when the Blueprint is first created.
+      # Neon's pooled connection, used by the running API.
+      - key: DATABASE_URL
+        sync: false
+      # Neon's direct connection, used by prisma migrate deploy (directUrl).
+      - key: DATABASE_URL_UNPOOLED
+        sync: false
+      # Neon storage (S3-compatible). Same names real AWS S3 uses.
+      - key: AWS_ACCESS_KEY_ID
+        sync: false
+      - key: AWS_SECRET_ACCESS_KEY
+        sync: false
+      - key: AWS_ENDPOINT_URL_S3
+        sync: false
+      - key: AWS_REGION
+        sync: false
+      # Both are the Vercel URL, e.g. https://studio-rags.vercel.app
+      - key: CORS_ORIGIN
+        sync: false
+      - key: APP_URL
+        sync: false

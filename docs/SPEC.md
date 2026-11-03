@@ -269,19 +269,29 @@ state-changing routes. Recorded as ADR-003.
 (nothing can escape to a real inbox), Resend in production. Every send is
 recorded in an `email_log` row so the admin can prove a confirmation went out.
 
-**Hosting — decided (ADR-004).** All three components in or near Sydney, because
-every user is in South Australia and a US region adds ~200 ms to each round trip:
+**Hosting — staging decided (ADR-025); production is outside the capstone
+(ADR-024).** The capstone deploys nothing to production and runs nothing that
+costs the client. What exists is a free **staging** environment for demos:
 
-| Component | Host | Region |
+| Component | Staging host (free) | Region |
 | --- | --- | --- |
-| Frontend | Vercel | `syd1` |
-| API | Fly.io | `syd` |
-| Database | Neon | `ap-southeast-2` |
-| Media | Cloudflare R2 | auto |
-| Email | Resend | — |
+| Frontend | Vercel Hobby | global edge |
+| API | Render free web service, Docker | Singapore |
+| Database | Neon free, Postgres 18 | `aws-ap-southeast-1` (Singapore) |
+| File storage | Neon object storage (S3-compatible), private bucket `assets` | Singapore |
+| Email | none yet — Mailpit locally | — |
 
-Rough running cost: A$40–70/month at this scale. Domain and any Wix migration
-are the client's call (§ 10).
+The browser only ever talks to the frontend's origin. Next.js rewrites
+`/api/v1/*` to the API (ADR-026), so the auth cookies stay first-party.
+Singapore, not Sydney, because no free host offers an Australian region; the
+database sits next to the API so each query is a short hop. Setup and operation:
+`docs/deploy/README.md`.
+
+ADR-004's plan (Vercel + Fly.io + Neon, all Sydney) is superseded for the
+capstone: Fly.io no longer has a free tier for new organisations. If the client
+later pays for a launch, the target is AWS in Sydney — ECS or Lightsail, RDS for
+PostgreSQL, S3 — and the code moves by configuration alone:
+`docs/deploy/aws-production.md`.
 
 ---
 
@@ -341,7 +351,12 @@ UTC+9:30/+10:30 with DST) is a presentation concern only.
 `createdAt`, `updatedAt`.
 
 **`RefreshToken`** — `id`, `userId`, `tokenHash`, `expiresAt`, `revokedAt`,
-`userAgent`, `ip`. Rotated on use.
+`revokedReason` (`ROTATED` | `SIGNED_OUT` | `PASSWORD_RESET` |
+`REUSE_DETECTED`), `rotatedFromId`, `userAgent`, `ip`. Rotated on use.
+`rotatedFromId` is the token a refresh spent to issue this one (unique: a token
+has at most one successor). A `ROTATED` token that comes back after the
+10-second grace window ends its own session. It counts as theft, and ends every
+session, only if its successor was used since (ADR-022, ADR-032).
 
 **`PasswordResetToken`** — `id`, `userId`, `tokenHash`, `expiresAt`, `usedAt`.
 
@@ -677,6 +692,29 @@ before writing frontend code. Do that; do not write Next.js from memory.
 
 ### Design direction
 
+**Approved: Fabric Fun** — chosen by the client on 2026-11-03 from the three
+directions in `docs/design/mockups/directions.html`. Everything from here is
+built in this direction. Atelier and Indigo Vat stay in the repo as the rejected
+alternatives, useful evidence for the report, and are not maintained.
+
+Fabric Fun in one line: warm and playful. Cream paper rather than white, plum and
+ochre display type, rounded cards, pill buttons, and a quatrefoil border motif
+traced from the carved woodblocks in her own photograph.
+
+| Token | Value | Use |
+| --- | --- | --- |
+| Paper | `#FFFCF6` | page ground — warm, never pure white |
+| Plum | `#4E2B4B` | headings and card titles |
+| Purple | `#5B3460` | primary buttons, nav, price tags |
+| Ochre | `#CA7F3A` | second headline line, links — **24px+ only**, 3.18:1 |
+| Gold | `#E8A134` | the *Book a class* button — **on dark ground only**, 2.19:1 on white |
+| Display | Fraunces SemiBold / Black | open substitute for Kozuka Mincho Pro |
+| Interface | Inter | forms, buttons, dates, tables, admin |
+
+The built screens are in Figma, page **Fabric Fun — Home & Auth**:
+<https://www.figma.com/design/WRSDQ8L6iHupgt77wpV0iP/> — home at desktop and
+phone, the sign-in page, and the six account screens.
+
 The audience is **all age groups** — the SRS names women 50+ as primary and 30+
 as secondary, but the platform is designed for everyone Rehana teaches, including
 parents booking Kids & Parents Painting. So: no "senior-friendly" aesthetic
@@ -703,8 +741,11 @@ Concrete rules, to be enforced in review:
   one-handed.
 - Every image needs meaningful `alt`. This is enforced at the DB level (§ 5).
 
-The design system — tokens, type scale, spacing, component inventory — will live
-at `docs/design/design-system.md` once the brand kit arrives.
+The design system — tokens, type scale, component inventory — lives on the
+**Foundations** frame of that Figma page: 29 colour styles and 26 text styles,
+each swatch carrying its hex and its measured contrast ratio. Every screen in the
+file is bound to those styles, so the palette changes in one place. It gets
+mirrored into Tailwind tokens when the frontend build starts.
 
 ### Admin dashboard
 
@@ -741,13 +782,13 @@ to feed.
 
 | # | Phase | Delivers |
 | --- | --- | --- |
-| 0 | Baseline | Repo re-baselined, spec written, tooling, CI, ADRs ← *we are here* |
-| 1 | Auth & data | Prisma schema, migrations, seed, register/login/reset, roles |
-| 2 | Catalog | Workshops, sessions, public site: home, list, detail, calendar, contact |
+| 0 | Baseline | Repo re-baselined, spec written, tooling, CI, ADRs — **done 2026-11-03** |
+| 1 | Auth & data | Prisma schema, migrations, seed, register/login/reset, roles — **done 2026-09-12; hardened and tested 2026-11-03** |
+| 2 | Catalog | Workshops, sessions, public site: home, list, detail, calendar, contact ← *we are here* |
 | 3 | Booking & payment | Seat holds, Stripe intents, webhook confirmation, confirmation email |
 | 4 | Customer account | Booking history, profile, reminder emails, admin notifications |
 
-**Trimester 2 — admin, extras, production**
+**Trimester 2 — admin, extras, handover**
 
 | # | Phase | Delivers |
 | --- | --- | --- |
@@ -755,10 +796,11 @@ to feed.
 | 6 | Gift cards | Purchase, delivery, redemption at checkout |
 | 7 | Reviews, marketing, compliance | Reviews + moderation, pixel readiness, consent, privacy pages |
 | 8 | Hardening | Load test, security review, accessibility audit, Lighthouse, usability test |
-| 9 | Launch | Production deploy, domain cutover, client training, handover docs |
+| 9 | Handover | Client training, handover docs, and a launch plan (`docs/deploy/aws-production.md`). Production deploy and domain cutover are **outside the capstone** (ADR-024) |
 
 Design work (personas, sitemap, wireframes, design system) runs alongside phases
-1–2 and needs client sign-off before phase 2 UI is built.
+1–2 and needs client sign-off before phase 2 UI is built. **Signed off
+2026-11-03: Fabric Fun (ADR-021).**
 
 ---
 
@@ -797,6 +839,12 @@ change what gets built.
 | 10 | Supervisor contact details to pass to the client | Client relationship | Team |
 | 11 | Plain-language explainer for **MoSCoW** and **Meta ads / pixel tracking** | Next meeting | Us |
 | 12 | **Has she approved SRS v1.0?** Issued 2026-08-04. No recorded response, and the scope has moved twice since. | Baseline for change control | Team to chase |
+| 13 | **SRS v1.1 must say production launch is outside the capstone.** v1.0 implies a live site: the domain in her name, "after launch", ongoing hosting costs. Under ADR-024 the project ends on staging plus a launch plan. Say so plainly before she expects otherwise. | Client expectations | Team |
+| 14 | **TRUST_PROXY on staging.** `render.yaml` assumes 2 hops (Vercel, then Render's proxy). Verify on the first deploy with the runbook check, so the login throttle keys on the visitor and not on a shared proxy address. | Throttling correctness | Us, at first deploy |
+| 15 | **Neon migrations.** The agent permission check refused `prisma migrate deploy` against Neon's branch named `production` (Neon's default name; the database is staging). The first Render deploy applies them at container start. Until then the auth flow is unproven on Neon. | Staging auth demo | Us, at first deploy |
+| 16 | **Local Postgres 17 vs Neon and CI 18.** Upgrade the dev container by dump and restore when convenient. Changing the image alone makes the existing volume unreadable. | Version parity | Us |
+| 17 | **Frontend refresh contract.** After a refresh 401, retry `GET /auth/me` once before sending the user to sign-in, so a winner response lost during a cold start is not mistaken for a signed-out user. Before `POST /auth/logout`, wait for any refresh still in flight. Otherwise that refresh's new session can outlive the sign-out (accepted risk, ADR-032). | Phase 2 auth UI | Us |
+| 18 | **Repo visibility.** The repository is public: this file, client correspondence and her policy PDF are readable by anyone. Consider making it private (GitHub Free includes 2,000 Actions minutes a month for private repos). | Client confidentiality | Developer |
 
 ### Closed by the second email of 2026-09-12
 
@@ -874,9 +922,23 @@ password-reset round trip, all passing:
 - Login failures are indistinguishable between a wrong password and an unknown
   address, and a dummy hash is verified on the miss so the timing matches too.
 - `forgot-password` returns the identical 202 whether or not the account exists.
-- **Refresh reuse detection works.** Replaying a spent refresh token revokes
-  every session for that user, not just the one presented.
-- A reset token is single-use, and using it invalidates all other sessions.
+- **Refresh reuse detection works.** A *rotated* refresh token that comes back
+  more than 10 seconds after it was rotated ends its own session. If its
+  successor was used since, two parties held it: every session for that user
+  is revoked, and replaying the token again ends nothing more. If nobody used
+  the successor, as when the answer carrying it was lost, only that one session
+  ends (ADR-032). A token ended by sign-out or a password reset is just dead: a
+  stale tab presenting it gets a 401 and ends nothing else (ADR-022).
+- A second tab losing the refresh race gets a 401 that leaves the cookies
+  alone, so it cannot wipe the winning tab's new cookies from the shared jar.
+  If the winner's answer was lost instead, the spent token stays in the jar,
+  and its next refresh ends only that browser's session.
+- A reset token is single-use, and using it invalidates all other sessions and
+  every other unused reset link for that account. Two different links used at
+  once give one success and one 401, never a deadlock.
+- Session writes and bulk revokes for one user run one at a time under that
+  user's row lock, so a refresh or sign-in already in flight cannot leave a
+  session alive after a password reset (ADR-022).
 
 Lint clean, typecheck clean, unit tests passing.
 
@@ -951,51 +1013,75 @@ is mostly interface, and the audience skews older (NFR-1, NFR-9), so the working
 text needs a face built for screen legibility. The brand faces set the tone on
 the marketing surfaces; the interface face does the work.
 
-### Still not started
+### Week 1 — CI, tests, hardening and staging (2026-11-03)
 
-`frontend/src/` is the default Next.js starter. Nothing has been committed since
-2026-07-28 — all work is untracked in the working tree.
+- **CI** on GitHub Actions (`.github/workflows/ci.yml`). Backend: Prisma
+  validate, a migration drift check, lint, typecheck, unit tests with coverage,
+  end-to-end tests on Postgres 18, the seed run twice, build. Frontend: lint,
+  typecheck, tests, build. A Docker job builds both images. It runs on pull
+  requests and on `main`, and Render deploys `main` only when it passes
+  (ADR-031).
+- **Tests.** Backend: 417 unit tests and 84 end-to-end tests against real
+  Postgres, green on both 17 and 18. The e2e harness refuses any database whose
+  name does not end in `_test`. Frontend: 13 tests. Every security fix was
+  checked by planting the bug back in, and a test failed each time.
+- **Auth hardening** from three review rounds: atomic refresh rotation with a
+  10-second grace window; per-user serialisation of session writes and a
+  recorded reason on every revoked token (ADR-022); successor links, so a lost
+  refresh answer ends one session rather than all (ADR-032); single-use reset
+  links under concurrency, with a reset voiding the other links; separate
+  access and refresh token types and secrets; stricter env validation; a seed
+  that refuses the public default admin password anywhere but localhost; reset
+  links logged only in development and test.
+- **Neon wired** (ADR-028): pooled URL for the app, direct URL for Migrate, a
+  storage module over the AWS SDK, and `npm run smoke:neon` to prove a real
+  environment end to end. Checked against the real project: database and
+  storage up, all ten smoke steps passing. Migrations on Neon wait for the first
+  Render deploy (§ 10 item 15).
+- **Health split** (ADR-029) and **migrations at container start** (ADR-030).
+- **Deploy files.** Backend and frontend Dockerfiles (Node 24, non-root),
+  `render.yaml`, the same-origin `/api/v1` rewrite (ADR-026), a staging status
+  page with a "test site" banner and no-index headers, `docs/deploy/README.md`
+  and `docs/deploy/aws-production.md`.
+- **Node 24 LTS** everywhere (ADR-027).
+
+### Frontend
+
+`frontend/` holds only the staging status page and the API proxy. Phase 2 builds
+the real public site on top of it, in Fabric Fun (ADR-021).
 
 ### Schedule
 
-Roughly five months to the February 2027 finish. Phase 0 of nine is done.
+About sixteen weeks to the end of February 2027, with eight phases left: two
+weeks each, Christmas in the middle, no slack. ADR-005 sets the deferral order
+if something has to give. Phase 9 is now handover rather than launch (ADR-024),
+which returns a little time.
 
-The Master Class withdrawal removed about a phase of work. The second email of
-2026-09-12 added some back: policy pages, credit vouchers, a business-day
-calendar, photo consent, and possibly two more classes. Net position is roughly
-unchanged. The build still has to start now.
+### Client relationship
 
-### Client relationship — attention needed
-
-Her email of 2026-09-12 opens: *"I was really wondering if your team is still
-working on this project."*
-
-Five weeks of silence has made a paying, engaged client doubt the project is
-alive. She has since sent detailed prices, her full policy document, and live
-listings, and says more is coming. She is holding up her end.
-
-Reply quickly, and with something to show. That matters more than any single
-requirement in this document.
+Her email of 2026-09-12 asked whether the project was still going. She has since
+chosen the visual direction (ADR-021). We owe her the fortnightly progress note
+promised that day. The staging link is the easiest version of it: what is new,
+and a link to try it.
 
 ### Next, in order
 
-1. ~~Reply to the client~~ — **drafted**, at
-   `docs/client/2026-09-12_reply-to-client.md`. Needs placeholders filled, then
-   send. Commits to a fortnightly progress note from here on.
-2. Commit the working tree. Five weeks of documentation is untracked.
-3. ~~Phase 1 — Prisma schema and the auth module~~ — **done 2026-09-12.**
-4. **Phase 2 — catalogue and sessions.** Public workshop list, detail pages,
-   session calendar with live seat counts, contact and private-event enquiry
-   forms. Admin CRUD for workshops and sessions.
-5. Re-issue the SRS as **v1.1**: Master Class out, real catalogue and prices in,
-   her actual refund policy in, private events decided. Chase the sign-off that
-   v1.0 never received.
-6. Regenerate the Requirements and Deliverables Mapping to match.
-7. Fetch the eight Eventbrite listings for real class descriptions. The seed
-   currently carries text marked `PLACEHOLDER` rather than inventing her words.
-8. **Verify the SA public-holiday dates** before launch. The seeded list was
-   computed, not taken from an authoritative source, and it drives real refund
-   outcomes through the 14-business-day rule (§ 10 item 8).
+1. **Stand up staging.** Merge this work to `main` once CI is green, create the
+   Render Blueprint and the Vercel project (`docs/deploy/README.md`), then check
+   it end to end. The first Render deploy applies the migrations on Neon (§ 10
+   item 15). Verify TRUST_PROXY (§ 10 item 14).
+2. **Send her the progress note** with the staging link.
+3. **Phase 2 — catalogue and sessions**, as a thin path through booking first:
+   Fabric Fun foundations, catalogue API, home and class pages, sign-in, then
+   book and pay in Stripe test mode.
+4. Re-issue the SRS as **v1.1**: Master Class out, real catalogue and prices in,
+   her refund policy in, private events decided, and production launch outside
+   the capstone (§ 10 item 13). Chase the sign-off v1.0 never received.
+5. Regenerate the Requirements and Deliverables Mapping to match.
+6. Regenerate `docs/diagrams/src/04-sequence-auth.mmd`; it predates ADR-022 and
+   ADR-032.
+7. **Verify the SA public-holiday dates** before they drive refunds (§ 10
+   item 8).
 
 ## 12. Decision log
 
@@ -1022,6 +1108,18 @@ requirement in this document.
 | ADR-018 | Photo consent is an explicit checkbox at booking, not implied by attendance | 2026-09-12 | § 5; her policy relies on implied consent. A visible opt-out stored on the booking is stronger for her and fairer to the customer, at near-zero cost |
 | ADR-019 | Private events and the travel surcharge stay **offline** — enquiry form only | 2026-09-12 | § 2; her $200 deposit contradicts FR-P3. Building a deposit-and-balance subsystem for the one part of her business she already runs comfortably offline is not a good use of five remaining months. **Confirmed by the developer 2026-09-12** |
 | ADR-020 | Initial build covers **six** of her eight classes | 2026-09-12 | § 1; Paint with Mate and Kids' Tie Dye are excluded from the first build only. Both fit shapes we already support, so she adds them herself post-launch. Keeps the design and test surface tight without capping the product |
+| ADR-021 | **Fabric Fun** is the approved visual direction | 2026-11-03 | § 7; client picked it from three directions shown. The other two are archived, not deleted — a rejected-alternatives trail the report needs |
+| ADR-022 | Session writes and bulk revokes are serialised per user (`SELECT … FOR UPDATE` on the user row), and every revoked refresh token records **why** | 2026-11-03 | § 5; review found a refresh or sign-in in flight could write a 30-day session just after a password reset revoked "every" session, and that a stale tab holding a signed-out or reset token triggered a theft response that signed the user out of their new sessions. A per-user lock costs nothing for other users; the reason column needs one additive migration. Accepted risk, unchanged: a thief who refreshes first keeps their session if the owner's tab presents the same token within 10 s |
+| ADR-023 | The self-hosted frontend image appends the caller's address to `X-Forwarded-For` before proxying `/api/v1` (`frontend/docker/forwarded-for.mjs`) | 2026-11-03 | § 3; Next's standalone proxy forwards the header unchanged, so behind it no `TRUST_PROXY` value was right: every visitor shared one login allowance, or a visitor could invent an address and bypass the throttle. With the preload the container counts as one hop. Vercel staging is unaffected (its edge writes the header) |
+| ADR-024 | **No production deployment in the capstone, and nothing that costs the client** | 2026-11-03 | § 9; the professor's direction. The project ends on a free staging environment plus a launch plan. A production launch would be a separate engagement, with accounts in the client's name |
+| ADR-025 | Staging on free tiers: Vercel Hobby (frontend), Render free Docker web service (API), Neon free (Postgres 18 + object storage); API and data in Singapore | 2026-11-03 | § 3; supersedes ADR-004 for the capstone. Fly.io has no free tier for new organisations, and no free host offers an Australian region. Vercel Hobby is non-commercial, which holds while the work is unpaid |
+| ADR-026 | Same-origin API: Next.js rewrites `/api/v1/*` to the API | 2026-11-03 | § 3; `*.vercel.app` and `*.onrender.com` are different sites on the Public Suffix List, so `SameSite=Lax` cookies would not travel, and Safari blocks third-party cookies outright. One origin also takes CORS out of the browser path |
+| ADR-027 | Node 24 LTS everywhere | 2026-11-03 | § 3; Node 20 reached end of life in April 2026, and the ESM-only `@nestjs/*` 12 packages need `require(esm)` |
+| ADR-028 | Neon per its own guidance: Prisma kept; pooled `DATABASE_URL` for the app, `directUrl = DATABASE_URL_UNPOOLED` for Migrate; storage through AWS SDK v3 with AWS-standard env vars and path-style addressing | 2026-11-03 | § 3; the API is a long-running process, not serverless, so no serverless driver. The plain S3 client rather than Neon's recommended Files SDK because the production target is AWS S3: removing `AWS_ENDPOINT_URL_S3` is the whole migration |
+| ADR-029 | Two health endpoints: `/health/live` (no I/O, for platform checks) and `/health` (database + storage, 503 when degraded) | 2026-11-03 | § 6; Render's checker calls every few seconds. A query there would keep Neon awake around the clock and spend the free plan's 100 CU-hours on health checks |
+| ADR-030 | Migrations run at container start (`prisma migrate deploy`, then the API) | 2026-11-03 | § 3; Render's free plan has no pre-deploy command. A failed migration stops the container, so the previous deploy stays live. On AWS this becomes a one-off task |
+| ADR-031 | CI gates staging: Render deploys `main` only after GitHub checks pass (`autoDeployTrigger: checksPass`); CI runs Postgres 18 to match Neon | 2026-11-03 | § 9; a red build can never reach the demo site. Local dev stays on Postgres 17 until a dump-and-restore upgrade |
+| ADR-032 | A rotated refresh token that comes back after the grace window ends every session only if its successor was used (refreshed or signed out with). Otherwise only its own session ends. Each refresh records the token it spent (`refresh_tokens.rotatedFromId`) | 2026-11-03 | § 5; amends ADR-022. Review found that a refresh whose answer never arrived left the spent token in the browser. Render cold starts make that likely (§ 10 item 17). The browser's next refresh was then treated as theft and signed the user out of every device. An unused successor is what a lost answer looks like. It is also what a stolen copy looks like before the owner refreshes again. Both cases now end that session, successor included, so neither party keeps it. A token answered as theft is marked `REUSE_DETECTED`, so replaying it cannot sign the owner out again. Accepted risks: a theft caught before the owner refreshes again ends one session, not all of them; sign-out racing a refresh in flight leaves that refresh's new session live (frontend waits, item 17; a server fix would follow `rotatedFromId` under the user lock) |
 
 ---
 

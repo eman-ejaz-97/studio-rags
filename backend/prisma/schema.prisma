@@ -8,9 +8,15 @@ generator client {
   provider = "prisma-client-js"
 }
 
+// On Neon, DATABASE_URL is the pooled ("-pooler") host for app traffic and
+// DATABASE_URL_UNPOOLED the direct host. Prisma Migrate needs a direct
+// session: through PgBouncer's transaction mode it fails with errors such as
+// `prepared statement "s0" already exists`. Locally and in CI both variables
+// hold the same URL.
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DATABASE_URL_UNPOOLED")
 }
 
 // ─── Enums ──────────────────────────────────────────────────────────────────
@@ -94,6 +100,25 @@ enum EnquiryKind {
   PRIVATE_EVENT
 }
 
+/// Why a refresh token stopped working. Reuse detection depends on it: only a
+/// ROTATED token coming back late can mean two parties held the same token,
+/// and only if its successor was then used (RefreshToken.rotatedFromId). A
+/// token ended by sign-out, a password reset or an earlier theft response is
+/// simply dead, and a stale tab presenting one must not sign the user out of
+/// the sessions they opened since.
+enum RefreshTokenRevocation {
+  /// Spent by a successful refresh, which issued its successor.
+  ROTATED
+  /// The holder signed out.
+  SIGNED_OUT
+  /// The password was reset, which ends every session.
+  PASSWORD_RESET
+  /// Ended by a reuse response: a rotated token came back after the grace
+  /// window. Set on the sessions that response ended, and on a token whose
+  /// return ended every session, so replaying it again changes nothing.
+  REUSE_DETECTED
+}
+
 // ─── Identity ───────────────────────────────────────────────────────────────
 
 model User {
@@ -124,17 +149,27 @@ model User {
 }
 
 model RefreshToken {
-  id        String    @id @default(cuid())
-  userId    String
+  id            String                  @id @default(cuid())
+  userId        String
   /// The token itself is never stored, only its hash.
-  tokenHash String    @unique
-  expiresAt DateTime
-  revokedAt DateTime?
-  userAgent String?
-  ip        String?
-  createdAt DateTime  @default(now())
+  tokenHash     String                  @unique
+  expiresAt     DateTime
+  revokedAt     DateTime?
+  /// Set together with revokedAt. Null on rows revoked before this column
+  /// existed; those are treated as dead, never as evidence of theft.
+  revokedReason RefreshTokenRevocation?
+  /// The token a refresh spent to issue this one. Null for a session opened
+  /// by sign-in or registration, and for rows written before this column
+  /// existed. Reuse detection follows it forward: a rotated token coming back
+  /// late is only theft if somebody went on to use its successor.
+  rotatedFromId String?                 @unique
+  userAgent     String?
+  ip            String?
+  createdAt     DateTime                @default(now())
 
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user        User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  rotatedFrom RefreshToken? @relation("RefreshTokenRotation", fields: [rotatedFromId], references: [id], onDelete: SetNull)
+  rotatedTo   RefreshToken? @relation("RefreshTokenRotation")
 
   @@index([userId])
   @@index([expiresAt])
