@@ -7,8 +7,12 @@ services:
       POSTGRES_USER: ${POSTGRES_USER:-studio}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-studio}
       POSTGRES_DB: ${POSTGRES_DB:-studio_rags}
+    # Loopback only. The password above is public (it is in the repo), and
+    # the seed treats a localhost database as unreachable from anywhere else
+    # when it allows the public development admin password. Publishing on
+    # every interface would put both on the local network.
     ports:
-      - '${POSTGRES_PORT:-5432}:5432'
+      - '127.0.0.1:${POSTGRES_PORT:-5432}:5432'
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
