@@ -855,6 +855,7 @@ change what gets built.
 | 22 | **Enquiries are stored but nobody is told.** `POST /contact` saves the row; the email to her arrives with the mail module (phase 4). Until then she would only see them in the database. | Contact form usefulness on staging | Us, phase 4 |
 | 23 | **Cancellation wording on class pages** shows her terms (§ 5) but stays silent on cash or voucher for late cancellations until item 4 is answered. | Class page copy | Client, via item 4 |
 | 24 | **Server-side catalogue fetches share one throttle key.** Pages fetch the catalogue from Vercel's servers, so on staging every visitor's page render arrives from Vercel. The global throttle (120 a minute, `app.module.ts`) could be hit by a busy minute of page views. Data is cached for 60 s, which keeps the real rate low. Exempt catalogue reads from the throttle, or key them differently, if it ever shows up. | Staging under load | Us, phase 8 |
+| 25 | **The CSRF double-submit token in § 3 is not built.** Cookies are `SameSite=Lax`, and `*.vercel.app` is on the public suffix list, so another site cannot send a signed-in POST today. The double-submit token is the second layer § 3 promises, and must be in place before `POST /bookings` takes payment. | Booking routes | Us, phase 3 |
 
 ### Closed by the second email of 2026-09-12
 
@@ -898,6 +899,25 @@ Open: the throttle check failed through Vercel (§ 10 item 14).
 
 Kids & Parents pricing is settled (ADR-033): $42 covers the child and the
 accompanying adult. The class pages show it as "$42 child + adult".
+
+### Phase 3 — booking and payment (in progress)
+
+Step 1, sign-in screens, built 2026-11-08 on branch `phase-3/sign-in`, not yet
+on staging (it waits for § 10 item 14):
+
+- `/sign-in`, `/register`, `/forgot-password`, `/reset-password`, `/account`,
+  worded as in the approved mockup. A "Sign in" / "Your account" link in the header.
+- `frontend/src/lib/session.ts` implements § 10 item 17: one refresh at a time,
+  a retry after a failed refresh before counting someone as signed out, and
+  sign-out waiting for a refresh in flight. Unit tests in `session.test.mjs`.
+- `?next=` only accepts a path on this site, so the sign-in page cannot be used
+  as an open redirect.
+- Shared form parts moved to `components/form-fields.tsx`; the contact form uses them.
+- Checked in a browser against the local API: register, wrong and right
+  password, sign-out, refresh through the rewrite, reset with a matching and a
+  mismatched password, and the spent reset link refused.
+- Password-reset emails are not sent yet: the link is only logged in
+  development until the mail module lands later in this phase.
 
 ### Phase 2 — catalogue and public site (built 2026-11-07)
 

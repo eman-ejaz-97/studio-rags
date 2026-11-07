@@ -1,5 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
+import { AccountLink } from "./account";
 import { buttonPrimary, pageWrap } from "./ui";
 
 const NAV = [
@@ -49,9 +50,12 @@ export function SiteHeader() {
           </ul>
         </nav>
 
-        <Link href="/classes" className={buttonPrimary}>
-          Book a class
-        </Link>
+        <div className="flex items-center gap-2">
+          <AccountLink />
+          <Link href="/classes" className={buttonPrimary}>
+            Book a class
+          </Link>
+        </div>
       </div>
       <div className="motif" aria-hidden="true" />
     </header>
