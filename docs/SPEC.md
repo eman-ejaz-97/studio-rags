@@ -1,6 +1,6 @@
 # Studio Rags — Living Specification
 
-**Status:** v0.7 · Last updated 2026-11-07
+**Status:** v0.7 · Last updated 2026-11-08
 **Source of truth.** If this file and any other document disagree, this file wins
 (except the client-signed SRS on scope — see § 2).
 
@@ -788,7 +788,7 @@ to feed.
 | --- | --- | --- |
 | 0 | Baseline | Repo re-baselined, spec written, tooling, CI, ADRs — **done 2026-11-03** |
 | 1 | Auth & data | Prisma schema, migrations, seed, register/login/reset, roles — **done 2026-09-12; hardened and tested 2026-11-03** |
-| 2 | Catalog | Workshops, sessions, public site: home, list, detail, calendar, contact — **built 2026-11-07 on `phase-2/catalogue`, awaiting merge** |
+| 2 | Catalog | Workshops, sessions, public site: home, list, detail, calendar, contact — **built 2026-11-07, merged 2026-11-08 (PR #2), live on staging** |
 | 3 | Booking & payment | Sign-in UI (moved from phase 2), seat holds, Stripe intents, webhook confirmation, confirmation email ← *next* |
 | 4 | Customer account | Booking history, profile, reminder emails, admin notifications |
 
@@ -844,8 +844,8 @@ change what gets built.
 | 11 | Plain-language explainer for **MoSCoW** and **Meta ads / pixel tracking** | Next meeting | Us |
 | 12 | **Has she approved SRS v1.0?** Issued 2026-08-04. No recorded response, and the scope has moved twice since. | Baseline for change control | Team to chase |
 | 13 | **SRS v1.1 must say production launch is outside the capstone.** v1.0 implies a live site: the domain in her name, "after launch", ongoing hosting costs. Under ADR-024 the project ends on staging plus a launch plan. Say so plainly before she expects otherwise. | Client expectations | Team |
-| 14 | **TRUST_PROXY on staging.** `render.yaml` assumes 2 hops (Vercel, then Render's proxy). Verify on the first deploy with the runbook check, so the login throttle keys on the visitor and not on a shared proxy address. | Throttling correctness | Us, at first deploy |
-| 15 | **Neon migrations.** The agent permission check refused `prisma migrate deploy` against Neon's branch named `production` (Neon's default name; the database is staging). The first Render deploy applies them at container start. Until then the auth flow is unproven on Neon. | Staging auth demo | Us, at first deploy |
+| 14 | **The per-visitor throttle does not hold through Vercel.** Checked 2026-11-08 with the runbook test. Through `studio-rags.vercel.app`, 14 failed logins in about a minute all returned 401; the limit is 10. Direct to `onrender.com` the same limit returns 429. Most likely `req.ip` with `TRUST_PROXY=2` lands on Vercel's outbound addresses, which change between requests, so each attempt looks like a new visitor. Render sits behind Cloudflare (`cf-ray` on its responses), so the chain probably has one hop more than `render.yaml` assumes. Affects the login limit and the contact form's 5 per 10 minutes. No exposure on staging today (no real accounts), but it must be fixed and re-tested before the phase 3 sign-in screens are on staging. Next test: `TRUST_PROXY=3` on Render, then the runbook check including the phone-hotspot step. | Login and contact throttling | Us, before phase 3 sign-in ships |
+| 15 | ~~**Neon migrations.**~~ **Resolved 2026-11-08.** The first Render deploy applied them at container start. The health check reports the database up, the seed ran, and the catalogue queries return the six classes from Neon. | — | Done |
 | 16 | **Local Postgres 17 vs Neon and CI 18.** Upgrade the dev container by dump and restore when convenient. Changing the image alone makes the existing volume unreadable. | Version parity | Us |
 | 17 | **Frontend refresh contract.** After a refresh 401, retry `GET /auth/me` once before sending the user to sign-in, so a winner response lost during a cold start is not mistaken for a signed-out user. Before `POST /auth/logout`, wait for any refresh still in flight. Otherwise that refresh's new session can outlive the sign-out (accepted risk, ADR-032). | Phase 2 auth UI | Us |
 | 18 | **Repo visibility.** The repository is public: this file, client correspondence and her policy PDF are readable by anyone. Consider making it private (GitHub Free includes 2,000 Actions minutes a month for private repos). | Client confidentiality | Developer |
@@ -882,8 +882,19 @@ her approval. Resolve before the design system is built.
 
 ## 11. Current status
 
-**Phases 0 and 1 complete. Phase 2 built on branch `phase-2/catalogue`, all
-checks green, awaiting merge to `main`.** Last updated 2026-11-07.
+**Phases 0, 1 and 2 complete. Phase 2 merged to `main` (PR #2) and live on
+staging at https://studio-rags.vercel.app.** Last updated 2026-11-08.
+
+### Staging (live 2026-11-08)
+
+| Part | Where | State |
+| --- | --- | --- |
+| Frontend | Vercel `studio-rags`, `https://studio-rags.vercel.app`, from `main` | Live. `API_ORIGIN` set to the Render address, then redeployed so the rewrite was rebuilt |
+| API | Render `studio-rags-api`, `https://studio-rags-api.onrender.com`, free, Singapore | Live. Migrations applied at container start |
+| Database | Neon, `aws-ap-southeast-1` | Seeded by the developer on 2026-11-08: admin account, six classes with sessions |
+| Checks | `/api/v1/health` through the Vercel address | API, database and storage all up |
+
+Open: the throttle check failed through Vercel (§ 10 item 14).
 
 Kids & Parents pricing is settled (ADR-033): $42 covers the child and the
 accompanying adult. The class pages show it as "$42 child + adult".
@@ -1129,24 +1140,20 @@ and a link to try it.
 
 ### Next, in order
 
-1. **Stand up staging.** Merge this work to `main` once CI is green, create the
-   Render Blueprint and the Vercel project (`docs/deploy/README.md`), then check
-   it end to end. The first Render deploy applies the migrations on Neon (§ 10
-   item 15). Verify TRUST_PROXY (§ 10 item 14).
-2. **Merge `phase-2/catalogue`** once the developer has read the explainer.
-   No migration, so the merge changes nothing on Neon.
-3. **Send her the progress note** (`docs/client/2026-11-07_progress-note.md`,
+1. **Send her the progress note** (`docs/client/2026-11-07_progress-note.md`,
    draft) with the staging link, and ask about § 10 items 4, 19 and 21.
-4. **Phase 3 — booking and payment**: sign-in screens (honouring § 10 item 17),
+2. **Phase 3 — booking and payment**: sign-in screens (honouring § 10 item 17),
    seat holds under the row lock, Stripe in test mode, webhook confirmation,
    confirmation email. Needs a Stripe test account; no card is ever added.
-5. Re-issue the SRS as **v1.1**: Master Class out, real catalogue and prices in,
+   Fix and re-test the throttle through Vercel (§ 10 item 14) before the
+   sign-in screens reach staging.
+3. Re-issue the SRS as **v1.1**: Master Class out, real catalogue and prices in,
    her refund policy in, private events decided, and production launch outside
    the capstone (§ 10 item 13). Chase the sign-off v1.0 never received.
-6. Regenerate the Requirements and Deliverables Mapping to match.
-7. Regenerate `docs/diagrams/src/04-sequence-auth.mmd`; it predates ADR-022 and
+4. Regenerate the Requirements and Deliverables Mapping to match.
+5. Regenerate `docs/diagrams/src/04-sequence-auth.mmd`; it predates ADR-022 and
    ADR-032.
-8. **Verify the SA public-holiday dates** before they drive refunds (§ 10
+6. **Verify the SA public-holiday dates** before they drive refunds (§ 10
    item 8).
 
 ## 12. Decision log
@@ -1192,6 +1199,8 @@ and a link to try it.
 | ADR-036 | Input borders darkened from the mockup's `#E2D6E8` to `#8E7E98` | 2026-11-07 | § 8; WCAG 2.2 AA 1.4.11 needs 3:1 for a field's edge. The mockup's lilac was 1.4:1, so the boxes nearly vanished for low-vision visitors. 3.76:1 on white, 3.67:1 on paper. Card borders keep the light lilac: they are decorative, and the text inside identifies each card |
 | ADR-037 | Sold-out dates are listed and marked "Fully booked", not hidden | 2026-11-07 | § 7; a hidden date looks like no class was planned. A full one tells a visitor the class is popular and that another date, or asking her, is the way in. The API flags them (`isFull`) and the page shows it in words |
 | ADR-038 | The contact form posts from the browser to `/api/v1/contact`, not through a Next server action | 2026-11-07 | § 6; the API throttles enquiries per visitor (5 per 10 minutes). A server action would make every visitor arrive from Vercel's servers, so one person could use up everyone's allowance. Catalogue lists are not cursor-paginated: six classes, and `/sessions` is bounded by its 92-day window |
+| ADR-039 | Phase explainers are built by `docs/explainers/tools/`, not the `explain-the-change` skill's template | 2026-11-08 | The developer rejected the skill's look (dark mode, sidebar, coloured callouts). The project builder keeps what mattered from the skill, excerpts read from git and checked against an expected first line, and adds what the developer asked for: each request followed hop by hop with the host it runs on, hand-drawn sequence diagrams numbered to match the steps, and a changed-files list that fails the build when a file is left undescribed |
+| ADR-040 | Staging sends real email through Resend's free plan, to the developer's own address only | 2026-11-08 | ADR-024; Resend without a verified domain delivers only to the account owner, and a domain costs money. Mail to any other address on staging is written to `email_log` as not sent, so the booking flow still completes and the record still exists. Mailpit stays the local inbox |
 
 ---
 

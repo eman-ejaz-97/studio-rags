@@ -368,6 +368,13 @@ Vercel's Next.js build adapter finds the app by its path from `outputFileTracing
 Pinning that root to `frontend/` makes the path empty, so it looks for `.next` in the wrong folder.
 `frontend/src/lib/build-roots.ts` therefore pins the roots everywhere except Vercel; keep it that way.
 
+### Vercel build fails resolving a Google font
+
+The log says `Module not found: Can't resolve '@vercel/turbopack-next/internal/font/google/font'`, from `frontend/src/app/layout.tsx`.
+The build downloads Fraunces and Inter from Google Fonts, and the fetch failed.
+Seen once on 2026-11-08, on a redeploy without the build cache; redeploying again built cleanly.
+If it keeps failing, check that Google Fonts is up and that the font options in `layout.tsx` are valid.
+
 ### Render build fails at `npm ci`
 
 `backend/package-lock.json` does not match `backend/package.json`.

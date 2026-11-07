@@ -1,0 +1,288 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Staging — Vercel, Render, Neon · Studio Rags</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--paper:#FAFAF7;--ink:#18181B;--muted:#52525B;--line:#E4E4E7;--accent:#5B3460;--plum:#3B1F3A;
+--code:#15141A;--code-ink:#E7E5EA;--code-muted:#8A8794}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth;scroll-padding-top:72px}
+body{margin:0;background:var(--paper);color:var(--ink);font:400 17px/1.65 Inter,system-ui,-apple-system,sans-serif;-webkit-font-smoothing:antialiased}
+a{color:var(--accent);text-underline-offset:3px}
+code{font:500 .88em ui-monospace,SFMono-Regular,Menlo,monospace;background:#EFEDF0;padding:.08em .35em;border-radius:5px}
+.topbar{position:sticky;top:0;z-index:5;background:rgba(250,250,247,.92);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
+.topbar nav{max-width:1180px;margin:0 auto;padding:0 28px;display:flex;gap:22px;align-items:center;height:56px;overflow-x:auto;white-space:nowrap}
+.topbar a{color:var(--muted);text-decoration:none;font-size:15px;font-weight:500}
+.topbar a:hover{color:var(--ink)}
+.topbar .brand{color:var(--plum);font-weight:700;margin-right:8px}
+.topbar .other{margin-left:auto;color:var(--accent)}
+main{max-width:1180px;margin:0 auto;padding:0 28px 120px}
+.hero{padding:64px 0 36px;max-width:820px}
+.eyebrow{font-size:14px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--accent);margin:0 0 14px}
+h1{font:700 clamp(36px,5vw,52px)/1.08 Fraunces,Georgia,serif;letter-spacing:-.01em;color:var(--plum);margin:0 0 20px}
+.lede{font-size:20px;line-height:1.55;color:#3F3F46;margin:0}
+h2{font:600 32px/1.2 Fraunces,Georgia,serif;color:var(--plum);margin:96px 0 12px;letter-spacing:-.005em}
+h2+.sub{color:var(--muted);margin:0 0 28px;max-width:760px}
+h3{font-size:24px;line-height:1.3;margin:0 0 8px}
+h4{font-size:19px;line-height:1.35;margin:10px 0 10px}
+p{margin:0 0 14px}
+.prose{max-width:760px}
+.host{display:inline-flex;align-items:center;font-size:12.5px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--fg);background:var(--bg);border:1px solid color-mix(in srgb,var(--fg) 25%,transparent);border-radius:999px;padding:2px 10px;margin-right:6px}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:16px;margin:28px 0 0}
+.card{background:#fff;border:1px solid var(--line);border-radius:14px;padding:20px 22px}
+.card h3{font-size:18px;margin:10px 0 8px}
+.card ul{margin:0;padding-left:18px;color:#3F3F46;font-size:15.5px}
+.card li{margin:4px 0}
+.shots{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;margin:8px 0 0}
+.shots a{display:block;text-decoration:none;color:var(--muted);font-size:14px}
+.shots img{width:100%;aspect-ratio:4/3;object-fit:cover;object-position:top;border-radius:10px;border:1px solid var(--line);display:block;margin-bottom:8px}
+.index{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:12px;margin:24px 0 0;padding:0;list-style:none}
+.index a{display:block;background:#fff;border:1px solid var(--line);border-radius:12px;padding:16px 18px;text-decoration:none;color:var(--ink)}
+.index a:hover{border-color:var(--accent)}
+.index b{display:block;font-size:17px;margin-bottom:4px}
+.index span{color:var(--muted);font-size:15px}
+.flow{margin:72px 0 0;padding-top:40px;border-top:2px solid var(--ink)}
+.flow-num{display:block;font-size:13px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--accent);margin-bottom:6px}
+.flow-head p{color:#3F3F46;max-width:760px;margin:6px 0 0}
+.rail{list-style:none;padding:0;margin:24px 0 8px;display:flex;flex-wrap:wrap;gap:8px 0;align-items:stretch}
+.rail li{display:flex;flex-direction:column;background:var(--bg);border:1px solid color-mix(in srgb,var(--fg) 22%,transparent);border-radius:10px;padding:7px 12px;margin-right:26px;position:relative}
+.rail li:not(:last-child)::after{content:"→";position:absolute;right:-20px;top:50%;transform:translateY(-50%);color:#71717A;font-weight:600}
+.rail-host{font-size:12px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--fg)}
+.rail code{background:none;padding:0;font-size:13.5px;color:var(--ink);overflow-wrap:anywhere}
+.diagram{margin:28px 0 8px;background:#fff;border:1px solid var(--line);border-radius:14px;padding:18px 18px 12px}
+.diagram .scroll{overflow-x:auto}
+.diagram svg{display:block;min-width:720px;width:100%;height:auto;margin:0 auto}
+.diagram figcaption{font-size:14.5px;color:var(--muted);margin-top:8px}
+.step{display:grid;grid-template-columns:minmax(0,5fr) minmax(0,7fr);gap:40px;padding:36px 0;border-top:1px solid var(--line)}
+.flow>.diagram+.step{border-top:0}
+.step-meta{display:flex;align-items:center;gap:4px}
+.num{display:inline-grid;place-items:center;width:28px;height:28px;border-radius:50%;background:var(--ink);color:#fff;font-size:13.5px;font-weight:700;margin-right:8px}
+.step-text p{color:#27272A}
+.step-text ul{padding-left:20px;margin:0 0 14px}
+.step-text li{margin:4px 0}
+.example{margin:18px 0 0;padding:14px 16px;border-left:3px solid var(--accent);background:#F6F2F6;border-radius:0 10px 10px 0;display:grid;grid-template-columns:auto 1fr;gap:4px 14px;font-size:15px}
+.example-title{grid-column:1/-1;font-size:12.5px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--accent);margin-bottom:2px}
+.example dt{color:var(--muted)}
+.example dd{margin:0;min-width:0;overflow-wrap:anywhere}
+.example code{background:none;padding:0}
+.code{margin:0 0 16px;border-radius:12px;overflow:hidden;background:var(--code);box-shadow:0 1px 0 rgba(0,0,0,.04),0 8px 24px -12px rgba(20,10,30,.35)}
+.code-head{display:flex;justify-content:space-between;gap:12px;padding:9px 16px;border-bottom:1px solid #2A2832;font:500 12.5px ui-monospace,Menlo,monospace;color:var(--code-muted)}
+.code-head .path{color:#C9C6D1;overflow-wrap:anywhere}
+.code pre{margin:0;padding:14px 0;overflow-x:auto;display:flex;font:400 13.5px/1.62 ui-monospace,SFMono-Regular,Menlo,monospace;color:var(--code-ink)}
+.code pre code{background:none;padding:0 18px 0 0;font:inherit;white-space:pre}
+.code .gutter{flex:none;text-align:right;color:#5E5B68;padding:0 14px 0 16px;user-select:none;white-space:pre}
+.code.plain pre code{padding-left:18px}
+.code figcaption{padding:8px 16px 12px;font-size:13.5px;color:var(--code-muted);border-top:1px solid #2A2832}
+.code .c{color:#7F7C8A;font-style:italic}.code .s{color:#B5E3A8}.code .k{color:#CDB8FF}.code .n{color:#F7C08A}
+table{width:100%;border-collapse:collapse;font-size:15.5px;background:#fff;border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.table{overflow-x:auto;margin:20px 0}
+th,td{text-align:left;vertical-align:top;padding:12px 16px;border-bottom:1px solid var(--line)}
+th{font-size:13px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);background:#F6F6F4}
+tr:last-child td{border-bottom:0}
+td code{font-size:.85em}
+.status-ok{color:#047857;font-weight:600}.status-bad{color:#B42318;font-weight:600}
+details.files{margin:20px 0;background:#fff;border:1px solid var(--line);border-radius:12px}
+details.files summary{cursor:pointer;padding:16px 20px;font-weight:600;min-height:48px}
+details.files .table{margin:0 16px 16px}
+.callout{background:#FFF7ED;border:1px solid #F5D0A9;border-radius:12px;padding:18px 20px;margin:20px 0;max-width:860px}
+.callout b{color:#7C2D12}
+@media (max-width:640px){.shots{grid-template-columns:repeat(2,minmax(0,1fr))}}
+footer{margin-top:96px;padding-top:24px;border-top:1px solid var(--line);color:var(--muted);font-size:15px}
+@media (max-width:920px){
+ main{padding:0 18px 80px}.topbar nav{padding:0 18px}
+ .step{grid-template-columns:minmax(0,1fr);gap:18px}
+ .hero{padding-top:40px}
+ h2{margin-top:72px}
+}
+</style>
+</head>
+<body>
+<div class="topbar"><nav aria-label="Sections"><span class="brand">Studio Rags</span><a href="#map">Map</a><a href="#request">A request</a><a href="#deploy">Deploys</a><a href="#config">Settings</a><a href="#status">Status</a><a href="#throttle">Open issue</a><a href="#failures">Failures</a><a class="other" href="phase-2-catalogue.html">Phase 2 →</a></nav></div>
+<main>
+
+<header class="hero">
+<p class="eyebrow">Staging · live since 8 November 2026 · costs nothing</p>
+<h1>Three hosts, one website</h1>
+<p class="lede">The site is split across three free services. Vercel runs the pages, Render runs the API,
+Neon keeps the data. This page shows what each one holds, how a request crosses them, and how code gets there.</p>
+</header>
+
+<div class="cards">
+<div class="card"><span class="host" style="--fg:#18181B;--bg:#F1F1F2">Vercel</span><h3>Runs the website</h3><ul>
+<li>Builds <code>frontend/</code> on every push to <code>main</code></li>
+<li>Renders pages on its servers in Singapore (<code>sin1</code>)</li>
+<li>Serves the photos in <code>frontend/public/</code> from its CDN</li>
+<li>Forwards <code>/api/v1/*</code> to Render</li>
+<li>Holds <code>API_ORIGIN</code> and <code>SITE_ENV</code></li>
+<li>Hobby plan. Does not sleep</li></ul></div>
+<div class="card"><span class="host" style="--fg:#5B21B6;--bg:#F2ECFD">Render</span><h3>Runs the API</h3><ul>
+<li>Builds <code>backend/Dockerfile</code> once CI passes</li>
+<li>Runs one container: migrations, then NestJS</li>
+<li>Holds every secret: database URLs, JWT keys, storage keys</li>
+<li>Checks <code>/api/v1/health/live</code> every few seconds</li>
+<li>Free plan, Singapore. <b>Sleeps after 15 minutes idle</b>; the next request waits about a minute</li></ul></div>
+<div class="card"><span class="host" style="--fg:#047857;--bg:#E6F5EE">Neon</span><h3>Keeps the data</h3><ul>
+<li>Postgres 18: workshops, sessions, bookings, enquiries, users</li>
+<li>A private storage bucket, <code>assets</code>, for files later</li>
+<li>Two addresses: pooled for the app, direct for migrations</li>
+<li>Free plan, <code>aws-ap-southeast-1</code> (Singapore)</li>
+<li>Sleeps when idle and wakes on the first query</li></ul></div>
+</div>
+
+<h2 id="map">The map</h2>
+<p class="sub">Each box is a different company's computer. <span class="host" style="--fg:#334155;--bg:#EEF2F6">Browser</span><span class="host" style="--fg:#18181B;--bg:#F1F1F2">Vercel</span><span class="host" style="--fg:#5B21B6;--bg:#F2ECFD">Render</span><span class="host" style="--fg:#047857;--bg:#E6F5EE">Neon</span></p>
+<figure class="diagram"><div class="scroll"><svg viewBox="0 0 1300 220" style="max-width:1300px" role="img" aria-label="At run time. The browser only ever talks to Vercel; Render and Neon are never addressed by the visitor." xmlns="http://www.w3.org/2000/svg" font-family="Inter, system-ui, sans-serif"><defs><marker id="bh" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#3F3F46"/></marker></defs><rect x="20" y="55" width="180" height="110" rx="12" fill="#EEF2F6" stroke="#334155" stroke-width="1.6"/><text x="36" y="79" font-size="11.5" font-weight="700" fill="#334155" letter-spacing=".06em">BROWSER</text><text x="36" y="101" font-size="15" font-weight="600" fill="#18181B">Visitor&#x27;s phone</text><text x="36" y="125" font-size="12.5" fill="#3F3F46" font-family="ui-monospace, Menlo, monospace">studio-rags</text><text x="36" y="144" font-size="12.5" fill="#3F3F46" font-family="ui-monospace, Menlo, monospace">.vercel.app</text><rect x="300" y="20" width="260" height="170" rx="12" fill="#F1F1F2" stroke="#18181B" stroke-width="1.6"/><text x="316" y="44" font-size="11.5" font-weight="700" fill="#18181B" letter-spacing=".06em">VERCEL</text><text x="316" y="66" font-size="15" font-weight="600" fill="#18181B">Next.js frontend</text><text x="316" y="90" font-size="12.5" fill="#3F3F46" font-family="ui-monospace, Menlo, monospace">renders pages</text><text x="316" y="109" font-size="12.5" fill="#3F3F46" font-family="ui-monospace, Menlo, monospace">serves /public photos</text><text x="316" y="128" font-size="12.5" fill="#3F3F46" font-family="ui-monospace, Menlo, monospace">rewrites /api/v1/*</text><text x="316" y="147" font-size="12.5" fill="#3F3F46" font-family="ui-monospace, Menlo, monospace">API_ORIGIN, SITE_ENV</text><rect x="660" y="20" width="260" height="170" rx="12" fill="#F2ECFD" stroke="#5B21B6" stroke-width="1.6"/><text x="676" y="44" font-size="11.5" font-weight="700" fill="#5B21B6" letter-spacing=".06em">RENDER</text><text x="676" y="66" font-size="15" font-weight="600" fill="#18181B">NestJS API, Docker</text><text x="676" y="90" font-size="12.5" fill="#3F3F46" font-family="ui-monospace, Menlo, monospace">/api/v1 controllers</text><text x="676" y="109" font-size="12.5" fill="#3F3F46" font-family="ui-monospace, Menlo, monospace">guards and throttle</text><text x="676" y="128" font-size="12.5" fill="#3F3F46" font-family="ui-monospace, Menlo, monospace">migrates on start</text><text x="676" y="147" font-size="12.5" fill="#3F3F46" font-family="ui-monospace, Menlo, monospace">secrets live here</text><rect x="1020" y="20" width="260" height="170" rx="12" fill="#E6F5EE" stroke="#047857" stroke-width="1.6"/><text x="1036" y="44" font-size="11.5" font-weight="700" fill="#047857" letter-spacing=".06em">NEON</text><text x="1036" y="66" font-size="15" font-weight="600" fill="#18181B">Postgres 18</text><text x="1036" y="90" font-size="12.5" fill="#3F3F46" font-family="ui-monospace, Menlo, monospace">tables</text><text x="1036" y="109" font-size="12.5" fill="#3F3F46" font-family="ui-monospace, Menlo, monospace">bucket: assets</text><text x="1036" y="128" font-size="12.5" fill="#3F3F46" font-family="ui-monospace, Menlo, monospace">pooled + direct</text><text x="1036" y="147" font-size="12.5" fill="#3F3F46" font-family="ui-monospace, Menlo, monospace">sleeps when idle</text><path d="M200,110 L300,110" fill="none" stroke="#3F3F46" stroke-width="1.5" marker-end="url(#bh)"/><rect x="229.5" y="91.0" width="41.0" height="16" fill="#FAFAF7"/><text x="250.0" y="103.0" text-anchor="middle" font-size="12.5" fill="#27272A">HTTPS</text><path d="M560,110 L660,110" fill="none" stroke="#3F3F46" stroke-width="1.5" marker-end="url(#bh)"/><rect x="586.2" y="83.0" width="47.599999999999994" height="16" fill="#FAFAF7"/><text x="610.0" y="95.0" text-anchor="middle" font-size="12.5" fill="#27272A">fetch,</text><rect x="582.9" y="99.0" width="54.199999999999996" height="16" fill="#FAFAF7"/><text x="610.0" y="111.0" text-anchor="middle" font-size="12.5" fill="#27272A">rewrite</text><path d="M920,110 L1020,110" fill="none" stroke="#3F3F46" stroke-width="1.5" marker-end="url(#bh)"/><rect x="946.2" y="91.0" width="47.599999999999994" height="16" fill="#FAFAF7"/><text x="970.0" y="103.0" text-anchor="middle" font-size="12.5" fill="#27272A">Prisma</text></svg></div><figcaption>At run time. The browser only ever talks to Vercel; Render and Neon are never addressed by the visitor.</figcaption></figure>
+<section class="flow" id="request"><header class="flow-head"><span class="flow-num">Flow 1</span><h3>One page view, across the three hosts</h3><p>Phase 2's class page, seen from the hosting side. The code-level detail is on the <a href="phase-2-catalogue.html#class-page">Phase 2 page</a>.</p></header><ol class="rail"><li style="--fg:#334155;--bg:#EEF2F6"><span class="rail-host">Browser</span><code>studio-rags.vercel.app</code></li><li style="--fg:#18181B;--bg:#F1F1F2"><span class="rail-host">Vercel</span><code>ClassPage renders</code></li><li style="--fg:#5B21B6;--bg:#F2ECFD"><span class="rail-host">Render</span><code>studio-rags-api.onrender.com/api/v1</code></li><li style="--fg:#047857;--bg:#E6F5EE"><span class="rail-host">Neon</span><code>pooled connection</code></li></ol><figure class="diagram"><div class="scroll"><svg viewBox="0 0 774 606" style="max-width:774px" role="img" aria-label="The two ways a request reaches Render: from Vercel&#x27;s server while it renders a page (1), and from the browser through the rewrite (2). Both end in the same controllers." xmlns="http://www.w3.org/2000/svg" font-family="Inter, system-ui, sans-serif"><defs><marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#3F3F46"/></marker></defs><line x1="102.0" y1="68" x2="102.0" y2="596" stroke="#D4D4D8" stroke-dasharray="3 4"/><rect x="24.0" y="18" width="156" height="46" rx="10" fill="#EEF2F6" stroke="#334155" stroke-width="1.5"/><text x="102.0" y="38" text-anchor="middle" font-size="13" font-weight="600" fill="#18181B">Visitor</text><text x="102.0" y="55" text-anchor="middle" font-size="11.5" font-weight="600" fill="#334155">BROWSER</text><line x1="292.0" y1="68" x2="292.0" y2="596" stroke="#D4D4D8" stroke-dasharray="3 4"/><rect x="214.0" y="18" width="156" height="46" rx="10" fill="#F1F1F2" stroke="#18181B" stroke-width="1.5"/><text x="292.0" y="38" text-anchor="middle" font-size="13" font-weight="600" fill="#18181B">Next.js</text><text x="292.0" y="55" text-anchor="middle" font-size="11.5" font-weight="600" fill="#18181B">VERCEL</text><line x1="482.0" y1="68" x2="482.0" y2="596" stroke="#D4D4D8" stroke-dasharray="3 4"/><rect x="404.0" y="18" width="156" height="46" rx="10" fill="#F2ECFD" stroke="#5B21B6" stroke-width="1.5"/><text x="482.0" y="38" text-anchor="middle" font-size="13" font-weight="600" fill="#18181B">NestJS</text><text x="482.0" y="55" text-anchor="middle" font-size="11.5" font-weight="600" fill="#5B21B6">RENDER</text><line x1="672.0" y1="68" x2="672.0" y2="596" stroke="#D4D4D8" stroke-dasharray="3 4"/><rect x="594.0" y="18" width="156" height="46" rx="10" fill="#E6F5EE" stroke="#047857" stroke-width="1.5"/><text x="672.0" y="38" text-anchor="middle" font-size="13" font-weight="600" fill="#18181B">Postgres</text><text x="672.0" y="55" text-anchor="middle" font-size="11.5" font-weight="600" fill="#047857">NEON</text><line x1="102.0" y1="104" x2="288.0" y2="104" stroke="#3F3F46" stroke-width="1.4" marker-end="url(#ah)"/><rect x="97.15" y="87" width="199.7" height="16" fill="#FFFFFF"/><text x="197.0" y="99" text-anchor="middle" font-size="12.5" fill="#18181B">GET /classes/batik-workshop</text><circle cx="85.15" cy="95" r="9" fill="#18181B"/><text x="85.15" y="99" text-anchor="middle" font-size="11" font-weight="700" fill="#FFFFFF">1</text><line x1="292.0" y1="150" x2="478.0" y2="150" stroke="#3F3F46" stroke-width="1.4" marker-end="url(#ah)"/><rect x="283.6" y="133" width="206.79999999999998" height="16" fill="#FFFFFF"/><text x="387.0" y="145" text-anchor="middle" font-size="12.5" fill="#18181B">fetch API_ORIGIN + /api/v1/…</text><circle cx="271.6" cy="141" r="9" fill="#18181B"/><text x="271.6" y="145" text-anchor="middle" font-size="11" font-weight="700" fill="#FFFFFF">1</text><rect x="328.6" y="174" width="306.79999999999995" height="26" rx="6" fill="#FFFBEB" stroke="#E5C07B"/><text x="482.0" y="191" text-anchor="middle" font-size="12" fill="#713F12">asleep? this request waits about a minute</text><line x1="482.0" y1="242" x2="668.0" y2="242" stroke="#3F3F46" stroke-width="1.4" marker-end="url(#ah)"/><rect x="498.45" y="225" width="157.1" height="16" fill="#FFFFFF"/><text x="577.0" y="237" text-anchor="middle" font-size="12.5" fill="#18181B">SQL over DATABASE_URL</text><circle cx="486.45" cy="233" r="9" fill="#18181B"/><text x="486.45" y="237" text-anchor="middle" font-size="11" font-weight="700" fill="#FFFFFF">3</text><line x1="672.0" y1="288" x2="486.0" y2="288" stroke="#3F3F46" stroke-width="1.4" marker-end="url(#ah)" stroke-dasharray="5 4"/><rect x="558.8" y="271" width="36.4" height="16" fill="#FFFFFF"/><text x="577.0" y="283" text-anchor="middle" font-size="12.5" fill="#52525B">rows</text><line x1="482.0" y1="334" x2="296.0" y2="334" stroke="#3F3F46" stroke-width="1.4" marker-end="url(#ah)" stroke-dasharray="5 4"/><rect x="368.8" y="317" width="36.4" height="16" fill="#FFFFFF"/><text x="387.0" y="329" text-anchor="middle" font-size="12.5" fill="#52525B">JSON</text><line x1="292.0" y1="380" x2="106.0" y2="380" stroke="#3F3F46" stroke-width="1.4" marker-end="url(#ah)" stroke-dasharray="5 4"/><rect x="178.8" y="363" width="36.4" height="16" fill="#FFFFFF"/><text x="197.0" y="375" text-anchor="middle" font-size="12.5" fill="#52525B">HTML</text><line x1="102.0" y1="426" x2="288.0" y2="426" stroke="#3F3F46" stroke-width="1.4" marker-end="url(#ah)"/><rect x="114.9" y="409" width="164.2" height="16" fill="#FFFFFF"/><text x="197.0" y="421" text-anchor="middle" font-size="12.5" fill="#18181B">GET /api/v1/…/sessions</text><circle cx="102.9" cy="417" r="9" fill="#18181B"/><text x="102.9" y="421" text-anchor="middle" font-size="11" font-weight="700" fill="#FFFFFF">2</text><line x1="292.0" y1="472" x2="478.0" y2="472" stroke="#3F3F46" stroke-width="1.4" marker-end="url(#ah)"/><rect x="319.1" y="455" width="135.8" height="16" fill="#FFFFFF"/><text x="387.0" y="467" text-anchor="middle" font-size="12.5" fill="#18181B">rewrite: same path</text><circle cx="307.1" cy="463" r="9" fill="#18181B"/><text x="307.1" y="467" text-anchor="middle" font-size="11" font-weight="700" fill="#FFFFFF">2</text><line x1="482.0" y1="518" x2="296.0" y2="518" stroke="#3F3F46" stroke-width="1.4" marker-end="url(#ah)" stroke-dasharray="5 4"/><rect x="368.8" y="501" width="36.4" height="16" fill="#FFFFFF"/><text x="387.0" y="513" text-anchor="middle" font-size="12.5" fill="#52525B">JSON</text><line x1="292.0" y1="564" x2="106.0" y2="564" stroke="#3F3F46" stroke-width="1.4" marker-end="url(#ah)" stroke-dasharray="5 4"/><rect x="178.8" y="547" width="36.4" height="16" fill="#FFFFFF"/><text x="197.0" y="559" text-anchor="middle" font-size="12.5" fill="#52525B">JSON</text></svg></div><figcaption>The two ways a request reaches Render: from Vercel&#x27;s server while it renders a page (1), and from the browser through the rewrite (2). Both end in the same controllers.</figcaption></figure><section class="step"><div class="step-text"><div class="step-meta"><span class="num">1</span><span class="host" style="--fg:#18181B;--bg:#F1F1F2">Vercel</span></div><h4>Vercel's server calls Render by name</h4><p>While rendering, Next.js runs on Vercel and needs the API's real address. <code>apiOrigin()</code> reads <code>API_ORIGIN</code>, set in Vercel's project settings to <code>https://studio-rags-api.onrender.com</code>. A deployed build without it fails loudly rather than pointing at a localhost that does not exist on Vercel.</p></div><div class="step-code"><figure class="code"><div class="code-head"><span class="path">frontend/src/lib/api-origin.ts</span><span class="lines">lines 13–28</span></div><pre><span class="gutter" aria-hidden="true">13
+14
+15
+16
+17
+18
+19
+20
+21
+22
+23
+24
+25
+26
+27
+28</span><code><span class="k">export</span> <span class="k">function</span> apiOrigin(): string {
+  <span class="c">// A deployed build must name its API. Vercel sets VERCEL on every build,</span>
+  <span class="c">// and every deploy sets SITE_ENV; without this check a forgotten API_ORIGIN</span>
+  <span class="c">// gives a green deploy whose /api/v1 proxy points at a localhost that does</span>
+  <span class="c">// not exist there, and a status page that says &quot;waking up&quot; for ever.</span>
+  <span class="c">// (frontend/Dockerfile refuses the same mistake before the build starts.)</span>
+  <span class="k">const</span> deployed = Boolean(process.env.VERCEL || process.env.SITE_ENV);
+  <span class="k">if</span> (deployed &amp;&amp; !process.env.API_ORIGIN) {
+    <span class="k">throw</span> <span class="k">new</span> Error(
+      <span class="s">&quot;API_ORIGIN is not set. Deployed builds must name the API, e.g. https://studio-rags-api.onrender.com.&quot;</span>,
+    );
+  }
+
+  <span class="c">// || rather than ??, so an empty value falls back to the local default</span>
+  <span class="c">// instead of producing a relative URL.</span>
+  <span class="k">const</span> raw = process.env.API_ORIGIN || LOCAL_API_ORIGIN;</code></pre></figure></div></section><section class="step"><div class="step-text"><div class="step-meta"><span class="num">2</span><span class="host" style="--fg:#18181B;--bg:#F1F1F2">Vercel</span></div><h4>The browser calls Vercel, and Vercel forwards</h4><p>Code running in the browser uses relative URLs like <code>/api/v1/contact</code>. Vercel matches the rewrite and fetches the same path from Render, then streams the answer back.</p><p>Why not call Render directly: login cookies (Phase 3) use <code>SameSite=Lax</code>, and <code>vercel.app</code> and <code>onrender.com</code> are different sites. A cookie set by Render would never be sent from the Vercel page. Through the rewrite, every cookie belongs to one address.</p><p>The destination is fixed when Vercel builds. Change <code>API_ORIGIN</code>, then redeploy.</p></div><div class="step-code"><figure class="code"><div class="code-head"><span class="path">frontend/next.config.ts</span><span class="lines">lines 23–36</span></div><pre><span class="gutter" aria-hidden="true">23
+24
+25
+26
+27
+28
+29
+30
+31
+32
+33
+34
+35
+36</span><code><span class="k">async</span> rewrites() {
+  <span class="k">return</span> [
+    {
+      <span class="c">// Same-origin API. The frontend (*.vercel.app) and the API</span>
+      <span class="c">// (*.onrender.com) are different sites, so a SameSite=Lax auth cookie</span>
+      <span class="c">// set by the API would never travel with requests from the page. The</span>
+      <span class="c">// browser instead calls /api/v1 on this origin and the server proxies</span>
+      <span class="c">// it, so the cookie belongs to this origin. The path is kept intact</span>
+      <span class="c">// so the refresh cookie&#x27;s Path=/api/v1/auth still matches.</span>
+      source: <span class="s">&quot;/api/v1/:path*&quot;</span>,
+      destination: <span class="s">`${apiOrigin()}/api/v1/:path*`</span>,
+    },
+  ];
+},</code></pre></figure></div></section><section class="step"><div class="step-text"><div class="step-meta"><span class="num">3</span><span class="host" style="--fg:#5B21B6;--bg:#F2ECFD">Render</span><span class="host" style="--fg:#047857;--bg:#E6F5EE">Neon</span></div><h4>Render runs the API; Neon answers its queries</h4><p>Every route lives under <code>/api/v1</code>. <code>trust proxy</code> tells Express how many proxies sit in front, so <code>req.ip</code> is the visitor and not a proxy. The throttle depends on it, and it is wrong today: see <a href="#throttle">the open issue</a>.</p><p>The running API uses Neon's <b>pooled</b> address, which shares a few real connections among many requests. Migrations and the seed use the <b>direct</b> one, because the pooler cannot hold the lock that stops two migrations running at once.</p></div><div class="step-code"><figure class="code"><div class="code-head"><span class="path">backend/src/app.setup.ts</span><span class="lines">lines 27–30</span></div><pre><span class="gutter" aria-hidden="true">27
+28
+29
+30</span><code><span class="k">const</span> trustedHops = Number(config.get&lt;number&gt;(<span class="s">&#x27;TRUST_PROXY&#x27;</span>) ?? <span class="n">0</span>);
+<span class="k">if</span> (trustedHops &gt; <span class="n">0</span>) {
+  app.set(<span class="s">&#x27;trust proxy&#x27;</span>, trustedHops);
+}</code></pre></figure><figure class="code"><div class="code-head"><span class="path">backend/src/app.setup.ts</span><span class="lines">lines 42</span></div><pre><span class="gutter" aria-hidden="true">42</span><code>app.setGlobalPrefix(<span class="s">&#x27;api/v1&#x27;</span>);</code></pre></figure><figure class="code"><div class="code-head"><span class="path">render.yaml</span><span class="lines">lines 60–67</span></div><pre><span class="gutter" aria-hidden="true">60
+61
+62
+63
+64
+65
+66
+67</span><code><span class="c"># sync: false = secrets and per-deploy URLs, never stored in git.</span>
+<span class="c"># Render asks for each value once, when the Blueprint is first created.</span>
+<span class="c"># Neon&#x27;s pooled connection, used by the running API.</span>
+- <span class="k">key</span>:<span class="s"> DATABASE_URL</span>
+  <span class="k">sync</span>:<span class="s"> false</span>
+<span class="c"># Neon&#x27;s direct connection, used by prisma migrate deploy (directUrl).</span>
+- <span class="k">key</span>:<span class="s"> DATABASE_URL_UNPOOLED</span>
+  <span class="k">sync</span>:<span class="s"> false</span></code></pre></figure></div></section></section><section class="flow" id="deploy"><header class="flow-head"><span class="flow-num">Flow 2</span><h3>How code gets onto each host</h3><p>Merge to <code>main</code> and both hosts rebuild themselves from GitHub. There is no upload step.</p></header><ol class="rail"><li style="--fg:#9A3412;--bg:#FDF0E7"><span class="rail-host">Your laptop</span><code>merge PR</code></li><li style="--fg:#1F2937;--bg:#F3F4F6"><span class="rail-host">GitHub</span><code>CI on main</code></li><li style="--fg:#18181B;--bg:#F1F1F2"><span class="rail-host">Vercel</span><code>build frontend/</code></li><li style="--fg:#5B21B6;--bg:#F2ECFD"><span class="rail-host">Render</span><code>build backend/ when green</code></li><li style="--fg:#5B21B6;--bg:#F2ECFD"><span class="rail-host">Render</span><code>migrate, then start</code></li><li style="--fg:#047857;--bg:#E6F5EE"><span class="rail-host">Neon</span><code>schema up to date</code></li></ol><figure class="diagram"><div class="scroll"><svg viewBox="0 0 1280 420" style="max-width:1280px" role="img" aria-label="How code reaches each host. Nothing is uploaded by hand: both hosts pull from GitHub. Only the seed is run manually." xmlns="http://www.w3.org/2000/svg" font-family="Inter, system-ui, sans-serif"><defs><marker id="bh" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#3F3F46"/></marker></defs><rect x="20" y="120" width="200" height="100" rx="12" fill="#FDF0E7" stroke="#9A3412" stroke-width="1.6"/><text x="36" y="144" font-size="11.5" font-weight="700" fill="#9A3412" letter-spacing=".06em">YOUR LAPTOP</text><text x="36" y="166" font-size="15" font-weight="600" fill="#18181B">git push</text><text x="36" y="190" font-size="12.5" fill="#3F3F46" font-family="ui-monospace, Menlo, monospace">a PR merged to main</text><rect x="300" y="120" width="250" height="100" rx="12" fill="#F3F4F6" stroke="#1F2937" stroke-width="1.6"/><text x="316" y="144" font-size="11.5" font-weight="700" fill="#1F2937" letter-spacing=".06em">GITHUB</text><text x="316" y="166" font-size="15" font-weight="600" fill="#18181B">Repo + Actions CI</text><text x="316" y="190" font-size="12.5" fill="#3F3F46" font-family="ui-monospace, Menlo, monospace">lint · types · tests</text><text x="316" y="209" font-size="12.5" fill="#3F3F46" font-family="ui-monospace, Menlo, monospace">e2e · docker build</text><rect x="650" y="20" width="280" height="110" rx="12" fill="#F1F1F2" stroke="#18181B" stroke-width="1.6"/><text x="666" y="44" font-size="11.5" font-weight="700" fill="#18181B" letter-spacing=".06em">VERCEL</text><text x="666" y="66" font-size="15" font-weight="600" fill="#18181B">Builds frontend/</text><text x="666" y="90" font-size="12.5" fill="#3F3F46" font-family="ui-monospace, Menlo, monospace">on every push</text><text x="666" y="109" font-size="12.5" fill="#3F3F46" font-family="ui-monospace, Menlo, monospace">next build, then live</text><rect x="650" y="180" width="280" height="140" rx="12" fill="#F2ECFD" stroke="#5B21B6" stroke-width="1.6"/><text x="666" y="204" font-size="11.5" font-weight="700" fill="#5B21B6" letter-spacing=".06em">RENDER</text><text x="666" y="226" font-size="15" font-weight="600" fill="#18181B">Builds backend/</text><text x="666" y="250" font-size="12.5" fill="#3F3F46" font-family="ui-monospace, Menlo, monospace">only once CI passes</text><text x="666" y="269" font-size="12.5" fill="#3F3F46" font-family="ui-monospace, Menlo, monospace">only if backend/**</text><text x="666" y="288" font-size="12.5" fill="#3F3F46" font-family="ui-monospace, Menlo, monospace">start: migrate deploy</text><text x="666" y="307" font-size="12.5" fill="#3F3F46" font-family="ui-monospace, Menlo, monospace">then: node dist/main</text><rect x="1030" y="200" width="230" height="100" rx="12" fill="#E6F5EE" stroke="#047857" stroke-width="1.6"/><text x="1046" y="224" font-size="11.5" font-weight="700" fill="#047857" letter-spacing=".06em">NEON</text><text x="1046" y="246" font-size="15" font-weight="600" fill="#18181B">Postgres 18</text><text x="1046" y="270" font-size="12.5" fill="#3F3F46" font-family="ui-monospace, Menlo, monospace">new migrations</text><text x="1046" y="289" font-size="12.5" fill="#3F3F46" font-family="ui-monospace, Menlo, monospace">applied here</text><path d="M220,170 L300,170" fill="none" stroke="#3F3F46" stroke-width="1.5" marker-end="url(#bh)"/><rect x="242.8" y="151.0" width="34.4" height="16" fill="#FAFAF7"/><text x="260.0" y="163.0" text-anchor="middle" font-size="12.5" fill="#27272A">push</text><path d="M550,150 L600,150 L600,75 L650,75" fill="none" stroke="#3F3F46" stroke-width="1.5" marker-end="url(#bh)"/><rect x="563.0" y="91" width="74.0" height="16" fill="#FAFAF7"/><text x="600" y="103" text-anchor="middle" font-size="12.5" fill="#27272A">every push</text><path d="M550,190 L600,190 L600,250 L650,250" fill="none" stroke="#3F3F46" stroke-width="1.5" marker-end="url(#bh)"/><rect x="559.7" y="203" width="80.6" height="16" fill="#FAFAF7"/><text x="600" y="215" text-anchor="middle" font-size="12.5" fill="#27272A">checks pass</text><path d="M930,250 L1030,250" fill="none" stroke="#3F3F46" stroke-width="1.5" marker-end="url(#bh)"/><rect x="952.9" y="231.0" width="54.199999999999996" height="16" fill="#FAFAF7"/><text x="980.0" y="243.0" text-anchor="middle" font-size="12.5" fill="#27272A">migrate</text><path d="M120,220 L120,385 L1145,385 L1145,300" fill="none" stroke="#3F3F46" stroke-width="1.5" marker-end="url(#bh)" stroke-dasharray="6 5"/><rect x="441.20000000000005" y="366" width="377.59999999999997" height="16" fill="#FAFAF7"/><text x="630" y="378" text-anchor="middle" font-size="12.5" fill="#27272A">seed: by hand, from your laptop, over the direct address</text></svg></div><figcaption>How code reaches each host. Nothing is uploaded by hand: both hosts pull from GitHub. Only the seed is run manually.</figcaption></figure><section class="step"><div class="step-text"><div class="step-meta"><span class="num">1</span><span class="host" style="--fg:#5B21B6;--bg:#F2ECFD">Render</span></div><h4>Render reads <code>render.yaml</code> from the repo</h4><p>The service is described in code, not clicked together. Two settings decide when it rebuilds: <code>autoDeployTrigger: checksPass</code> waits for GitHub Actions to go green, and <code>buildFilter</code> skips commits that do not touch <code>backend/</code>. A docs-only merge leaves the API alone.</p><p>Vercel has no such gate: it builds every push to <code>main</code>. A red frontend build simply does not replace the live one.</p></div><div class="step-code"><figure class="code"><div class="code-head"><span class="path">render.yaml</span><span class="lines">lines 16–33</span></div><pre><span class="gutter" aria-hidden="true">16
+17
+18
+19
+20
+21
+22
+23
+24
+25
+26
+27
+28
+29
+30
+31
+32
+33</span><code>- <span class="k">type</span>:<span class="s"> web</span>
+  <span class="k">name</span>:<span class="s"> studio-rags-api</span>
+  <span class="k">runtime</span>:<span class="s"> docker</span>
+  <span class="k">plan</span>:<span class="s"> free</span>
+  <span class="k">region</span>:<span class="s"> singapore</span>
+  <span class="k">dockerfilePath</span>:<span class="s"> ./backend/Dockerfile</span>
+  <span class="k">dockerContext</span>:<span class="s"> ./backend</span>
+  <span class="c"># Liveness only. Render calls it every few seconds, so it must not touch</span>
+  <span class="c"># the database: that would keep Neon awake around the clock and spend the</span>
+  <span class="c"># free plan&#x27;s monthly compute hours on health checks alone.</span>
+  <span class="k">healthCheckPath</span>:<span class="s"> /api/v1/health/live</span>
+  <span class="c"># Deploy a commit only once its GitHub checks (.github/workflows/ci.yml)</span>
+  <span class="c"># have passed, so a red build never reaches staging.</span>
+  <span class="k">autoDeployTrigger</span>:<span class="s"> checksPass</span>
+  <span class="c"># Frontend-only or docs-only commits do not rebuild the API.</span>
+  <span class="k">buildFilter</span>:<span class="s"></span>
+    <span class="k">paths</span>:<span class="s"></span>
+      - backend/**</code></pre></figure></div></section><section class="step"><div class="step-text"><div class="step-meta"><span class="num">2</span><span class="host" style="--fg:#5B21B6;--bg:#F2ECFD">Render</span><span class="host" style="--fg:#047857;--bg:#E6F5EE">Neon</span></div><h4>Each container start migrates, then serves</h4><p>The free plan has no pre-deploy hook, so the container does it. <code>prisma migrate deploy</code> applies only migrations Neon has not recorded, and is a no-op otherwise. If one fails, <code>set -e</code> stops the container and Render keeps the previous version live.</p><p>This is why migrations reach Neon without anyone running them: a merge that adds one applies it on the next start.</p></div><div class="step-code"><figure class="code"><div class="code-head"><span class="path">backend/docker-entrypoint.sh</span><span class="lines">lines 13–21</span></div><pre><span class="gutter" aria-hidden="true">13
+14
+15
+16
+17
+18
+19
+20
+21</span><code><span class="k">set</span> -eu
+
+<span class="k">echo</span> &quot;Applying database migrations&quot;
+node_modules/.bin/prisma migrate deploy
+
+<span class="c"># exec replaces this shell, so node runs as PID 1 and receives Render&#x27;s SIGTERM</span>
+<span class="c"># directly. Nest&#x27;s shutdown hooks then close the database pool cleanly.</span>
+<span class="k">echo</span> &quot;Starting the API&quot;
+<span class="k">exec</span> <span class="k">node</span> dist/main</code></pre></figure></div></section><section class="step"><div class="step-text"><div class="step-meta"><span class="num">3</span><span class="host" style="--fg:#9A3412;--bg:#FDF0E7">Your laptop</span><span class="host" style="--fg:#047857;--bg:#E6F5EE">Neon</span></div><h4>The seed is the one manual step</h4><p>The seed writes the admin account, six classes and their dates. It runs from your laptop straight to Neon over the direct address, reading the credentials from <code>.env.local</code> in a subshell so they do not stay in your terminal. You type the admin password; it is never stored in a file. Running it twice changes nothing: CI proves that on every push.</p></div><div class="step-code"><figure class="code"><div class="code-head"><span class="path">docs/deploy/README.md</span><span class="lines">lines 179–188</span></div><pre><span class="gutter" aria-hidden="true">179
+180
+181
+182
+183
+184
+185
+186
+187
+188</span><code><span class="k">cd</span> backend
+read -rs &#x27;SEED_ADMIN_PASSWORD?New admin password (12+ characters): &#x27;; <span class="k">echo</span>
+(
+  <span class="k">set</span> -a; . ../.env.local; <span class="k">set</span> +a
+  DATABASE_URL=&quot;$DATABASE_URL_UNPOOLED&quot; \
+  SEED_ADMIN_EMAIL=&#x27;you@example.com&#x27; \
+  SEED_ADMIN_PASSWORD=&quot;$SEED_ADMIN_PASSWORD&quot; \
+  npx ts-<span class="k">node</span> prisma/seed.ts
+)
+unset SEED_ADMIN_PASSWORD</code></pre></figure></div></section></section><h2 id="config">Where each setting lives</h2><p class="sub">Names only. Values are in each host's dashboard, never in git.</p><div class="table"><table><thead><tr><th>Setting</th><th>Lives on</th><th>Read by</th><th>Notes</th></tr></thead><tbody><tr><td><code>API_ORIGIN</code></td><td><span class="host" style="--fg:#18181B;--bg:#F1F1F2">Vercel</span></td><td><code>apiOrigin()</code>, the rewrite</td><td>Read at build time; redeploy after changing it</td></tr><tr><td><code>SITE_ENV</code></td><td><span class="host" style="--fg:#18181B;--bg:#F1F1F2">Vercel</span></td><td>The "Test site" banner, <code>robots.ts</code></td><td><code>staging</code>: banner on, search engines kept out</td></tr><tr><td><code>DATABASE_URL</code></td><td><span class="host" style="--fg:#5B21B6;--bg:#F2ECFD">Render</span></td><td>Prisma, at run time</td><td>Neon pooled address, <code>connect_timeout=15</code> so a sleeping Neon can wake</td></tr><tr><td><code>DATABASE_URL_UNPOOLED</code></td><td><span class="host" style="--fg:#5B21B6;--bg:#F2ECFD">Render</span><span class="host" style="--fg:#9A3412;--bg:#FDF0E7">Your laptop</span></td><td><code>prisma migrate deploy</code>, the seed</td><td>Neon direct address. On your laptop it is in <code>.env.local</code></td></tr><tr><td><code>AWS_*</code>, <code>STORAGE_BUCKET</code></td><td><span class="host" style="--fg:#5B21B6;--bg:#F2ECFD">Render</span></td><td>StorageService</td><td>Neon's storage speaks the S3 API, so the AWS SDK talks to it</td></tr><tr><td><code>CORS_ORIGIN</code>, <code>APP_URL</code></td><td><span class="host" style="--fg:#5B21B6;--bg:#F2ECFD">Render</span></td><td>CORS, the password-reset link</td><td><code>https://studio-rags.vercel.app</code></td></tr><tr><td><code>JWT_ACCESS_SECRET</code>, <code>JWT_REFRESH_SECRET</code></td><td><span class="host" style="--fg:#5B21B6;--bg:#F2ECFD">Render</span></td><td>Sign-in tokens</td><td>Generated by Render; nobody has seen them</td></tr><tr><td><code>TRUST_PROXY</code></td><td><span class="host" style="--fg:#5B21B6;--bg:#F2ECFD">Render</span></td><td><code>app.set('trust proxy')</code></td><td><code>2</code> in <code>render.yaml</code>. Probably needs <code>3</code></td></tr></tbody></table></div><h2 id="status">Status on 8 November 2026</h2><p class="sub">Checked by hand against the live hosts.</p><div class="table"><table><thead><tr><th>Check</th><th>Result</th></tr></thead><tbody><tr><td>Site</td><td><span class="status-ok">Live</span> at <a href="https://studio-rags.vercel.app">studio-rags.vercel.app</a></td></tr><tr><td>API</td><td><span class="status-ok">Live</span> at <code>studio-rags-api.onrender.com</code>; <code>/api/v1/health</code> reports database and storage up</td></tr><tr><td>Rewrite</td><td><span class="status-ok">Working</span>: <code>/api/v1/workshops</code> on the Vercel address returns the six classes</td></tr><tr><td>Data</td><td><span class="status-ok">Seeded</span>: six classes with dates, one admin</td></tr><tr><td>Per-visitor throttle</td><td><span class="status-bad">Not holding</span> through Vercel. See below</td></tr></tbody></table></div><h2 id="throttle">Open issue: the throttle cannot tell visitors apart</h2><p class="sub">Must be fixed before the sign-in screens reach staging (SPEC § 10, item 14).</p><div class="prose"><p>The login throttle allows 10 attempts a minute per visitor. It identifies a visitor by <code>req.ip</code>. Behind proxies, Express works that out from <code>X-Forwarded-For</code>, the list of addresses each proxy appends: it skips <code>TRUST_PROXY</code> entries from the right and takes the next one.</p><p><code>render.yaml</code> assumes two proxies: Vercel, then Render's own. The test says otherwise:</p></div><div class="table"><table><thead><tr><th>Test</th><th>Expected</th><th>Got</th></tr></thead><tbody><tr><td>14 failed logins in a minute, through Vercel</td><td>429 after 10</td><td><span class="status-bad">401 every time</span></td></tr><tr><td>Failed logins straight to Render</td><td>429 after 10</td><td><span class="status-ok">429</span></td></tr><tr><td>Straight to Render with a made-up <code>X-Forwarded-For</code></td><td>Counted as you</td><td>401: a forged header resets the count (a known gap)</td></tr></tbody></table></div><div class="prose"><p>Render answers with Cloudflare headers (<code>cf-ray</code>), so there is likely one more proxy than assumed. With 2, <code>req.ip</code> lands on Vercel's outgoing address, which changes from request to request: every attempt looks like a new visitor. Failed logins write nothing to the database, so the test was safe on staging.</p><p><b>Next:</b> set <code>TRUST_PROXY=3</code> in Render's dashboard, repeat the test, then repeat it from a phone on mobile data to prove two visitors get separate limits. Then write the value into <code>render.yaml</code>.</p></div><h2 id="failures">When staging misbehaves</h2><div class="table"><table><thead><tr><th>Symptom</th><th>Likely cause</th><th>What to do</th></tr></thead><tbody><tr><td>Pages say the classes can't be shown</td><td>Render is asleep</td><td>Open <code>/api/v1/health/live</code> on the Render address, wait a minute, reload</td></tr><tr><td>API wakes but errors on the database</td><td>Neon took longer than 15 s to wake</td><td>Reload once; check Neon's dashboard</td></tr><tr><td>Everything paused near month end</td><td>A free allowance ran out (Render 750 h, Neon 100 CU-h)</td><td>Wait for the reset. Never add a card</td></tr><tr><td>New backend code not live</td><td>CI failed, or the commit did not touch <code>backend/</code></td><td>Check Actions; Render's Events tab says why it skipped</td></tr><tr><td>Vercel build fails on a Google font</td><td>Seen once; a retry built</td><td>Redeploy; runbook has the details</td></tr><tr><td>Frontend still calls an old API address</td><td><code>API_ORIGIN</code> changed without a rebuild</td><td>Redeploy on Vercel</td></tr></tbody></table></div><h2 id="verify">Check it yourself</h2><figure class="code plain"><div class="code-head"><span class="path">Wake Render, then check the whole chain through Vercel</span></div><pre><code><span class="k">curl</span> -s https://studio-rags-api.onrender.com/api/v1/health/live
+<span class="k">curl</span> -s https://studio-rags.vercel.app/api/v1/health</code></pre></figure><p class="prose">The first is Render alone and touches nothing else. The second goes browser → Vercel → Render → Neon and reports the database and storage. Avoid calling it on a timer: each call wakes Neon and spends free hours.</p><footer>Excerpts are read from commit <code>94abb4a</code> by <code>docs/explainers/tools/staging.py</code>. 8 excerpts. The runbook is <code>docs/deploy/README.md</code>.</footer>
+</main>
+</body>
+</html>
