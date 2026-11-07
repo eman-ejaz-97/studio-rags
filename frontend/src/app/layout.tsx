@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import { Fraunces, Inter } from "next/font/google";
+import { SiteFooter } from "@/components/site-footer";
+import { SiteHeader } from "@/components/site-header";
 import "./globals.css";
 
 // Display face. Fraunces stands in for the brand's Kozuka Mincho Pro; only
@@ -17,7 +19,10 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "Studio Rags",
+  title: {
+    default: "Studio Rags — textile art workshops in Adelaide",
+    template: "%s · Studio Rags",
+  },
   description:
     "Textile art workshops in Adelaide with Rehana Usman: Indonesian batik, Japanese shibori and Pakistani woodblock printing.",
 };
@@ -37,6 +42,12 @@ export default function RootLayout({
       className={`${fraunces.variable} ${inter.variable} h-full antialiased`}
     >
       <body className="flex min-h-full flex-col">
+        <a
+          href="#main"
+          className="sr-only z-50 rounded-full bg-purple px-5 py-3 font-semibold text-white focus:not-sr-only focus:absolute focus:top-3 focus:left-3"
+        >
+          Skip to main content
+        </a>
         {isTestSite && (
           <aside
             aria-label="Test site notice"
@@ -45,7 +56,11 @@ export default function RootLayout({
             <p>Test site — bookings here are not real</p>
           </aside>
         )}
-        {children}
+        <SiteHeader />
+        <main id="main" tabIndex={-1} className="flex flex-1 flex-col focus:outline-none">
+          {children}
+        </main>
+        <SiteFooter />
       </body>
     </html>
   );

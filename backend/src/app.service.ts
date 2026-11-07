@@ -10,7 +10,7 @@ export const SERVICE_NAME = 'studio-rags-api';
  * uptime monitor gets an answer before its own request times out.
  *
  * It must also stay well inside the staging status page's own wait
- * (HEALTH_TIMEOUT_MS in frontend/src/app/page.tsx, 8 s). When the API is up
+ * (HEALTH_TIMEOUT_MS in frontend/src/app/status/page.tsx, 8 s). When the API is up
  * but the database hangs, the API has to answer "database down" before the
  * page gives up, or the page tells the visitor the whole server is asleep.
  * app.controller.spec.ts checks the two against each other.

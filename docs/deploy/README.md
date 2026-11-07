@@ -209,9 +209,10 @@ That also signs out every session the old password opened.
 
 ## Check it works
 
-1. Open the Vercel address.
+1. Open the Vercel address followed by `/status`.
    The purple banner says "Test site — bookings here are not real".
    The status card shows API, Database and File storage all **Up**.
+   Then open the plain Vercel address: the home page lists the classes.
 2. Ask for the health report through the Vercel address, the way the browser does:
 
    ```sh
@@ -239,8 +240,9 @@ That also signs out every session the old password opened.
 
 ## Before a demo
 
-- [ ] Two minutes before showing Rehana, open the Vercel address. This wakes the API and the database.
+- [ ] Two minutes before showing Rehana, open the Vercel address followed by `/status`. This wakes the API and the database.
 - [ ] Refresh until the status card shows all three **Up**.
+- [ ] Then open the home page. While the API is still asleep it says the classes can't be shown, so wake it first.
 - [ ] Use the main Vercel address. Never show or send a preview address.
 - [ ] Point out the purple banner: nothing booked on this site is real.
 - [ ] Keep the tab in use. Fifteen minutes without a request puts the API back to sleep.

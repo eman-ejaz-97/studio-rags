@@ -1,18 +1,61 @@
 @import "tailwindcss";
 
 /*
- * Fabric Fun tokens (ADR-021), only the ones in use so far. The full set lives
- * in Figma and gets mirrored here when the real frontend build starts.
+ * Fabric Fun tokens (ADR-021). Mirrored from the approved mockup,
+ * docs/design/mockups/directions.html, which is the source the Figma styles
+ * were built from. Reconcile against Figma when its access is restored
+ * (SPEC § 10).
  *
- * The colour rule: the purples carry text. Gold (#E8A134) only ever sits on a
- * dark ground, and ochre (#CA7F3A) is for text 24px and larger. Both fail AA
- * as body text on paper.
+ * The colour rule: the purples carry text. Gold only ever sits on a dark
+ * ground (2.19:1 on paper), and ochre is for text 24px and larger (3.18:1).
+ * Both fail AA as body text on paper. Ratios below are against the ground
+ * each colour is used on.
  */
 @theme {
-  --color-paper: #fffcf6;
-  --color-ink: #2b2033;
-  --color-plum: #4e2b4b;
-  --color-purple: #5b3460;
+  /* Grounds */
+  --color-paper: #fffcf6; /* page ground: warm, never pure white */
+  --color-card: #ffffff;
+  --color-lilac: #f3ecf6; /* pills, tag chips */
+  --color-line: #efe6f2; /* card borders */
+  --color-night: #2b2033; /* footer */
+
+  /* Brand */
+  --color-indigo: #3b2955; /* 12.85:1 on white */
+  --color-plum: #4e2b4b; /* 11.86:1 — headings, card titles */
+  --color-purple: #5b3460; /* 9.98:1 — primary buttons, nav, price tags */
+  --color-ochre: #ca7f3a; /* 3.18:1 — display text 24px+ only */
+  --color-gold: #e8a134; /* dark ground only: 4.55–5.86:1 on the purples */
+  --color-on-gold: #33203a; /* text on a gold button */
+
+  /* Text */
+  --color-ink: #2b2033; /* body text */
+  --color-body: #4e4057; /* lead paragraphs */
+  --color-muted: #5c4d66; /* secondary text */
+  --color-subtle: #6d5d77; /* hints, small meta */
+  --color-mist: #f2e9f5; /* text on purple */
+  --color-night-ink: #cfc2d6; /* text on night */
+
+  /* Date chips */
+  --color-sand: #fbf2e2;
+  --color-sand-ink: #6b4a1b;
+
+  /* Forms */
+  --color-field: #fffdfb;
+  /* Darker than the mockup's #e2d6e8 (1.4:1): an input's edge needs 3:1
+     against its ground (WCAG 1.4.11). 3.76:1 on card, 3.67:1 on paper. */
+  --color-field-line: #8e7e98;
+  --color-focus-glow: #f0e4f5;
+
+  /* Messages: words carry the meaning, colour only repeats it */
+  --color-error-bg: #fdece7;
+  --color-error-ink: #8a3419;
+  --color-error-line: #f2cbbc;
+  --color-ok-bg: #eff7ef;
+  --color-ok-ink: #2f5133;
+  --color-ok-line: #cde4ce;
+
+  --radius-card: 22px;
+  --radius-field: 12px;
 }
 
 /* inline: these point at the CSS variables next/font puts on <html>. */
@@ -28,4 +71,34 @@ body {
   /* 17px base: the agreed minimum for body text is 16px, the target 17-18. */
   font-size: 1.0625rem;
   line-height: 1.6;
+}
+
+/* One focus ring everywhere: visible on paper, on white cards and on purple. */
+:focus-visible {
+  outline: 3px solid var(--color-purple);
+  outline-offset: 3px;
+}
+.on-dark :focus-visible {
+  outline-color: var(--color-gold);
+}
+
+/*
+ * The quatrefoil traced from the carved woodblocks in her own photograph,
+ * repeated as a border. Decorative only.
+ */
+.motif {
+  height: 46px;
+  background-repeat: repeat-x;
+  background-size: 46px 46px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='46' height='46' viewBox='0 0 46 46'%3E%3Cg fill='none' stroke='%23ca7f3a' stroke-width='1.6'%3E%3Cpath d='M23 8c4 0 7 3 7 7s-3 8-7 8-7-3-7-8 3-7 7-7z'/%3E%3Cpath d='M23 23c4 0 7 3 7 8s-3 7-7 7-7-3-7-7 3-8 7-8z'/%3E%3Ccircle cx='23' cy='23' r='2.4'/%3E%3C/g%3E%3C/svg%3E");
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
+    scroll-behavior: auto !important;
+  }
 }
