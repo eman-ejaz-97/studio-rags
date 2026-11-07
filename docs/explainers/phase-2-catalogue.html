@@ -3,125 +3,330 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Phase 2 — the public site · Studio Rags</title>
+<title>Phase 2 — the catalogue · Studio Rags</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,900&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
-  :root {
-    --paper: #FFFCF6; --plum: #4E2B4B; --purple: #5B3460; --ochre: #CA7F3A;
-    --gold: #E8A134; --ink: #3a2f3d; --muted: #5f5466; --line: #e7dcea; --lilac: #f4eef6;
-  }
-  * { box-sizing: border-box; }
-  body { margin: 0; background: var(--paper); color: var(--ink);
-    font: 400 1.0625rem/1.65 Inter, system-ui, sans-serif; }
-  main { max-width: 760px; margin: 0 auto; padding: 3rem 1.25rem 5rem; }
-  h1, h2, h3 { font-family: Fraunces, Georgia, serif; color: var(--plum); line-height: 1.15; }
-  h1 { font-weight: 900; font-size: clamp(2.2rem, 6vw, 3.2rem); margin: .25rem 0 1rem; }
-  h1 span { color: var(--ochre); display: block; }
-  h2 { font-weight: 600; font-size: 1.75rem; margin: 3.5rem 0 1rem; }
-  h3 { font-weight: 600; font-size: 1.2rem; margin: 0 0 .4rem; }
-  .eyebrow { font-weight: 600; color: var(--purple); letter-spacing: .04em; text-transform: uppercase; font-size: 1rem; }
-  .lede { font-size: 1.2rem; color: var(--muted); }
-  .pills { display: flex; flex-wrap: wrap; gap: .5rem; padding: 0; list-style: none; }
-  .pills li { background: var(--lilac); color: var(--purple); border-radius: 999px; padding: .3rem .9rem; font-weight: 500; font-size: 1rem; }
-  figure { margin: 0 0 2.25rem; }
-  figure img { width: 100%; height: auto; display: block; border-radius: 18px; border: 1px solid var(--line);
-    box-shadow: 0 8px 28px rgba(78,43,75,.10); }
-  figcaption { margin-top: .6rem; color: var(--muted); }
-  figcaption b { color: var(--plum); }
-  .card { background: #fff; border: 1px solid var(--line); border-radius: 18px; padding: 1.25rem 1.4rem; margin-bottom: 1rem; }
-  .flow { width: 100%; height: auto; margin: .5rem 0 1.25rem; }
-  ol.steps { padding-left: 1.4rem; }
-  ol.steps li { margin-bottom: .5rem; }
-  ul.risks { list-style: none; padding: 0; }
-  ul.risks li { border-left: 4px solid var(--ochre); padding: .2rem 0 .2rem 1rem; margin-bottom: 1rem; }
-  ul.risks b { color: var(--plum); }
-  details { margin-top: .75rem; }
-  summary { cursor: pointer; color: var(--purple); font-weight: 600; min-height: 44px; display: flex; align-items: center; }
-  summary:focus-visible { outline: 3px solid var(--purple); outline-offset: 3px; border-radius: 6px; }
-  pre { background: #2b1f2e; color: #f6eef7; border-radius: 12px; padding: 1rem 1.1rem; overflow-x: auto;
-    font: 400 1rem/1.55 ui-monospace, SFMono-Regular, Menlo, monospace; margin: .5rem 0 0; }
-  .src { font: 400 1rem ui-monospace, Menlo, monospace; color: var(--muted); margin-top: .9rem; }
-  code { font-family: ui-monospace, Menlo, monospace; font-size: .92em; background: var(--lilac); padding: .05rem .35rem; border-radius: 5px; }
-  pre code { background: none; padding: 0; font-size: inherit; }
-  .next { background: var(--purple); color: #fff; border-radius: 18px; padding: 1.5rem 1.6rem; margin-top: 3.5rem; }
-  .next h2 { color: var(--gold); margin-top: 0; }
-  .next a { color: #fff; }
-  footer { color: var(--muted); font-size: 1rem; margin-top: 2.5rem; }
+:root{--paper:#FAFAF7;--ink:#18181B;--muted:#52525B;--line:#E4E4E7;--accent:#5B3460;--plum:#3B1F3A;
+--code:#15141A;--code-ink:#E7E5EA;--code-muted:#8A8794}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth;scroll-padding-top:72px}
+body{margin:0;background:var(--paper);color:var(--ink);font:400 17px/1.65 Inter,system-ui,-apple-system,sans-serif;-webkit-font-smoothing:antialiased}
+a{color:var(--accent);text-underline-offset:3px}
+code{font:500 .88em ui-monospace,SFMono-Regular,Menlo,monospace;background:#EFEDF0;padding:.08em .35em;border-radius:5px}
+.topbar{position:sticky;top:0;z-index:5;background:rgba(250,250,247,.92);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
+.topbar nav{max-width:1180px;margin:0 auto;padding:0 28px;display:flex;gap:22px;align-items:center;height:56px;overflow-x:auto;white-space:nowrap}
+.topbar a{color:var(--muted);text-decoration:none;font-size:15px;font-weight:500}
+.topbar a:hover{color:var(--ink)}
+.topbar .brand{color:var(--plum);font-weight:700;margin-right:8px}
+.topbar .other{margin-left:auto;color:var(--accent)}
+main{max-width:1180px;margin:0 auto;padding:0 28px 120px}
+.hero{padding:64px 0 36px;max-width:820px}
+.eyebrow{font-size:14px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--accent);margin:0 0 14px}
+h1{font:700 clamp(36px,5vw,52px)/1.08 Fraunces,Georgia,serif;letter-spacing:-.01em;color:var(--plum);margin:0 0 20px}
+.lede{font-size:20px;line-height:1.55;color:#3F3F46;margin:0}
+h2{font:600 32px/1.2 Fraunces,Georgia,serif;color:var(--plum);margin:96px 0 12px;letter-spacing:-.005em}
+h2+.sub{color:var(--muted);margin:0 0 28px;max-width:760px}
+h3{font-size:24px;line-height:1.3;margin:0 0 8px}
+h4{font-size:19px;line-height:1.35;margin:10px 0 10px}
+p{margin:0 0 14px}
+.prose{max-width:760px}
+.host{display:inline-flex;align-items:center;font-size:12.5px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--fg);background:var(--bg);border:1px solid color-mix(in srgb,var(--fg) 25%,transparent);border-radius:999px;padding:2px 10px;margin-right:6px}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:16px;margin:28px 0 0}
+.card{background:#fff;border:1px solid var(--line);border-radius:14px;padding:20px 22px}
+.card h3{font-size:18px;margin:10px 0 8px}
+.card ul{margin:0;padding-left:18px;color:#3F3F46;font-size:15.5px}
+.card li{margin:4px 0}
+.shots{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;margin:8px 0 0}
+.shots a{display:block;text-decoration:none;color:var(--muted);font-size:14px}
+.shots img{width:100%;aspect-ratio:4/3;object-fit:cover;object-position:top;border-radius:10px;border:1px solid var(--line);display:block;margin-bottom:8px}
+.index{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:12px;margin:24px 0 0;padding:0;list-style:none}
+.index a{display:block;background:#fff;border:1px solid var(--line);border-radius:12px;padding:16px 18px;text-decoration:none;color:var(--ink)}
+.index a:hover{border-color:var(--accent)}
+.index b{display:block;font-size:17px;margin-bottom:4px}
+.index span{color:var(--muted);font-size:15px}
+.flow{margin:72px 0 0;padding-top:40px;border-top:2px solid var(--ink)}
+.flow-num{display:block;font-size:13px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--accent);margin-bottom:6px}
+.flow-head p{color:#3F3F46;max-width:760px;margin:6px 0 0}
+.rail{list-style:none;padding:0;margin:24px 0 8px;display:flex;flex-wrap:wrap;gap:8px 0;align-items:stretch}
+.rail li{display:flex;flex-direction:column;background:var(--bg);border:1px solid color-mix(in srgb,var(--fg) 22%,transparent);border-radius:10px;padding:7px 12px;margin-right:26px;position:relative}
+.rail li:not(:last-child)::after{content:"→";position:absolute;right:-20px;top:50%;transform:translateY(-50%);color:#71717A;font-weight:600}
+.rail-host{font-size:12px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--fg)}
+.rail code{background:none;padding:0;font-size:13.5px;color:var(--ink);overflow-wrap:anywhere}
+.diagram{margin:28px 0 8px;background:#fff;border:1px solid var(--line);border-radius:14px;padding:18px 18px 12px}
+.diagram .scroll{overflow-x:auto}
+.diagram svg{display:block;min-width:720px;width:100%;height:auto;margin:0 auto}
+.diagram figcaption{font-size:14.5px;color:var(--muted);margin-top:8px}
+.step{display:grid;grid-template-columns:minmax(0,5fr) minmax(0,7fr);gap:40px;padding:36px 0;border-top:1px solid var(--line)}
+.flow>.diagram+.step{border-top:0}
+.step-meta{display:flex;align-items:center;gap:4px}
+.num{display:inline-grid;place-items:center;width:28px;height:28px;border-radius:50%;background:var(--ink);color:#fff;font-size:13.5px;font-weight:700;margin-right:8px}
+.step-text p{color:#27272A}
+.step-text ul{padding-left:20px;margin:0 0 14px}
+.step-text li{margin:4px 0}
+.example{margin:18px 0 0;padding:14px 16px;border-left:3px solid var(--accent);background:#F6F2F6;border-radius:0 10px 10px 0;display:grid;grid-template-columns:auto 1fr;gap:4px 14px;font-size:15px}
+.example-title{grid-column:1/-1;font-size:12.5px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--accent);margin-bottom:2px}
+.example dt{color:var(--muted)}
+.example dd{margin:0;min-width:0;overflow-wrap:anywhere}
+.example code{background:none;padding:0}
+.code{margin:0 0 16px;border-radius:12px;overflow:hidden;background:var(--code);box-shadow:0 1px 0 rgba(0,0,0,.04),0 8px 24px -12px rgba(20,10,30,.35)}
+.code-head{display:flex;justify-content:space-between;gap:12px;padding:9px 16px;border-bottom:1px solid #2A2832;font:500 12.5px ui-monospace,Menlo,monospace;color:var(--code-muted)}
+.code-head .path{color:#C9C6D1;overflow-wrap:anywhere}
+.code pre{margin:0;padding:14px 0;overflow-x:auto;display:flex;font:400 13.5px/1.62 ui-monospace,SFMono-Regular,Menlo,monospace;color:var(--code-ink)}
+.code pre code{background:none;padding:0 18px 0 0;font:inherit;white-space:pre}
+.code .gutter{flex:none;text-align:right;color:#5E5B68;padding:0 14px 0 16px;user-select:none;white-space:pre}
+.code.plain pre code{padding-left:18px}
+.code figcaption{padding:8px 16px 12px;font-size:13.5px;color:var(--code-muted);border-top:1px solid #2A2832}
+.code .c{color:#7F7C8A;font-style:italic}.code .s{color:#B5E3A8}.code .k{color:#CDB8FF}.code .n{color:#F7C08A}
+table{width:100%;border-collapse:collapse;font-size:15.5px;background:#fff;border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.table{overflow-x:auto;margin:20px 0}
+th,td{text-align:left;vertical-align:top;padding:12px 16px;border-bottom:1px solid var(--line)}
+th{font-size:13px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);background:#F6F6F4}
+tr:last-child td{border-bottom:0}
+td code{font-size:.85em}
+.status-ok{color:#047857;font-weight:600}.status-bad{color:#B42318;font-weight:600}
+details.files{margin:20px 0;background:#fff;border:1px solid var(--line);border-radius:12px}
+details.files summary{cursor:pointer;padding:16px 20px;font-weight:600;min-height:48px}
+details.files .table{margin:0 16px 16px}
+.callout{background:#FFF7ED;border:1px solid #F5D0A9;border-radius:12px;padding:18px 20px;margin:20px 0;max-width:860px}
+.callout b{color:#7C2D12}
+@media (max-width:640px){.shots{grid-template-columns:repeat(2,minmax(0,1fr))}}
+footer{margin-top:96px;padding-top:24px;border-top:1px solid var(--line);color:var(--muted);font-size:15px}
+@media (max-width:920px){
+ main{padding:0 18px 80px}.topbar nav{padding:0 18px}
+ .step{grid-template-columns:minmax(0,1fr);gap:18px}
+ .hero{padding-top:40px}
+ h2{margin-top:72px}
+}
 </style>
 </head>
 <body>
+<div class="topbar"><nav aria-label="Sections"><span class="brand">Studio Rags</span><a href="#flows">Flows</a><a href="#data">Database</a><a href="#decisions">Decisions</a><a href="#failures">Failures</a><a href="#verify">Check it</a><a href="#files">Files</a><a class="other" href="staging.html">Staging →</a></nav></div>
 <main>
 
-<p class="eyebrow">Studio Rags · Phase 2 · 7 November 2026</p>
-<h1>The public site <span>is up.</span></h1>
-<p class="lede">Visitors can now browse Rehana's classes, see real dates with live seat counts, and send her a message. Online booking and payment come next, in Phase 3.</p>
-<ul class="pills">
-  <li>6 classes</li><li>6 pages</li><li>5 API endpoints</li><li>551 backend tests, 29 frontend tests</li>
+<header class="hero">
+<p class="eyebrow">Phase 2 · merged 8 November 2026 · PR #2</p>
+<h1>The catalogue: how a class page gets its seats</h1>
+<p class="lede">Visitors can browse the six classes, see real dates with seats left, and send a question.
+Nothing is booked yet. This page follows each click through the code, from the browser to Postgres and back.</p>
+</header>
+<div class="shots"><a href="phase-2/home.jpg"><img src="phase-2/home.jpg" alt="The home page with class cards" loading="lazy">Home</a><a href="phase-2/class.jpg"><img src="phase-2/class.jpg" alt="The Batik Workshop page with its dates" loading="lazy">Class page</a><a href="phase-2/calendar.jpg"><img src="phase-2/calendar.jpg" alt="The November calendar" loading="lazy">Calendar</a><a href="phase-2/contact.jpg"><img src="phase-2/contact.jpg" alt="The contact form with a drafted message" loading="lazy">Contact</a></div>
+<h2 id="flows">Five flows</h2>
+<p class="sub">Every step is tagged with where its code runs: <span class="host" style="--fg:#334155;--bg:#EEF2F6">Browser</span><span class="host" style="--fg:#18181B;--bg:#F1F1F2">Vercel</span><span class="host" style="--fg:#5B21B6;--bg:#F2ECFD">Render</span><span class="host" style="--fg:#047857;--bg:#E6F5EE">Neon</span>.
+The <a href="staging.html">staging page</a> explains what those three hosts are.</p>
+<ul class="index">
+<li><a href="#class-page"><b>1 · Opening a class page</b><span>Server render, guards, three queries, seat maths</span></a></li>
+<li><a href="#live-seats"><b>2 · Seats refreshed in the browser</b><span>The uncached refetch and the Vercel rewrite</span></a></li>
+<li><a href="#contact"><b>3 · Asking about a date</b><span>The one write: throttle, honeypot, insert</span></a></li>
+<li><a href="#home"><b>4 · Home and class list</b><span>Why it renders per visit</span></a></li>
+<li><a href="#calendar"><b>5 · The calendar</b><span>Adelaide months and the 92-day cap</span></a></li>
 </ul>
+<section class="flow" id="class-page"><header class="flow-head"><span class="flow-num">Flow 1</span><h3>Opening a class page</h3><p>The page is HTML rendered on Vercel. The data comes from Render, which reads Neon. This is the deepest path in the phase; the other flows reuse parts of it.</p></header><ol class="rail"><li style="--fg:#334155;--bg:#EEF2F6"><span class="rail-host">Browser</span><code>GET /classes/batik-workshop</code></li><li style="--fg:#18181B;--bg:#F1F1F2"><span class="rail-host">Vercel</span><code>ClassPage</code></li><li style="--fg:#18181B;--bg:#F1F1F2"><span class="rail-host">Vercel</span><code>getWorkshopSessions → get()</code></li><li style="--fg:#5B21B6;--bg:#F2ECFD"><span class="rail-host">Render</span><code>WorkshopsController.sessions</code></li><li style="--fg:#5B21B6;--bg:#F2ECFD"><span class="rail-host">Render</span><code>CatalogueService.listWorkshopSessions</code></li><li style="--fg:#5B21B6;--bg:#F2ECFD"><span class="rail-host">Render</span><code>seatsTaken → toSession</code></li><li style="--fg:#047857;--bg:#E6F5EE"><span class="rail-host">Neon</span><code>workshops · sessions · bookings</code></li></ol><figure class="diagram"><div class="scroll"><svg viewBox="0 0 1154 698" style="max-width:1154px" role="img" aria-label="Opening a class page. The numbers match the steps below. getWorkshop runs the same way in parallel, against GET /api/v1/workshops/batik-workshop; it is left off to keep the picture readable." xmlns="http://www.w3.org/2000/svg" font-family="Inter, system-ui, sans-serif"><defs><marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#3F3F46"/></marker></defs><line x1="102.0" y1="68" x2="102.0" y2="688" stroke="#D4D4D8" stroke-dasharray="3 4"/><rect x="24.0" y="18" width="156" height="46" rx="10" fill="#EEF2F6" stroke="#334155" stroke-width="1.5"/><text x="102.0" y="38" text-anchor="middle" font-size="13" font-weight="600" fill="#18181B">Visitor</text><text x="102.0" y="55" text-anchor="middle" font-size="11.5" font-weight="600" fill="#334155">BROWSER</text><line x1="292.0" y1="68" x2="292.0" y2="688" stroke="#D4D4D8" stroke-dasharray="3 4"/><rect x="214.0" y="18" width="156" height="46" rx="10" fill="#F1F1F2" stroke="#18181B" stroke-width="1.5"/><text x="292.0" y="38" text-anchor="middle" font-size="13" font-weight="600" fill="#18181B">ClassPage</text><text x="292.0" y="55" text-anchor="middle" font-size="11.5" font-weight="600" fill="#18181B">VERCEL</text><line x1="482.0" y1="68" x2="482.0" y2="688" stroke="#D4D4D8" stroke-dasharray="3 4"/><rect x="404.0" y="18" width="156" height="46" rx="10" fill="#F1F1F2" stroke="#18181B" stroke-width="1.5"/><text x="482.0" y="38" text-anchor="middle" font-size="13" font-weight="600" fill="#18181B">get()</text><text x="482.0" y="55" text-anchor="middle" font-size="11.5" font-weight="600" fill="#18181B">VERCEL</text><line x1="672.0" y1="68" x2="672.0" y2="688" stroke="#D4D4D8" stroke-dasharray="3 4"/><rect x="594.0" y="18" width="156" height="46" rx="10" fill="#F2ECFD" stroke="#5B21B6" stroke-width="1.5"/><text x="672.0" y="38" text-anchor="middle" font-size="13" font-weight="600" fill="#18181B">WorkshopsController</text><text x="672.0" y="55" text-anchor="middle" font-size="11.5" font-weight="600" fill="#5B21B6">RENDER</text><line x1="862.0" y1="68" x2="862.0" y2="688" stroke="#D4D4D8" stroke-dasharray="3 4"/><rect x="784.0" y="18" width="156" height="46" rx="10" fill="#F2ECFD" stroke="#5B21B6" stroke-width="1.5"/><text x="862.0" y="38" text-anchor="middle" font-size="13" font-weight="600" fill="#18181B">CatalogueService</text><text x="862.0" y="55" text-anchor="middle" font-size="11.5" font-weight="600" fill="#5B21B6">RENDER</text><line x1="1052.0" y1="68" x2="1052.0" y2="688" stroke="#D4D4D8" stroke-dasharray="3 4"/><rect x="974.0" y="18" width="156" height="46" rx="10" fill="#E6F5EE" stroke="#047857" stroke-width="1.5"/><text x="1052.0" y="38" text-anchor="middle" font-size="13" font-weight="600" fill="#18181B">Postgres</text><text x="1052.0" y="55" text-anchor="middle" font-size="11.5" font-weight="600" fill="#047857">NEON</text><line x1="102.0" y1="104" x2="288.0" y2="104" stroke="#3F3F46" stroke-width="1.4" marker-end="url(#ah)"/><rect x="97.15" y="87" width="199.7" height="16" fill="#FFFFFF"/><text x="197.0" y="99" text-anchor="middle" font-size="12.5" fill="#18181B">GET /classes/batik-workshop</text><circle cx="85.15" cy="95" r="9" fill="#18181B"/><text x="85.15" y="99" text-anchor="middle" font-size="11" font-weight="700" fill="#FFFFFF">1</text><line x1="292.0" y1="150" x2="478.0" y2="150" stroke="#3F3F46" stroke-width="1.4" marker-end="url(#ah)"/><rect x="294.25" y="133" width="185.5" height="16" fill="#FFFFFF"/><text x="387.0" y="145" text-anchor="middle" font-size="12.5" fill="#18181B">getWorkshopSessions(slug)</text><circle cx="282.25" cy="141" r="9" fill="#18181B"/><text x="282.25" y="145" text-anchor="middle" font-size="11" font-weight="700" fill="#FFFFFF">2</text><line x1="482.0" y1="196" x2="668.0" y2="196" stroke="#3F3F46" stroke-width="1.4" marker-end="url(#ah)"/><rect x="470.05" y="179" width="213.89999999999998" height="16" fill="#FFFFFF"/><text x="577.0" y="191" text-anchor="middle" font-size="12.5" fill="#18181B">GET …/batik-workshop/sessions</text><circle cx="458.05" cy="187" r="9" fill="#18181B"/><text x="458.05" y="191" text-anchor="middle" font-size="11" font-weight="700" fill="#FFFFFF">3</text><rect x="484.6" y="220" width="374.79999999999995" height="26" rx="6" fill="#FFFBEB" stroke="#E5C07B"/><text x="672.0" y="237" text-anchor="middle" font-size="12" fill="#713F12">ThrottlerGuard → JwtAuthGuard: @Public, let through</text><line x1="672.0" y1="288" x2="858.0" y2="288" stroke="#3F3F46" stroke-width="1.4" marker-end="url(#ah)"/><rect x="652.95" y="271" width="228.1" height="16" fill="#FFFFFF"/><text x="767.0" y="283" text-anchor="middle" font-size="12.5" fill="#18181B">listWorkshopSessions(slug, now)</text><circle cx="640.95" cy="279" r="9" fill="#18181B"/><text x="640.95" y="283" text-anchor="middle" font-size="11" font-weight="700" fill="#FFFFFF">4</text><line x1="862.0" y1="334" x2="1048.0" y2="334" stroke="#3F3F46" stroke-width="1.4" marker-end="url(#ah)"/><rect x="846.5" y="317" width="221.0" height="16" fill="#FFFFFF"/><text x="957.0" y="329" text-anchor="middle" font-size="12.5" fill="#18181B">findFirst · findMany · groupBy</text><circle cx="834.5" cy="325" r="9" fill="#18181B"/><text x="834.5" y="329" text-anchor="middle" font-size="11" font-weight="700" fill="#FFFFFF">4</text><line x1="1052.0" y1="380" x2="866.0" y2="380" stroke="#3F3F46" stroke-width="1.4" marker-end="url(#ah)" stroke-dasharray="5 4"/><rect x="938.8" y="363" width="36.4" height="16" fill="#FFFFFF"/><text x="957.0" y="375" text-anchor="middle" font-size="12.5" fill="#52525B">rows</text><path d="M862.0,414 h38 v18 h-36" fill="none" stroke="#3F3F46" stroke-width="1.4" marker-end="url(#ah)"/><rect x="904.0" y="409" width="185.5" height="16" fill="#FFFFFF"/><text x="908.0" y="421" text-anchor="start" font-size="12.5" fill="#18181B">toSession: 8 − 0 = 8 left</text><circle cx="846.0" cy="417" r="9" fill="#18181B"/><text x="846.0" y="421" text-anchor="middle" font-size="11" font-weight="700" fill="#FFFFFF">5</text><line x1="862.0" y1="472" x2="676.0" y2="472" stroke="#3F3F46" stroke-width="1.4" marker-end="url(#ah)" stroke-dasharray="5 4"/><rect x="684.9" y="455" width="164.2" height="16" fill="#FFFFFF"/><text x="767.0" y="467" text-anchor="middle" font-size="12.5" fill="#52525B">{ workshop, sessions }</text><line x1="672.0" y1="518" x2="486.0" y2="518" stroke="#3F3F46" stroke-width="1.4" marker-end="url(#ah)" stroke-dasharray="5 4"/><rect x="544.6" y="501" width="64.8" height="16" fill="#FFFFFF"/><text x="577.0" y="513" text-anchor="middle" font-size="12.5" fill="#52525B">200 JSON</text><rect x="352.4" y="542" width="259.20000000000005" height="26" rx="6" fill="#FFFBEB" stroke="#E5C07B"/><text x="482.0" y="559" text-anchor="middle" font-size="12" fill="#713F12">kept for 60 s in Next&#x27;s data cache</text><line x1="482.0" y1="610" x2="296.0" y2="610" stroke="#3F3F46" stroke-width="1.4" marker-end="url(#ah)" stroke-dasharray="5 4"/><rect x="319.1" y="593" width="135.8" height="16" fill="#FFFFFF"/><text x="387.0" y="605" text-anchor="middle" font-size="12.5" fill="#52525B">{ ok: true, data }</text><line x1="292.0" y1="656" x2="106.0" y2="656" stroke="#3F3F46" stroke-width="1.4" marker-end="url(#ah)" stroke-dasharray="5 4"/><rect x="125.55000000000001" y="639" width="142.9" height="16" fill="#FFFFFF"/><text x="197.0" y="651" text-anchor="middle" font-size="12.5" fill="#52525B">HTML with the dates</text></svg></div><figcaption>Opening a class page. The numbers match the steps below. getWorkshop runs the same way in parallel, against GET /api/v1/workshops/batik-workshop; it is left off to keep the picture readable.</figcaption></figure><section class="step"><div class="step-text"><div class="step-meta"><span class="num">1</span><span class="host" style="--fg:#18181B;--bg:#F1F1F2">Vercel</span></div><h4><code>ClassPage</code> asks for the class and its dates at once</h4><p>A server component: it runs on Vercel, never in the visitor's browser. Both calls start together with <code>Promise.all</code>, so the page waits for the slower one, not the sum.</p><p>Each call returns a result, not an exception: <code>not-found</code> becomes the site's 404 through <code>notFound()</code>, and <code>unavailable</code> (the API asleep or too slow) renders <code>ApiUnavailable</code> instead of an error page.</p><dl class="example"><div class="example-title">In this example</div><dt>URL</dt><dd><code>/classes/batik-workshop</code></dd><dt>slug</dt><dd><code>batik-workshop</code></dd></dl></div><div class="step-code"><figure class="code"><div class="code-head"><span class="path">frontend/src/app/classes/[slug]/page.tsx</span><span class="lines">lines 27–42</span></div><pre><span class="gutter" aria-hidden="true">27
+28
+29
+30
+31
+32
+33
+34
+35
+36
+37
+38
+39
+40
+41
+42</span><code><span class="k">export</span> <span class="k">default</span> <span class="k">async</span> <span class="k">function</span> ClassPage({ params }: Props) {
+  <span class="k">const</span> { slug } = <span class="k">await</span> params;
+  <span class="c">// Both start at once; fetch() de-duplicates the one generateMetadata made.</span>
+  <span class="k">const</span> [workshop, sessions] = <span class="k">await</span> Promise.all([
+    getWorkshop(slug),
+    getWorkshopSessions(slug),
+  ]);
 
-<h2>What changed, in screenshots</h2>
+  <span class="k">if</span> (!workshop.ok &amp;&amp; workshop.reason === <span class="s">&quot;not-found&quot;</span>) notFound();
+  <span class="k">if</span> (!workshop.ok) {
+    <span class="k">return</span> (
+      &lt;div className={<span class="s">`${pageWrap} py-12`</span>}&gt;
+        &lt;ApiUnavailable what=<span class="s">&quot;this class&quot;</span> /&gt;
+      &lt;/div&gt;
+    );
+  }</code></pre></figure></div></section><section class="step"><div class="step-text"><div class="step-meta"><span class="num">2</span><span class="host" style="--fg:#18181B;--bg:#F1F1F2">Vercel</span></div><h4><code>get()</code> calls Render directly and keeps the answer for 60 seconds</h4><p><code>getWorkshopSessions</code> only builds the path. <code>get()</code> does the work: it prefixes <code>apiOrigin()</code>, which on Vercel is <code>https://studio-rags-api.onrender.com</code> and locally <code>http://localhost:3001</code>. The variable is not <code>NEXT_PUBLIC_</code>, so it never reaches the browser.</p><ul><li><code>revalidate: 60</code> keeps the JSON in Next's data cache. The next visitor within a minute costs Render nothing.</li><li><code>AbortSignal.timeout(8000)</code> turns a sleeping API into <code>unavailable</code> after 8 seconds instead of hanging the page.</li><li>404 is passed back as <code>not-found</code>; anything else not OK is <code>unavailable</code>.</li></ul><dl class="example"><div class="example-title">In this example</div><dt>request</dt><dd><code>GET https://studio-rags-api.onrender.com/api/v1/workshops/batik-workshop/sessions</code></dd></dl></div><div class="step-code"><figure class="code"><div class="code-head"><span class="path">frontend/src/lib/catalogue.ts</span><span class="lines">lines 64–73</span></div><pre><span class="gutter" aria-hidden="true">64
+65
+66
+67
+68
+69
+70
+71
+72
+73</span><code><span class="k">export</span> <span class="k">async</span> <span class="k">function</span> getWorkshopSessions(
+  slug: string,
+): Promise&lt;ApiResult&lt;SessionView[]&gt;&gt; {
+  <span class="k">return</span> map(
+    <span class="k">await</span> get&lt;{ sessions: SessionView[] }&gt;(
+      <span class="s">`/workshops/${encodeURIComponent(slug)}/sessions`</span>,
+    ),
+    (d) =&gt; d.sessions,
+  );
+}</code></pre></figure><figure class="code"><div class="code-head"><span class="path">frontend/src/lib/catalogue.ts</span><span class="lines">lines 27–40</span></div><pre><span class="gutter" aria-hidden="true">27
+28
+29
+30
+31
+32
+33
+34
+35
+36
+37
+38
+39
+40</span><code><span class="k">async</span> <span class="k">function</span> get&lt;T&gt;(path: string): Promise&lt;ApiResult&lt;T&gt;&gt; {
+  <span class="k">try</span> {
+    <span class="k">const</span> res = <span class="k">await</span> fetch(<span class="s">`${apiOrigin()}/api/v1${path}`</span>, {
+      next: { revalidate: REVALIDATE_SECONDS, tags: [<span class="s">&quot;catalogue&quot;</span>] },
+      signal: AbortSignal.timeout(TIMEOUT_MS),
+      headers: { accept: <span class="s">&quot;application/json&quot;</span> },
+    });
+    <span class="k">if</span> (res.status === <span class="n">404</span>) <span class="k">return</span> { ok: <span class="k">false</span>, reason: <span class="s">&quot;not-found&quot;</span> };
+    <span class="k">if</span> (!res.ok) <span class="k">return</span> { ok: <span class="k">false</span>, reason: <span class="s">&quot;unavailable&quot;</span> };
+    <span class="k">return</span> { ok: <span class="k">true</span>, data: (<span class="k">await</span> res.json()) <span class="k">as</span> T };
+  } <span class="k">catch</span> {
+    <span class="k">return</span> { ok: <span class="k">false</span>, reason: <span class="s">&quot;unavailable&quot;</span> };
+  }
+}</code></pre></figure></div></section><section class="step"><div class="step-text"><div class="step-meta"><span class="num">3</span><span class="host" style="--fg:#5B21B6;--bg:#F2ECFD">Render</span></div><h4>Three global guards run, then the controller</h4><p>The path is assembled from three places: <code>setGlobalPrefix('api/v1')</code>, <code>@Controller('workshops')</code> and <code>@Get(':slug/sessions')</code>.</p><p>Before the method runs, Nest applies the guards registered in <code>AppModule</code>, in order. <code>ThrottlerGuard</code> counts the caller against 120 requests a minute. <code>JwtAuthGuard</code> makes every route private unless it carries <code>@Public()</code>, so a new admin route cannot be left open by forgetting a decorator. <code>RolesGuard</code> has nothing to check here.</p><p>The controller passes <code>new Date()</code> as <code>now</code>, so the service never reads the clock and tests can pin the time.</p></div><div class="step-code"><figure class="code"><div class="code-head"><span class="path">backend/src/app.module.ts</span><span class="lines">lines 43–45</span></div><pre><span class="gutter" aria-hidden="true">43
+44
+45</span><code>{ provide: APP_GUARD, useClass: ThrottlerGuard },
+{ provide: APP_GUARD, useClass: JwtAuthGuard },
+{ provide: APP_GUARD, useClass: RolesGuard },</code></pre></figure><figure class="code"><div class="code-head"><span class="path">backend/src/common/guards/jwt-auth.guard.ts</span><span class="lines">lines 17–24</span></div><pre><span class="gutter" aria-hidden="true">17
+18
+19
+20
+21
+22
+23
+24</span><code>canActivate(context: ExecutionContext) {
+  <span class="k">const</span> isPublic = this.reflector.getAllAndOverride&lt;boolean&gt;(IS_PUBLIC_KEY, [
+    context.getHandler(),
+    context.getClass(),
+  ]);
 
-<figure>
-  <img src="phase-2/home.jpg" alt="Home page: 'Make something with your hands' in plum and ochre, three workshop photos, and class cards with prices." loading="lazy">
-  <figcaption><b>Home.</b> The Fabric Fun look, built for real: cream paper, plum headings, the woodblock border, and her own photos.</figcaption>
-</figure>
+  <span class="k">return</span> isPublic ? <span class="k">true</span> : super.canActivate(context);
+}</code></pre></figure><figure class="code"><div class="code-head"><span class="path">backend/src/catalogue/workshops.controller.ts</span><span class="lines">lines 30–39</span></div><pre><span class="gutter" aria-hidden="true">30
+31
+32
+33
+34
+35
+36
+37
+38
+39</span><code><span class="c">/** FR-C3. Upcoming dates for one class, sold-out ones flagged. */</span>
+@Public()
+@Get(<span class="s">&#x27;:slug/sessions&#x27;</span>)
+<span class="k">async</span> sessions(
+  @Param(<span class="s">&#x27;slug&#x27;</span>) slug: string,
+): Promise&lt;{ sessions: SessionView[] }&gt; {
+  <span class="k">return</span> {
+    sessions: <span class="k">await</span> this.catalogue.listWorkshopSessions(slug, <span class="k">new</span> Date()),
+  };
+}</code></pre></figure></div></section><section class="step"><div class="step-text"><div class="step-meta"><span class="num">4</span><span class="host" style="--fg:#5B21B6;--bg:#F2ECFD">Render</span><span class="host" style="--fg:#047857;--bg:#E6F5EE">Neon</span></div><h4>The service runs three queries through Prisma</h4><ol><li><b>The workshop</b>, only if <code>PUBLISHED</code>. A draft and a typo get the same 404, so the API cannot reveal that a draft exists.</li><li><b>Its sessions</b> that are on sale: <code>SCHEDULED</code> and in the future. At most 24, earliest first. <code>sessionSelect</code> leaves out <code>onlineJoinUrl</code>, so the Zoom link is never in public JSON.</li><li><b>The seats taken</b> for those session ids, in one grouped query (step 5).</li></ol></div><div class="step-code"><figure class="code"><div class="code-head"><span class="path">backend/src/catalogue/catalogue.service.ts</span><span class="lines">lines 140–160</span></div><pre><span class="gutter" aria-hidden="true">140
+141
+142
+143
+144
+145
+146
+147
+148
+149
+150
+151
+152
+153
+154
+155
+156
+157
+158
+159
+160</span><code><span class="k">async</span> listWorkshopSessions(slug: string, now: Date): Promise&lt;SessionView[]&gt; {
+  <span class="k">const</span> workshop = <span class="k">await</span> this.prisma.workshop.findFirst({
+    where: { slug, status: WorkshopStatus.PUBLISHED },
+    select: { id: <span class="k">true</span>, basePriceCents: <span class="k">true</span> },
+  });
+  <span class="k">if</span> (!workshop) <span class="k">throw</span> <span class="k">new</span> NotFoundException(<span class="s">&#x27;Class not found&#x27;</span>);
 
-<figure>
-  <img src="phase-2/class.jpg" alt="Indonesian Batik Workshop page with price, length, place, and five upcoming Saturdays, each showing '8 places left'." loading="lazy">
-  <figcaption><b>A class page.</b> Every upcoming date, with its seat count fetched fresh in the browser so it is never a cached number.</figcaption>
-</figure>
-
-<figure>
-  <img src="phase-2/calendar.jpg" alt="Calendar for November 2026, grouped by day, with Previous and Next month links." loading="lazy">
-  <figcaption><b>Calendar.</b> Every class in one month, grouped by day. You can page from this month up to six months ahead.</figcaption>
-</figure>
-
-<figure>
-  <img src="phase-2/contact.jpg" alt="Contact form with the message pre-filled: 'Hello Rehana, I'd like a place in Indonesian Batik Workshop on Saturday 14 November at 10:00 am.'" loading="lazy">
-  <figcaption><b>Contact.</b> “Ask about this date” opens the form with the message already written. Until booking opens, this is how people reserve a place.</figcaption>
-</figure>
-
-<h2>How a visit works</h2>
-
-<svg class="flow" viewBox="0 0 720 150" role="img" aria-labelledby="flow-title">
-  <title id="flow-title">The visitor's browser asks the Next.js site on Vercel, which asks the NestJS API on Render, which reads Postgres on Neon.</title>
-  <defs><marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#5B3460"/></marker></defs>
-  <g font-family="Inter, sans-serif" text-anchor="middle">
-    <rect x="4" y="30" width="150" height="80" rx="16" fill="#fff" stroke="#5B3460" stroke-width="2"/>
-    <text x="79" y="66" font-size="17" font-weight="600" fill="#4E2B4B">Browser</text>
-    <text x="79" y="89" font-size="14" fill="#5f5466">the visitor</text>
-    <rect x="192" y="30" width="150" height="80" rx="16" fill="#fff" stroke="#5B3460" stroke-width="2"/>
-    <text x="267" y="66" font-size="17" font-weight="600" fill="#4E2B4B">Next.js site</text>
-    <text x="267" y="89" font-size="14" fill="#5f5466">Vercel</text>
-    <rect x="380" y="30" width="150" height="80" rx="16" fill="#fff" stroke="#5B3460" stroke-width="2"/>
-    <text x="455" y="66" font-size="17" font-weight="600" fill="#4E2B4B">NestJS API</text>
-    <text x="455" y="89" font-size="14" fill="#5f5466">Render</text>
-    <rect x="568" y="30" width="148" height="80" rx="16" fill="#5B3460"/>
-    <text x="642" y="66" font-size="17" font-weight="600" fill="#fff">Postgres</text>
-    <text x="642" y="89" font-size="14" fill="#E8A134">Neon</text>
-    <line x1="156" y1="70" x2="188" y2="70" stroke="#5B3460" stroke-width="2" marker-end="url(#a)"/>
-    <line x1="344" y1="70" x2="376" y2="70" stroke="#5B3460" stroke-width="2" marker-end="url(#a)"/>
-    <line x1="532" y1="70" x2="564" y2="70" stroke="#5B3460" stroke-width="2" marker-end="url(#a)"/>
-    <path d="M79,112 C79,145 455,145 455,114" fill="none" stroke="#CA7F3A" stroke-width="2" stroke-dasharray="6 5" marker-end="url(#a)"/>
-    <text x="267" y="146" font-size="13" fill="#5f5466">live seat counts, contact form</text>
-  </g>
-</svg>
-
-<ol class="steps">
-  <li>A visitor opens a class page, and the Next.js site asks the API for that class and its dates.</li>
-  <li>The API reads Postgres and counts the seats taken by confirmed bookings and by unexpired holds. That is one query for all dates.</li>
-  <li>The site builds the page and keeps the API's answer for 60 seconds, so the next visitors are served quickly.</li>
-  <li>Once the page loads, the browser fetches the dates again, uncached, so “places left” is current.</li>
-  <li>The contact form posts straight from the browser to the API, which saves the message for Rehana.</li>
-</ol>
-
-<details>
-  <summary>Show me the code: counting seats</summary>
-  <p class="src">backend/src/catalogue/availability.ts</p>
-  <pre><code>export function seatHoldingBookings(now: Date): Prisma.BookingWhereInput {
-  return {
+  <span class="k">const</span> sessions = <span class="k">await</span> this.prisma.session.findMany({
+    where: { ...onSale(now), workshopId: workshop.id },
+    orderBy: { startsAt: <span class="s">&#x27;asc&#x27;</span> },
+    take: WORKSHOP_SESSIONS_LIMIT,
+    select: sessionSelect,
+  });
+  <span class="k">const</span> taken = <span class="k">await</span> this.seatsTaken(
+    sessions.map((s) =&gt; s.id),
+    now,
+  );
+  <span class="k">return</span> sessions.map((s) =&gt;
+    toSession(s, workshop.basePriceCents, taken.get(s.id) ?? <span class="n">0</span>),
+  );
+}</code></pre></figure><figure class="code"><div class="code-head"><span class="path">backend/src/catalogue/catalogue.service.ts</span><span class="lines">lines 68–75</span></div><pre><span class="gutter" aria-hidden="true">68
+69
+70
+71
+72
+73
+74
+75</span><code><span class="c">/** Public sessions: on sale now, for a class that is published. */</span>
+<span class="k">function</span> onSale(now: Date): Prisma.SessionWhereInput {
+  <span class="k">return</span> {
+    status: SessionStatus.SCHEDULED,
+    startsAt: { gt: now },
+    workshop: { status: WorkshopStatus.PUBLISHED },
+  };
+}</code></pre></figure></div></section><section class="step"><div class="step-text"><div class="step-meta"><span class="num">5</span><span class="host" style="--fg:#5B21B6;--bg:#F2ECFD">Render</span></div><h4>Seats: one sum per session, then capacity minus taken</h4><p><code>seatsTaken</code> is a single <code>groupBy</code> over every session on the page, not one query per date. Which bookings hold a seat is decided in one place, <code>seatHoldingBookings</code>: a confirmed booking, or a pending one whose hold has not run out yet. An expired hold frees its seats at once, before any cleanup job marks it.</p><p>Phase 3's checkout must use this same function inside its row lock, or the page and the payment will disagree about how many seats are left.</p><p><code>toSession</code> clamps at zero and sets <code>isFull</code>. A full date stays in the list, labelled "Fully booked" in words.</p><dl class="example"><div class="example-title">In this example</div><dt>session</dt><dd><code>cmw6cmtig00050sa2fxenxjee</code></dd><dt>startsAt</dt><dd><code>2026-11-13T23:30:00.000Z</code></dd><dt>shown as</dt><dd><code>Saturday 14 November, 10:00 am (Adelaide)</code></dd><dt>capacity − taken</dt><dd><code>8 − 0 → seatsLeft 8</code></dd><dt>priceCents</dt><dd><code>8200 → $82</code></dd></dl></div><div class="step-code"><figure class="code"><div class="code-head"><span class="path">backend/src/catalogue/catalogue.service.ts</span><span class="lines">lines 228–240</span></div><pre><span class="gutter" aria-hidden="true">228
+229
+230
+231
+232
+233
+234
+235
+236
+237
+238
+239
+240</span><code><span class="c">/** Seats held per session, in one grouped query. */</span>
+<span class="k">private</span> <span class="k">async</span> seatsTaken(
+  sessionIds: string[],
+  now: Date,
+): Promise&lt;Map&lt;string, number&gt;&gt; {
+  <span class="k">if</span> (sessionIds.length === <span class="n">0</span>) <span class="k">return</span> <span class="k">new</span> Map();
+  <span class="k">const</span> rows = <span class="k">await</span> this.prisma.booking.groupBy({
+    by: [<span class="s">&#x27;sessionId&#x27;</span>],
+    where: { sessionId: { <span class="k">in</span>: sessionIds }, ...seatHoldingBookings(now) },
+    _sum: { seats: <span class="k">true</span> },
+  });
+  <span class="k">return</span> <span class="k">new</span> Map(rows.map((r) =&gt; [r.sessionId, r._sum.seats ?? <span class="n">0</span>]));
+}</code></pre></figure><figure class="code"><div class="code-head"><span class="path">backend/src/catalogue/availability.ts</span><span class="lines">lines 11–26</span></div><pre><span class="gutter" aria-hidden="true">11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21
+22
+23
+24
+25
+26</span><code><span class="k">export</span> <span class="k">function</span> seatHoldingBookings(now: Date): Prisma.BookingWhereInput {
+  <span class="k">return</span> {
     OR: [
       { status: BookingStatus.CONFIRMED },
       { status: BookingStatus.PENDING, holdExpiresAt: { gt: now } },
@@ -129,116 +334,399 @@
   };
 }
 
-/**
- * Never negative. Capacity may be lowered below what is already booked
- * (§ 5, ADR-012); that session is simply full, not "-2 left".
- */
-export function seatsLeft(capacity: number, taken: number): number {
-  return Math.max(0, capacity - taken);
-}</code></pre>
-  <p class="src">backend/src/catalogue/catalogue.service.ts</p>
-  <pre><code>  /** Seats held per session, in one grouped query. */
-  private async seatsTaken(
-    sessionIds: string[],
-    now: Date,
-  ): Promise&lt;Map&lt;string, number&gt;&gt; {
-    if (sessionIds.length === 0) return new Map();
-    const rows = await this.prisma.booking.groupBy({
-      by: ['sessionId'],
-      where: { sessionId: { in: sessionIds }, ...seatHoldingBookings(now) },
-      _sum: { seats: true },
-    });
-    return new Map(rows.map((r) =&gt; [r.sessionId, r._sum.seats ?? 0]));
-  }</code></pre>
-</details>
-
-<details>
-  <summary>Show me the code: the site's 60-second cache and 8-second timeout</summary>
-  <p class="src">frontend/src/lib/catalogue.ts</p>
-  <pre><code>async function get&lt;T&gt;(path: string): Promise&lt;ApiResult&lt;T&gt;&gt; {
-  try {
-    const res = await fetch(`${apiOrigin()}/api/v1${path}`, {
-      next: { revalidate: REVALIDATE_SECONDS, tags: ["catalogue"] },
-      signal: AbortSignal.timeout(TIMEOUT_MS),
-      headers: { accept: "application/json" },
-    });
-    if (res.status === 404) return { ok: false, reason: "not-found" };
-    if (!res.ok) return { ok: false, reason: "unavailable" };
-    return { ok: true, data: (await res.json()) as T };
-  } catch {
-    return { ok: false, reason: "unavailable" };
-  }
-}</code></pre>
-  <p class="src">frontend/src/components/session-list.tsx (the browser's fresh fetch)</p>
-  <pre><code>  useEffect(() =&gt; {
-    const controller = new AbortController();
-    fetch(`/api/v1/workshops/${encodeURIComponent(slug)}/sessions`, {
-      cache: "no-store",
-      signal: controller.signal,
-      headers: { accept: "application/json" },
+<span class="c">/**</span>
+<span class="c"> * Never negative. Capacity may be lowered below what is already booked</span>
+<span class="c"> * (§ 5, ADR-012); that session is simply full, not &quot;-2 left&quot;.</span>
+<span class="c"> */</span>
+<span class="k">export</span> <span class="k">function</span> seatsLeft(capacity: number, taken: number): number {
+  <span class="k">return</span> Math.max(<span class="n">0</span>, capacity - taken);
+}</code></pre></figure><figure class="code plain"><div class="code-head"><span class="path">Shape of the SQL Prisma sends (illustrative, not copied from a log)</span></div><pre><code>SELECT &quot;sessionId&quot;, SUM(seats)
+FROM bookings
+WHERE &quot;sessionId&quot; IN ($1, $2, …)
+  AND (status = &#x27;CONFIRMED&#x27;
+       OR (status = &#x27;PENDING&#x27; AND &quot;holdExpiresAt&quot; &gt; $now))
+GROUP BY &quot;sessionId&quot;;</code></pre></figure><figure class="code"><div class="code-head"><span class="path">backend/src/catalogue/catalogue.service.ts</span><span class="lines">lines 309–325</span></div><pre><span class="gutter" aria-hidden="true">309
+310
+311
+312
+313
+314
+315
+316
+317
+318
+319
+320
+321
+322
+323
+324
+325</span><code><span class="k">function</span> toSession(
+  s: SessionRow,
+  basePriceCents: number,
+  taken: number,
+): SessionView {
+  <span class="k">const</span> left = seatsLeft(s.capacity, taken);
+  <span class="k">return</span> {
+    id: s.id,
+    startsAt: s.startsAt.toISOString(),
+    endsAt: s.endsAt.toISOString(),
+    priceCents: sessionPriceCents(basePriceCents, s.priceCentsOverride),
+    capacity: s.capacity,
+    seatsLeft: left,
+    isFull: left === <span class="n">0</span>,
+    location: s.location,
+  };
+}</code></pre></figure></div></section></section><section class="flow" id="live-seats"><header class="flow-head"><span class="flow-num">Flow 2</span><h3>Seat counts refreshed in the browser</h3><p>The HTML can be up to a minute old. Seat numbers cannot wait that long, so <code>SessionList</code> asks again as soon as it mounts.</p></header><ol class="rail"><li style="--fg:#334155;--bg:#EEF2F6"><span class="rail-host">Browser</span><code>SessionList useEffect</code></li><li style="--fg:#334155;--bg:#EEF2F6"><span class="rail-host">Browser</span><code>fetch /api/v1/…/sessions</code></li><li style="--fg:#18181B;--bg:#F1F1F2"><span class="rail-host">Vercel</span><code>next.config.ts rewrite</code></li><li style="--fg:#5B21B6;--bg:#F2ECFD"><span class="rail-host">Render</span><code>WorkshopsController.sessions</code></li><li style="--fg:#047857;--bg:#E6F5EE"><span class="rail-host">Neon</span><code>same three queries</code></li></ol><figure class="diagram"><div class="scroll"><svg viewBox="0 0 774 422" style="max-width:774px" role="img" aria-label="After the HTML arrives, the browser asks again for the seat counts, uncached. It only ever talks to the Vercel address." xmlns="http://www.w3.org/2000/svg" font-family="Inter, system-ui, sans-serif"><defs><marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#3F3F46"/></marker></defs><line x1="102.0" y1="68" x2="102.0" y2="412" stroke="#D4D4D8" stroke-dasharray="3 4"/><rect x="24.0" y="18" width="156" height="46" rx="10" fill="#EEF2F6" stroke="#334155" stroke-width="1.5"/><text x="102.0" y="38" text-anchor="middle" font-size="13" font-weight="600" fill="#18181B">SessionList</text><text x="102.0" y="55" text-anchor="middle" font-size="11.5" font-weight="600" fill="#334155">BROWSER</text><line x1="292.0" y1="68" x2="292.0" y2="412" stroke="#D4D4D8" stroke-dasharray="3 4"/><rect x="214.0" y="18" width="156" height="46" rx="10" fill="#F1F1F2" stroke="#18181B" stroke-width="1.5"/><text x="292.0" y="38" text-anchor="middle" font-size="13" font-weight="600" fill="#18181B">studio-rags.vercel.app</text><text x="292.0" y="55" text-anchor="middle" font-size="11.5" font-weight="600" fill="#18181B">VERCEL</text><line x1="482.0" y1="68" x2="482.0" y2="412" stroke="#D4D4D8" stroke-dasharray="3 4"/><rect x="404.0" y="18" width="156" height="46" rx="10" fill="#F2ECFD" stroke="#5B21B6" stroke-width="1.5"/><text x="482.0" y="38" text-anchor="middle" font-size="13" font-weight="600" fill="#18181B">WorkshopsController</text><text x="482.0" y="55" text-anchor="middle" font-size="11.5" font-weight="600" fill="#5B21B6">RENDER</text><line x1="672.0" y1="68" x2="672.0" y2="412" stroke="#D4D4D8" stroke-dasharray="3 4"/><rect x="594.0" y="18" width="156" height="46" rx="10" fill="#E6F5EE" stroke="#047857" stroke-width="1.5"/><text x="672.0" y="38" text-anchor="middle" font-size="13" font-weight="600" fill="#18181B">Postgres</text><text x="672.0" y="55" text-anchor="middle" font-size="11.5" font-weight="600" fill="#047857">NEON</text><line x1="102.0" y1="104" x2="288.0" y2="104" stroke="#3F3F46" stroke-width="1.4" marker-end="url(#ah)"/><rect x="79.4" y="87" width="235.2" height="16" fill="#FFFFFF"/><text x="197.0" y="99" text-anchor="middle" font-size="12.5" fill="#18181B">GET /api/v1/…/sessions  no-store</text><circle cx="67.4" cy="95" r="9" fill="#18181B"/><text x="67.4" y="99" text-anchor="middle" font-size="11" font-weight="700" fill="#FFFFFF">1</text><path d="M292.0,138 h38 v18 h-36" fill="none" stroke="#3F3F46" stroke-width="1.4" marker-end="url(#ah)"/><rect x="334.0" y="133" width="228.1" height="16" fill="#FFFFFF"/><text x="338.0" y="145" text-anchor="start" font-size="12.5" fill="#18181B">rewrite /api/v1/:path* → Render</text><circle cx="276.0" cy="141" r="9" fill="#18181B"/><text x="276.0" y="145" text-anchor="middle" font-size="11" font-weight="700" fill="#FFFFFF">2</text><line x1="292.0" y1="196" x2="478.0" y2="196" stroke="#3F3F46" stroke-width="1.4" marker-end="url(#ah)"/><rect x="290.7" y="179" width="192.6" height="16" fill="#FFFFFF"/><text x="387.0" y="191" text-anchor="middle" font-size="12.5" fill="#18181B">same path, on onrender.com</text><circle cx="278.7" cy="187" r="9" fill="#18181B"/><text x="278.7" y="191" text-anchor="middle" font-size="11" font-weight="700" fill="#FFFFFF">2</text><rect x="412.0" y="220" width="330.0" height="26" rx="6" fill="#FFFBEB" stroke="#E5C07B"/><text x="577.0" y="237" text-anchor="middle" font-size="12" fill="#713F12">Flow 1, steps 3 to 5</text><line x1="482.0" y1="288" x2="296.0" y2="288" stroke="#3F3F46" stroke-width="1.4" marker-end="url(#ah)" stroke-dasharray="5 4"/><rect x="354.6" y="271" width="64.8" height="16" fill="#FFFFFF"/><text x="387.0" y="283" text-anchor="middle" font-size="12.5" fill="#52525B">200 JSON</text><line x1="292.0" y1="334" x2="106.0" y2="334" stroke="#3F3F46" stroke-width="1.4" marker-end="url(#ah)" stroke-dasharray="5 4"/><rect x="164.6" y="317" width="64.8" height="16" fill="#FFFFFF"/><text x="197.0" y="329" text-anchor="middle" font-size="12.5" fill="#52525B">200 JSON</text><path d="M102.0,368 h38 v18 h-36" fill="none" stroke="#3F3F46" stroke-width="1.4" marker-end="url(#ah)"/><rect x="144.0" y="363" width="135.8" height="16" fill="#FFFFFF"/><text x="148.0" y="375" text-anchor="start" font-size="12.5" fill="#18181B">setSessions(fresh)</text><circle cx="86.0" cy="371" r="9" fill="#18181B"/><text x="86.0" y="375" text-anchor="middle" font-size="11" font-weight="700" fill="#FFFFFF">3</text></svg></div><figcaption>After the HTML arrives, the browser asks again for the seat counts, uncached. It only ever talks to the Vercel address.</figcaption></figure><section class="step"><div class="step-text"><div class="step-meta"><span class="num">1</span><span class="host" style="--fg:#334155;--bg:#EEF2F6">Browser</span></div><h4><code>SessionList</code> refetches on mount</h4><p>A client component, so this code runs in the visitor's browser. It starts with the sessions the server rendered, then replaces them with a fresh answer.</p><p>The URL is relative, so the request goes to <code>studio-rags.vercel.app</code>, the address the page came from. <code>cache: "no-store"</code> skips every cache. If the call fails, the server-rendered dates simply stay.</p></div><div class="step-code"><figure class="code"><div class="code-head"><span class="path">frontend/src/components/session-list.tsx</span><span class="lines">lines 31–46</span></div><pre><span class="gutter" aria-hidden="true">31
+32
+33
+34
+35
+36
+37
+38
+39
+40
+41
+42
+43
+44
+45
+46</span><code>useEffect(() =&gt; {
+  <span class="k">const</span> controller = <span class="k">new</span> AbortController();
+  fetch(<span class="s">`/api/v1/workshops/${encodeURIComponent(slug)}/sessions`</span>, {
+    cache: <span class="s">&quot;no-store&quot;</span>,
+    signal: controller.signal,
+    headers: { accept: <span class="s">&quot;application/json&quot;</span> },
+  })
+    .then((res) =&gt; (res.ok ? res.json() : <span class="k">null</span>))
+    .then((body: { sessions: SessionView[] } | <span class="k">null</span>) =&gt; {
+      <span class="k">if</span> (body) setSessions(body.sessions);
     })
-      .then((res) =&gt; (res.ok ? res.json() : null))
-      .then((body: { sessions: SessionView[] } | null) =&gt; {
-        if (body) setSessions(body.sessions);
-      })
-      .catch(() =&gt; {
-        // Aborted on unmount, or the API is asleep: keep the server's list.
-      });
-    return () =&gt; controller.abort();
-  }, [slug]);</code></pre>
-</details>
+    .<span class="k">catch</span>(() =&gt; {
+      <span class="c">// Aborted on unmount, or the API is asleep: keep the server&#x27;s list.</span>
+    });
+  <span class="k">return</span> () =&gt; controller.abort();
+}, [slug]);</code></pre></figure></div></section><section class="step"><div class="step-text"><div class="step-meta"><span class="num">2</span><span class="host" style="--fg:#18181B;--bg:#F1F1F2">Vercel</span></div><h4>Vercel forwards <code>/api/v1/*</code> to Render</h4><p>No code of ours runs here. Vercel's edge matches the rewrite and fetches the same path from Render. The browser sees one site, so there is no CORS preflight, and in Phase 3 the login cookies will belong to the site's own address.</p><p>The destination is resolved when Vercel <em>builds</em> the site. Changing <code>API_ORIGIN</code> needs a redeploy before the rewrite follows it.</p></div><div class="step-code"><figure class="code"><div class="code-head"><span class="path">frontend/next.config.ts</span><span class="lines">lines 23–36</span></div><pre><span class="gutter" aria-hidden="true">23
+24
+25
+26
+27
+28
+29
+30
+31
+32
+33
+34
+35
+36</span><code><span class="k">async</span> rewrites() {
+  <span class="k">return</span> [
+    {
+      <span class="c">// Same-origin API. The frontend (*.vercel.app) and the API</span>
+      <span class="c">// (*.onrender.com) are different sites, so a SameSite=Lax auth cookie</span>
+      <span class="c">// set by the API would never travel with requests from the page. The</span>
+      <span class="c">// browser instead calls /api/v1 on this origin and the server proxies</span>
+      <span class="c">// it, so the cookie belongs to this origin. The path is kept intact</span>
+      <span class="c">// so the refresh cookie&#x27;s Path=/api/v1/auth still matches.</span>
+      source: <span class="s">&quot;/api/v1/:path*&quot;</span>,
+      destination: <span class="s">`${apiOrigin()}/api/v1/:path*`</span>,
+    },
+  ];
+},</code></pre></figure></div></section><section class="step"><div class="step-text"><div class="step-meta"><span class="num">3</span><span class="host" style="--fg:#334155;--bg:#EEF2F6">Browser</span></div><h4>The button is only a link</h4><p>Nothing is booked or held in Phase 2. "Ask about this date" is a link to the contact form with the class and date in the query string, which Flow 3 picks up. A full date has no link.</p><dl class="example"><div class="example-title">In this example</div><dt>link</dt><dd><code>/contact?class=batik-workshop&amp;date=2026-11-13T23:30:00.000Z</code></dd></dl></div><div class="step-code"><figure class="code"><div class="code-head"><span class="path">frontend/src/components/session-list.tsx</span><span class="lines">lines 95–103</span></div><pre><span class="gutter" aria-hidden="true">95
+96
+97
+98
+99
+100
+101
+102
+103</span><code>{!s.isFull &amp;&amp; (
+  &lt;Link
+    href={<span class="s">`/contact?class=${encodeURIComponent(slug)}&amp;date=${encodeURIComponent(s.startsAt)}`</span>}
+    className={buttonOutline}
+    aria-label={<span class="s">`Ask about ${title} on ${when}`</span>}
+  &gt;
+    Ask about this date
+  &lt;/Link&gt;
+)}</code></pre></figure></div></section></section><section class="flow" id="contact"><header class="flow-head"><span class="flow-num">Flow 3</span><h3>Asking about a date</h3><p>The only write in Phase 2. One row in <code>enquiries</code>, no email yet (that is Phase 4).</p></header><ol class="rail"><li style="--fg:#334155;--bg:#EEF2F6"><span class="rail-host">Browser</span><code>Ask about this date</code></li><li style="--fg:#18181B;--bg:#F1F1F2"><span class="rail-host">Vercel</span><code>ContactPage → draftMessage</code></li><li style="--fg:#334155;--bg:#EEF2F6"><span class="rail-host">Browser</span><code>ContactForm.onSubmit</code></li><li style="--fg:#18181B;--bg:#F1F1F2"><span class="rail-host">Vercel</span><code>rewrite</code></li><li style="--fg:#5B21B6;--bg:#F2ECFD"><span class="rail-host">Render</span><code>EnquiriesController.create</code></li><li style="--fg:#5B21B6;--bg:#F2ECFD"><span class="rail-host">Render</span><code>EnquiriesService.create</code></li><li style="--fg:#047857;--bg:#E6F5EE"><span class="rail-host">Neon</span><code>INSERT enquiries</code></li></ol><figure class="diagram"><div class="scroll"><svg viewBox="0 0 964 560" style="max-width:964px" role="img" aria-label="Asking about a date. The page is drafted on the server; the post comes from the browser." xmlns="http://www.w3.org/2000/svg" font-family="Inter, system-ui, sans-serif"><defs><marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#3F3F46"/></marker></defs><line x1="102.0" y1="68" x2="102.0" y2="550" stroke="#D4D4D8" stroke-dasharray="3 4"/><rect x="24.0" y="18" width="156" height="46" rx="10" fill="#EEF2F6" stroke="#334155" stroke-width="1.5"/><text x="102.0" y="38" text-anchor="middle" font-size="13" font-weight="600" fill="#18181B">ContactForm</text><text x="102.0" y="55" text-anchor="middle" font-size="11.5" font-weight="600" fill="#334155">BROWSER</text><line x1="292.0" y1="68" x2="292.0" y2="550" stroke="#D4D4D8" stroke-dasharray="3 4"/><rect x="214.0" y="18" width="156" height="46" rx="10" fill="#F1F1F2" stroke="#18181B" stroke-width="1.5"/><text x="292.0" y="38" text-anchor="middle" font-size="13" font-weight="600" fill="#18181B">ContactPage</text><text x="292.0" y="55" text-anchor="middle" font-size="11.5" font-weight="600" fill="#18181B">VERCEL</text><line x1="482.0" y1="68" x2="482.0" y2="550" stroke="#D4D4D8" stroke-dasharray="3 4"/><rect x="404.0" y="18" width="156" height="46" rx="10" fill="#F2ECFD" stroke="#5B21B6" stroke-width="1.5"/><text x="482.0" y="38" text-anchor="middle" font-size="13" font-weight="600" fill="#18181B">Render API</text><text x="482.0" y="55" text-anchor="middle" font-size="11.5" font-weight="600" fill="#5B21B6">RENDER</text><line x1="672.0" y1="68" x2="672.0" y2="550" stroke="#D4D4D8" stroke-dasharray="3 4"/><rect x="594.0" y="18" width="156" height="46" rx="10" fill="#F2ECFD" stroke="#5B21B6" stroke-width="1.5"/><text x="672.0" y="38" text-anchor="middle" font-size="13" font-weight="600" fill="#18181B">EnquiriesService</text><text x="672.0" y="55" text-anchor="middle" font-size="11.5" font-weight="600" fill="#5B21B6">RENDER</text><line x1="862.0" y1="68" x2="862.0" y2="550" stroke="#D4D4D8" stroke-dasharray="3 4"/><rect x="784.0" y="18" width="156" height="46" rx="10" fill="#E6F5EE" stroke="#047857" stroke-width="1.5"/><text x="862.0" y="38" text-anchor="middle" font-size="13" font-weight="600" fill="#18181B">Postgres</text><text x="862.0" y="55" text-anchor="middle" font-size="11.5" font-weight="600" fill="#047857">NEON</text><line x1="102.0" y1="104" x2="288.0" y2="104" stroke="#3F3F46" stroke-width="1.4" marker-end="url(#ah)"/><rect x="97.15" y="87" width="199.7" height="16" fill="#FFFFFF"/><text x="197.0" y="99" text-anchor="middle" font-size="12.5" fill="#18181B">GET /contact?class=…&amp;date=…</text><circle cx="85.15" cy="95" r="9" fill="#18181B"/><text x="85.15" y="99" text-anchor="middle" font-size="11" font-weight="700" fill="#FFFFFF">1</text><line x1="292.0" y1="150" x2="478.0" y2="150" stroke="#3F3F46" stroke-width="1.4" marker-end="url(#ah)"/><rect x="255.2" y="133" width="263.6" height="16" fill="#FFFFFF"/><text x="387.0" y="145" text-anchor="middle" font-size="12.5" fill="#18181B">GET /api/v1/workshops/batik-workshop</text><circle cx="243.2" cy="141" r="9" fill="#18181B"/><text x="243.2" y="145" text-anchor="middle" font-size="11" font-weight="700" fill="#FFFFFF">1</text><line x1="482.0" y1="196" x2="296.0" y2="196" stroke="#3F3F46" stroke-width="1.4" marker-end="url(#ah)" stroke-dasharray="5 4"/><rect x="340.4" y="179" width="93.19999999999999" height="16" fill="#FFFFFF"/><text x="387.0" y="191" text-anchor="middle" font-size="12.5" fill="#52525B">{ title, … }</text><line x1="292.0" y1="242" x2="106.0" y2="242" stroke="#3F3F46" stroke-width="1.4" marker-end="url(#ah)" stroke-dasharray="5 4"/><rect x="90.05000000000001" y="225" width="213.89999999999998" height="16" fill="#FFFFFF"/><text x="197.0" y="237" text-anchor="middle" font-size="12.5" fill="#52525B">form, message already drafted</text><path d="M102.0,276 h38 v18 h-36" fill="none" stroke="#3F3F46" stroke-width="1.4" marker-end="url(#ah)"/><rect x="144.0" y="271" width="157.1" height="16" fill="#FFFFFF"/><text x="148.0" y="283" text-anchor="start" font-size="12.5" fill="#18181B">onSubmit → validate()</text><circle cx="86.0" cy="279" r="9" fill="#18181B"/><text x="86.0" y="283" text-anchor="middle" font-size="11" font-weight="700" fill="#FFFFFF">2</text><line x1="102.0" y1="334" x2="478.0" y2="334" stroke="#3F3F46" stroke-width="1.4" marker-end="url(#ah)"/><rect x="114.05000000000001" y="317" width="355.9" height="16" fill="#FFFFFF"/><text x="292.0" y="329" text-anchor="middle" font-size="12.5" fill="#18181B">POST /api/v1/contact (through the Vercel rewrite)</text><circle cx="102.05000000000001" cy="325" r="9" fill="#18181B"/><text x="102.05000000000001" y="329" text-anchor="middle" font-size="11" font-weight="700" fill="#FFFFFF">2</text><rect x="335.4" y="358" width="293.20000000000005" height="26" rx="6" fill="#FFFBEB" stroke="#E5C07B"/><text x="482.0" y="375" text-anchor="middle" font-size="12" fill="#713F12">ThrottlerGuard: 5 per 10 min per caller</text><line x1="482.0" y1="426" x2="668.0" y2="426" stroke="#3F3F46" stroke-width="1.4" marker-end="url(#ah)"/><rect x="533.95" y="409" width="86.1" height="16" fill="#FFFFFF"/><text x="577.0" y="421" text-anchor="middle" font-size="12.5" fill="#18181B">create(dto)</text><circle cx="521.95" cy="417" r="9" fill="#18181B"/><text x="521.95" y="421" text-anchor="middle" font-size="11" font-weight="700" fill="#FFFFFF">3</text><line x1="672.0" y1="472" x2="858.0" y2="472" stroke="#3F3F46" stroke-width="1.4" marker-end="url(#ah)"/><rect x="688.45" y="455" width="157.1" height="16" fill="#FFFFFF"/><text x="767.0" y="467" text-anchor="middle" font-size="12.5" fill="#18181B">INSERT INTO enquiries</text><circle cx="676.45" cy="463" r="9" fill="#18181B"/><text x="676.45" y="467" text-anchor="middle" font-size="11" font-weight="700" fill="#FFFFFF">4</text><line x1="482.0" y1="518" x2="106.0" y2="518" stroke="#3F3F46" stroke-width="1.4" marker-end="url(#ah)" stroke-dasharray="5 4"/><rect x="234.75" y="501" width="114.5" height="16" fill="#FFFFFF"/><text x="292.0" y="513" text-anchor="middle" font-size="12.5" fill="#52525B">202 { message }</text></svg></div><figcaption>Asking about a date. The page is drafted on the server; the post comes from the browser.</figcaption></figure><section class="step"><div class="step-text"><div class="step-meta"><span class="num">1</span><span class="host" style="--fg:#18181B;--bg:#F1F1F2">Vercel</span></div><h4><code>ContactPage</code> drafts the message</h4><p>The query string is untrusted, so the page looks the slug up through the same <code>getWorkshop</code> as Flow 1 and uses the title the API returns. An unknown slug gives an empty message. A date that does not parse falls back to asking about the next one.</p><dl class="example"><div class="example-title">In this example</div><dt>query</dt><dd><code>?class=batik-workshop&amp;date=2026-11-13T23:30:00.000Z</code></dd><dt>message</dt><dd><code>Hello Rehana, I&#x27;d like a place in &lt;title&gt; on &lt;day&gt; at &lt;time&gt;.</code></dd></dl></div><div class="step-code"><figure class="code"><div class="code-head"><span class="path">frontend/src/app/contact/page.tsx</span><span class="lines">lines 18–34</span></div><pre><span class="gutter" aria-hidden="true">18
+19
+20
+21
+22
+23
+24
+25
+26
+27
+28
+29
+30
+31
+32
+33
+34</span><code><span class="k">async</span> <span class="k">function</span> draftMessage(slug?: string, date?: string): Promise&lt;string&gt; {
+  <span class="k">if</span> (!slug) <span class="k">return</span> <span class="s">&quot;&quot;</span>;
+  <span class="k">const</span> workshop = <span class="k">await</span> getWorkshop(slug);
+  <span class="k">if</span> (!workshop.ok) <span class="k">return</span> <span class="s">&quot;&quot;</span>;
+  <span class="k">const</span> when = date &amp;&amp; !Number.isNaN(Date.parse(date)) ? date : <span class="k">null</span>;
+  <span class="k">return</span> when
+    ? <span class="s">`Hello Rehana, I’d like a place in ${workshop.data.title} on ${formatLongDay(when)} at ${formatTime(when)}.`</span>
+    : <span class="s">`Hello Rehana, I’d like to know about the next ${workshop.data.title}.`</span>;
+}
 
-<h2>Three decisions worth knowing</h2>
+<span class="k">export</span> <span class="k">default</span> <span class="k">async</span> <span class="k">function</span> ContactPage({
+  searchParams,
+}: {
+  searchParams: Promise&lt;{ <span class="k">class</span>?: string; date?: string }&gt;;
+}) {
+  <span class="k">const</span> params = <span class="k">await</span> searchParams;
+  <span class="k">const</span> initialMessage = <span class="k">await</span> draftMessage(params.<span class="k">class</span>, params.date);</code></pre></figure></div></section><section class="step"><div class="step-text"><div class="step-meta"><span class="num">2</span><span class="host" style="--fg:#334155;--bg:#EEF2F6">Browser</span></div><h4><code>onSubmit</code> validates, then posts</h4><p><code>validate()</code> runs first and puts each error in words next to its field. Only a clean form is sent. The post is relative, so it goes through the Vercel rewrite like Flow 2.</p><p>Why the browser posts, not a server action: the throttle is per caller. From a server action every post would come from Vercel's address, and one sender could use up everyone's allowance.</p></div><div class="step-code"><figure class="code"><div class="code-head"><span class="path">frontend/src/components/contact-form.tsx</span><span class="lines">lines 105–120</span></div><pre><span class="gutter" aria-hidden="true">105
+106
+107
+108
+109
+110
+111
+112
+113
+114
+115
+116
+117
+118
+119
+120</span><code><span class="k">try</span> {
+  <span class="k">const</span> res = <span class="k">await</span> fetch(<span class="s">&quot;/api/v1/contact&quot;</span>, {
+    method: <span class="s">&quot;POST&quot;</span>,
+    headers: { <span class="s">&quot;content-type&quot;</span>: <span class="s">&quot;application/json&quot;</span>, accept: <span class="s">&quot;application/json&quot;</span> },
+    body: JSON.stringify(body),
+  });
+  <span class="k">const</span> json = (<span class="k">await</span> res.json().<span class="k">catch</span>(() =&gt; <span class="k">null</span>)) <span class="k">as</span> {
+    message?: string | string[];
+  } | <span class="k">null</span>;
 
-<div class="card">
-  <h3>Pages are rendered on request, and the data is cached for a minute</h3>
-  <p>A page built once at deploy time would go stale the moment Rehana adds a date, and CI has no API to build against. Instead each page is rendered when it is visited, from data that is at most 60 seconds old. Seat counts skip the cache entirely. (ADR-034)</p>
-</div>
+  <span class="k">if</span> (res.ok) {
+    setStatus({
+      state: <span class="s">&quot;sent&quot;</span>,
+      message: <span class="k">typeof</span> json?.message === <span class="s">&quot;string&quot;</span> ? json.message : <span class="s">&quot;Thank you.&quot;</span>,
+    });
+    form.reset();</code></pre></figure><figure class="code"><div class="code-head"><span class="path">frontend/src/components/contact-form.tsx</span><span class="lines">lines 286–289</span></div><pre><span class="gutter" aria-hidden="true">286
+287
+288
+289</span><code><span class="c">{/* Honeypot: hidden from people and screen readers, filled by bots. */}</span>
+&lt;div aria-hidden=<span class="s">&quot;true&quot;</span> className=<span class="s">&quot;absolute -left-[9999px] h-px w-px overflow-hidden&quot;</span>&gt;
+  &lt;label htmlFor=<span class="s">&quot;website&quot;</span>&gt;Leave this empty&lt;/label&gt;
+  &lt;input id=<span class="s">&quot;website&quot;</span> name=<span class="s">&quot;website&quot;</span> <span class="k">type</span>=<span class="s">&quot;text&quot;</span> tabIndex={-<span class="n">1</span>} autoComplete=<span class="s">&quot;off&quot;</span> /&gt;</code></pre></figure></div></section><section class="step"><div class="step-text"><div class="step-meta"><span class="num">3</span><span class="host" style="--fg:#5B21B6;--bg:#F2ECFD">Render</span></div><h4>The controller: throttled, validated, 202</h4><p><code>@Throttle</code> overrides the global limit for this route: 5 posts per 10 minutes. The sixth gets 429 before any code of ours runs.</p><p>The global <code>ValidationPipe</code> rejects unknown fields and bad values against <code>CreateEnquiryDto</code> with 400. 202 means accepted, not handled: Rehana replies later.</p></div><div class="step-code"><figure class="code"><div class="code-head"><span class="path">backend/src/enquiries/enquiries.controller.ts</span><span class="lines">lines 14–22</span></div><pre><span class="gutter" aria-hidden="true">14
+15
+16
+17
+18
+19
+20
+21
+22</span><code><span class="c">/** FR-C13, and private-event enquiries (ADR-019). */</span>
+@Public()
+@Post()
+@HttpCode(HttpStatus.ACCEPTED)
+@Throttle({ <span class="k">default</span>: { limit: <span class="n">5</span>, ttl: <span class="n">600_000</span> } })
+<span class="k">async</span> create(@Body() dto: CreateEnquiryDto): Promise&lt;{ message: string }&gt; {
+  <span class="k">await</span> this.enquiries.create(dto);
+  <span class="k">return</span> { message: ENQUIRY_RECEIVED };
+}</code></pre></figure></div></section><section class="step"><div class="step-text"><div class="step-meta"><span class="num">4</span><span class="host" style="--fg:#5B21B6;--bg:#F2ECFD">Render</span><span class="host" style="--fg:#047857;--bg:#E6F5EE">Neon</span></div><h4>The service: honeypot, then one insert</h4><p><code>website</code> is a hidden field a person never fills. When it has a value, the service stores nothing but the controller still answers 202, so a bot learns nothing.</p><p>The class name travels inside the message text. <code>enquiries</code> has no foreign key to a workshop.</p></div><div class="step-code"><figure class="code"><div class="code-head"><span class="path">backend/src/enquiries/enquiries.service.ts</span><span class="lines">lines 19–43</span></div><pre><span class="gutter" aria-hidden="true">19
+20
+21
+22
+23
+24
+25
+26
+27
+28
+29
+30
+31
+32
+33
+34
+35
+36
+37
+38
+39
+40
+41
+42
+43</span><code><span class="k">async</span> create(dto: CreateEnquiryDto): Promise&lt;EnquiryOutcome&gt; {
+  <span class="k">if</span> (dto.website) {
+    this.logger.warn(<span class="s">&#x27;Contact form honeypot filled; enquiry discarded&#x27;</span>);
+    <span class="k">return</span> <span class="s">&#x27;discarded&#x27;</span>;
+  }
 
-<div class="card">
-  <h3>Sold-out dates stay visible, marked “Fully booked”</h3>
-  <p>A hidden date looks as if no class was planned. A full one shows the class is popular and points the visitor to another date, or to asking Rehana. It is said in words, not only with colour. (ADR-037)</p>
-</div>
+  <span class="k">const</span> kind = dto.kind ?? EnquiryKind.GENERAL;
+  <span class="k">const</span> isPrivateEvent = kind === EnquiryKind.PRIVATE_EVENT;
 
-<div class="card">
-  <h3>The browser sends the contact form, not the Next.js server</h3>
-  <p>The API allows 5 messages per visitor every 10 minutes. If the form went through the Next.js server, every message would arrive from Vercel's addresses, and one spammer could use up everyone's allowance. A hidden honeypot field quietly drops bots. (ADR-038)</p>
-  <details>
-    <summary>Show me the code: the rate limit and the honeypot</summary>
-    <p class="src">backend/src/enquiries/enquiries.controller.ts</p>
-    <pre><code>  @HttpCode(HttpStatus.ACCEPTED)
-  @Throttle({ default: { limit: 5, ttl: 600_000 } })
-  async create(@Body() dto: CreateEnquiryDto): Promise&lt;{ message: string }&gt; {
-    await this.enquiries.create(dto);
-    return { message: ENQUIRY_RECEIVED };
-  }</code></pre>
-    <p class="src">backend/src/enquiries/enquiries.service.ts</p>
-    <pre><code>    if (dto.website) {
-      this.logger.warn('Contact form honeypot filled; enquiry discarded');
-      return 'discarded';
-    }</code></pre>
-  </details>
-</div>
+  <span class="k">await</span> this.prisma.enquiry.create({
+    data: {
+      kind,
+      name: dto.name,
+      email: dto.email,
+      phone: dto.phone || <span class="k">null</span>,
+      message: dto.message,
+      preferredDate:
+        isPrivateEvent &amp;&amp; dto.preferredDate
+          ? <span class="k">new</span> Date(dto.preferredDate)
+          : <span class="k">null</span>,
+      guestCount: isPrivateEvent ? (dto.guestCount ?? <span class="k">null</span>) : <span class="k">null</span>,
+    },
+  });
+  <span class="k">return</span> <span class="s">&#x27;stored&#x27;</span>;
+}</code></pre></figure></div></section></section><section class="flow" id="home"><header class="flow-head"><span class="flow-num">Flow 4</span><h3>The home page and the class list</h3><p>Both pages make one call, <code>getWorkshops</code>, through the same <code>get()</code> as Flow 1.</p></header><ol class="rail"><li style="--fg:#334155;--bg:#EEF2F6"><span class="rail-host">Browser</span><code>GET / or /classes?type=…</code></li><li style="--fg:#18181B;--bg:#F1F1F2"><span class="rail-host">Vercel</span><code>Home · ClassesPage</code></li><li style="--fg:#18181B;--bg:#F1F1F2"><span class="rail-host">Vercel</span><code>getWorkshops → get()</code></li><li style="--fg:#5B21B6;--bg:#F2ECFD"><span class="rail-host">Render</span><code>WorkshopsController.list</code></li><li style="--fg:#5B21B6;--bg:#F2ECFD"><span class="rail-host">Render</span><code>listWorkshops</code></li><li style="--fg:#047857;--bg:#E6F5EE"><span class="rail-host">Neon</span><code>workshops + next date</code></li></ol><section class="step"><div class="step-text"><div class="step-meta"><span class="num">1</span><span class="host" style="--fg:#18181B;--bg:#F1F1F2">Vercel</span></div><h4>Rendered per visit, not at build time</h4><p><code>await connection()</code> tells Next.js not to pre-render the home page during the build. CI builds with no API running, so a build-time render would bake in an empty catalogue. The data is still cached for 60 seconds by <code>get()</code>.</p><p>The class list filters by <code>?type</code> on Vercel, after the call, so both pages share one cached response.</p></div><div class="step-code"><figure class="code"><div class="code-head"><span class="path">frontend/src/app/page.tsx</span><span class="lines">lines 37–40</span></div><pre><span class="gutter" aria-hidden="true">37
+38
+39
+40</span><code><span class="k">export</span> <span class="k">default</span> <span class="k">async</span> <span class="k">function</span> Home() {
+  <span class="c">// Rendered per request, never at build time: CI builds with no API running.</span>
+  <span class="k">await</span> connection();
+  <span class="k">const</span> workshops = <span class="k">await</span> getWorkshops();</code></pre></figure><figure class="code"><div class="code-head"><span class="path">frontend/src/app/classes/page.tsx</span><span class="lines">lines 24–32</span></div><pre><span class="gutter" aria-hidden="true">24
+25
+26
+27
+28
+29
+30
+31
+32</span><code><span class="k">const</span> { <span class="k">type</span> } = <span class="k">await</span> searchParams;
+<span class="k">const</span> selected = parseClassType(<span class="k">type</span>);
+<span class="k">const</span> workshops = <span class="k">await</span> getWorkshops();
 
-<h2>What can go wrong</h2>
+<span class="k">const</span> shown = workshops.ok
+  ? workshops.data.filter(
+      (w) =&gt; !selected || w.productType === CLASS_TYPES[selected].productType,
+    )
+  : [];</code></pre></figure></div></section><section class="step"><div class="step-text"><div class="step-meta"><span class="num">2</span><span class="host" style="--fg:#5B21B6;--bg:#F2ECFD">Render</span><span class="host" style="--fg:#047857;--bg:#E6F5EE">Neon</span></div><h4><code>listWorkshops</code>: published classes and each one's next date</h4><p>Two queries, whatever the number of classes: the published workshops in their set order, then <code>nextSessions</code> for all of their ids at once, which gives each card its next date.</p></div><div class="step-code"><figure class="code"><div class="code-head"><span class="path">backend/src/catalogue/workshops.controller.ts</span><span class="lines">lines 14–19</span></div><pre><span class="gutter" aria-hidden="true">14
+15
+16
+17
+18
+19</span><code><span class="c">/** FR-C1. Published classes only, in the admin&#x27;s order. */</span>
+@Public()
+@Get()
+<span class="k">async</span> list(): Promise&lt;{ workshops: WorkshopCard[] }&gt; {
+  <span class="k">return</span> { workshops: <span class="k">await</span> this.catalogue.listWorkshops(<span class="k">new</span> Date()) };
+}</code></pre></figure><figure class="code"><div class="code-head"><span class="path">backend/src/catalogue/catalogue.service.ts</span><span class="lines">lines 81–92</span></div><pre><span class="gutter" aria-hidden="true">81
+82
+83
+84
+85
+86
+87
+88
+89
+90
+91
+92</span><code><span class="k">async</span> listWorkshops(now: Date): Promise&lt;WorkshopCard[]&gt; {
+  <span class="k">const</span> workshops = <span class="k">await</span> this.prisma.workshop.findMany({
+    where: { status: WorkshopStatus.PUBLISHED },
+    orderBy: [{ sortOrder: <span class="s">&#x27;asc&#x27;</span> }, { title: <span class="s">&#x27;asc&#x27;</span> }],
+    select: cardSelect,
+  });
+  <span class="k">const</span> next = <span class="k">await</span> this.nextSessions(
+    workshops.map((w) =&gt; w.id),
+    now,
+  );
+  <span class="k">return</span> workshops.map((w) =&gt; this.toCard(w, next.get(w.id) ?? <span class="k">null</span>));
+}</code></pre></figure></div></section></section><section class="flow" id="calendar"><header class="flow-head"><span class="flow-num">Flow 5</span><h3>The calendar</h3><p>One month at a time, in Adelaide time, at most six months ahead.</p></header><ol class="rail"><li style="--fg:#334155;--bg:#EEF2F6"><span class="rail-host">Browser</span><code>GET /calendar?month=2026-11</code></li><li style="--fg:#18181B;--bg:#F1F1F2"><span class="rail-host">Vercel</span><code>CalendarPage → getSessions</code></li><li style="--fg:#5B21B6;--bg:#F2ECFD"><span class="rail-host">Render</span><code>SessionsController.list</code></li><li style="--fg:#5B21B6;--bg:#F2ECFD"><span class="rail-host">Render</span><code>resolveRange</code></li><li style="--fg:#5B21B6;--bg:#F2ECFD"><span class="rail-host">Render</span><code>listSessions</code></li><li style="--fg:#047857;--bg:#E6F5EE"><span class="rail-host">Neon</span><code>sessions in range</code></li></ol><section class="step"><div class="step-text"><div class="step-meta"><span class="num">1</span><span class="host" style="--fg:#18181B;--bg:#F1F1F2">Vercel</span></div><h4>The page turns a month into a time range</h4><p><code>monthRange</code> gives the first and last instant of the month in <code>Australia/Adelaide</code>, so a 10 am class on the 1st is not pushed into the previous month by UTC. Months beyond six ahead are clamped.</p></div><div class="step-code"><figure class="code"><div class="code-head"><span class="path">frontend/src/app/calendar/page.tsx</span><span class="lines">lines 38–44</span></div><pre><span class="gutter" aria-hidden="true">38
+39
+40
+41
+42
+43
+44</span><code><span class="k">const</span> { month: requested } = <span class="k">await</span> searchParams;
+<span class="k">const</span> thisMonth = currentMonth();
+<span class="k">const</span> lastMonth = shiftMonth(thisMonth, MONTHS_AHEAD);
+<span class="k">const</span> month = clamp(parseMonth(requested) ?? thisMonth, thisMonth, lastMonth);
 
-<ul class="risks">
-  <li><b>The free API is asleep.</b> Render's free tier sleeps after 15 minutes and takes about a minute to wake. The site stops waiting after 8 seconds and shows “We couldn't load … just now” instead of hanging. Open the site a minute before a demo.</li>
-  <li><b>No email reaches Rehana yet.</b> Messages are saved in the database, but nothing notifies her until Phase 4, and her inbox screen arrives in Phase 5.</li>
-  <li><b>A server-side count can be up to a minute old.</b> The calendar's “places left” come from the cached answer. Class pages refresh in the browser, and the Phase 3 booking re-checks seats under a lock, so nobody can be sold a seat that isn't there.</li>
-  <li><b>The site's own requests share one rate limit.</b> All of the Next.js server's API calls come from Vercel, so they share the general limit of 120 per minute. That is fine for a demo, and it is an open question (SPEC § 10, item 24) before real traffic arrives.</li>
-</ul>
+<span class="k">const</span> { <span class="k">from</span>, to } = monthRange(month);
+<span class="k">const</span> result = <span class="k">await</span> getSessions(<span class="k">from</span>, to);</code></pre></figure></div></section><section class="step"><div class="step-text"><div class="step-meta"><span class="num">2</span><span class="host" style="--fg:#5B21B6;--bg:#F2ECFD">Render</span></div><h4>The API refuses ranges it was not built for</h4><p><code>resolveRange</code> defaults to 31 days from now and refuses more than 92, with 400. The page never asks for that much; the limit protects the API from other callers.</p></div><div class="step-code"><figure class="code"><div class="code-head"><span class="path">backend/src/catalogue/sessions.controller.ts</span><span class="lines">lines 11–24</span></div><pre><span class="gutter" aria-hidden="true">11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21
+22
+23
+24</span><code><span class="c">/** FR-C3. The calendar: every class&#x27;s dates in [from, to). */</span>
+@Public()
+@Get()
+<span class="k">async</span> list(
+  @Query() query: SessionRangeDto,
+): Promise&lt;{ <span class="k">from</span>: string; to: string; sessions: CalendarSessionView[] }&gt; {
+  <span class="k">const</span> now = <span class="k">new</span> Date();
+  <span class="k">const</span> { <span class="k">from</span>, to } = resolveRange(query, now);
+  <span class="k">return</span> {
+    <span class="k">from</span>: <span class="k">from</span>.toISOString(),
+    to: to.toISOString(),
+    sessions: <span class="k">await</span> this.catalogue.listSessions(<span class="k">from</span>, to, now),
+  };
+}</code></pre></figure><figure class="code"><div class="code-head"><span class="path">backend/src/catalogue/dto/session-range.dto.ts</span><span class="lines">lines 27–45</span></div><pre><span class="gutter" aria-hidden="true">27
+28
+29
+30
+31
+32
+33
+34
+35
+36
+37
+38
+39
+40
+41
+42
+43
+44
+45</span><code><span class="k">export</span> <span class="k">function</span> resolveRange(
+  dto: SessionRangeDto,
+  now: Date,
+): { <span class="k">from</span>: Date; to: Date } {
+  <span class="k">const</span> <span class="k">from</span> = dto.<span class="k">from</span> ? <span class="k">new</span> Date(dto.<span class="k">from</span>) : now;
+  <span class="k">const</span> to = dto.to
+    ? <span class="k">new</span> Date(dto.to)
+    : <span class="k">new</span> Date(<span class="k">from</span>.getTime() + DEFAULT_RANGE_DAYS * DAY_MS);
 
-<section class="next">
-  <h2>What's next</h2>
-  <p><b>Now:</b> the staging link, a free Vercel, Render and Neon setup, so Rehana can click through it herself.</p>
-  <p><b>Phase 3:</b> sign-up and login screens, then booking: choose a date, a seat is held for 15 minutes, pay with Stripe in test mode, get a confirmation.</p>
-</section>
-
-<footer>
-  <p>See it running: in <code>backend/</code> run <code>npm run start:dev</code>, in <code>frontend/</code> run <code>npx next dev -p 3100</code>, then open <code>localhost:3100</code>. Code excerpts are taken from the repository when this page is built.</p>
-</footer>
-
+  <span class="k">if</span> (to &lt;= <span class="k">from</span>) {
+    <span class="k">throw</span> <span class="k">new</span> BadRequestException(<span class="s">&#x27;to must be later than from&#x27;</span>);
+  }
+  <span class="k">if</span> (to.getTime() - <span class="k">from</span>.getTime() &gt; MAX_RANGE_DAYS * DAY_MS) {
+    <span class="k">throw</span> <span class="k">new</span> BadRequestException(
+      <span class="s">`A range can cover at most ${MAX_RANGE_DAYS} days`</span>,
+    );
+  }
+  <span class="k">return</span> { <span class="k">from</span>, to };
+}</code></pre></figure></div></section></section><h2 id="data">What the database sees</h2><p class="sub">No migration this phase. The tables came from Phase 1; Phase 2 reads three and writes one.</p><div class="table"><table><thead><tr><th>Table</th><th>Read or write</th><th>Where</th><th>What it uses</th></tr></thead><tbody><tr><td><code>workshops</code></td><td>read</td><td><code>listWorkshops</code>, <code>getWorkshop</code>, <code>listWorkshopSessions</code></td><td><code>status = 'PUBLISHED'</code>, slug, title, price, photo path</td></tr><tr><td><code>sessions</code></td><td>read</td><td>every catalogue query</td><td><code>status = 'SCHEDULED'</code>, <code>startsAt &gt; now</code>, capacity. Never <code>onlineJoinUrl</code></td></tr><tr><td><code>bookings</code></td><td>read (a sum)</td><td><code>seatsTaken</code></td><td>seats, status, <code>holdExpiresAt</code>. Empty until Phase 3</td></tr><tr><td><code>enquiries</code></td><td>insert</td><td><code>EnquiriesService.create</code></td><td>kind, name, email, message. <code>handledAt</code> stays null</td></tr></tbody></table></div><p class="prose">Photos are not in the database. It stores a path such as <code>/images/classes/batik-workshop.jpg</code>, and the file ships with the frontend in <code>frontend/public/</code>, so Vercel serves it from its CDN.</p><h2 id="decisions">Why it is built this way</h2><p class="sub">Each choice, what it replaced, and what it costs.</p><div class="table"><table><thead><tr><th>Chosen</th><th>Instead of</th><th>Because</th><th>Cost</th></tr></thead><tbody><tr><td>Render per visit, cache data 60 s</td><td>HTML built once at deploy</td><td>CI has no API to build against, and a new date would wait for the next deploy</td><td>The first visitor each minute waits on the API</td></tr><tr><td>Browser refetches seats with <code>no-store</code></td><td>Trust the 60 s cache</td><td>A seat count a minute old can be wrong</td><td>One extra request per class page view</td></tr><tr><td>Browser posts the contact form</td><td>A server action</td><td>The throttle is per caller; through a server action every caller is Vercel</td><td>The browser needs a route to the API: the rewrite</td></tr><tr><td>Full dates stay listed</td><td>Hide them</td><td>A missing Saturday looks like she never ran one</td><td>Rows you cannot ask about</td></tr><tr><td>One seat rule, <code>seatHoldingBookings</code></td><td>Count confirmed only</td><td>Confirmed-only shows seats someone is paying for right now</td><td>Phase 3 must use it under its lock</td></tr><tr><td>Zoom link left out of <code>sessionSelect</code></td><td>Return it and hide it in React</td><td>Anything in the JSON is public</td><td>A separate query for confirmed bookings later</td></tr></tbody></table></div><h2 id="failures">When it goes wrong</h2><p class="sub">What the code does, what a visitor sees, and how to tell from outside.</p><div class="table"><table><thead><tr><th>Failure</th><th>Code path</th><th>Visitor sees</th><th>How to spot it</th></tr></thead><tbody><tr><td>Render asleep, or slower than 8 s</td><td><code>get()</code> aborts, returns <code>unavailable</code></td><td>"We couldn't load this class just now"</td><td>Render wakes in about a minute; reload</td></tr><tr><td>Draft or misspelt slug</td><td><code>NotFoundException</code> → 404</td><td>The site's 404 page</td><td>API answers 404 "Class not found"</td></tr><tr><td>Sixth contact post in 10 minutes</td><td><code>@Throttle</code> rejects before the controller</td><td>"Please wait ten minutes and try again"</td><td>HTTP 429; no sixth row</td></tr><tr><td>Honeypot filled</td><td><code>create</code> returns <code>'discarded'</code>, still 202</td><td>The normal thank-you</td><td>Log line "Contact form honeypot filled"</td></tr><tr><td>Browser seat refetch fails</td><td><code>SessionList</code> ignores the error</td><td>The server-rendered dates</td><td>Network panel shows the <code>/sessions</code> call failing</td></tr><tr><td>Range over 92 days</td><td><code>resolveRange</code> throws</td><td>Never, from the site</td><td>400 "A range can cover at most 92 days"</td></tr></tbody></table></div><figure class="code"><div class="code-head"><span class="path">frontend/src/components/api-unavailable.tsx</span><span class="lines">lines 8–16</span></div><pre><span class="gutter" aria-hidden="true">8
+9
+10
+11
+12
+13
+14
+15
+16</span><code><span class="k">export</span> <span class="k">function</span> ApiUnavailable({ what }: { what: string }) {
+  <span class="k">return</span> (
+    &lt;div
+      role=<span class="s">&quot;status&quot;</span>
+      className=<span class="s">&quot;rounded-[var(--radius-card)] border-2 border-line bg-card p-6&quot;</span>
+    &gt;
+      &lt;p className=<span class="s">&quot;font-display text-xl font-semibold text-plum&quot;</span>&gt;
+        We couldn’t load {what} just now
+      &lt;/p&gt;</code></pre><figcaption>The message a visitor sees while Render wakes up.</figcaption></figure><h2 id="verify">Check it yourself</h2><p class="sub">Read-only, against staging. Wake Render first: the first call can take a minute.</p><figure class="code plain"><div class="code-head"><span class="path">Through Vercel, exactly as the browser does it</span></div><pre><code><span class="k">curl</span> -s https://studio-rags.vercel.app/api/v1/workshops/batik-workshop/sessions</code></pre></figure><p class="prose">Expect 200 and a <code>sessions</code> array whose first entry has <code>seatsLeft</code> 8 and <code>priceCents</code> 8200.</p><figure class="code plain"><div class="code-head"><span class="path">A slug that does not exist</span></div><pre><code><span class="k">curl</span> -s -o /dev/null -w &quot;%{http_code}\n&quot; https://studio-rags.vercel.app/api/v1/workshops/no-such-class</code></pre></figure><p class="prose">Expect <code>404</code>.</p><figure class="code plain"><div class="code-head"><span class="path">The tests that pin this behaviour (local, against studio_rags_test)</span></div><pre><code><span class="k">cd</span> backend &amp;&amp; npx jest src/catalogue src/enquiries
+npm run test:e2e -- catalogue enquiries</code></pre></figure><div class="table"><table><thead><tr><th>Test file</th><th>What it locks</th></tr></thead><tbody><tr><td><code>backend/src/catalogue/availability.spec.ts</code></td><td>Which bookings hold a seat; seats left never below zero</td></tr><tr><td><code>backend/src/catalogue/dto/session-range.dto.spec.ts</code></td><td>31-day default, 92-day refusal</td></tr><tr><td><code>backend/test/catalogue/workshops.e2e-spec.ts</code></td><td>Drafts are 404; response shape; no Zoom link</td></tr><tr><td><code>backend/test/catalogue/sessions.e2e-spec.ts</code></td><td>Calendar range and the availability endpoint</td></tr><tr><td><code>backend/test/enquiries/contact.e2e-spec.ts</code></td><td>202, honeypot, unknown fields rejected, sixth post 429</td></tr><tr><td><code>frontend/src/lib/adelaide.test.mjs</code>, <code>format.test.mjs</code></td><td>Adelaide dates and "Fully booked" in words</td></tr></tbody></table></div><h2 id="files">Every file in this phase</h2><p class="sub">62 files between <code>83eb46d</code> and <code>94abb4a</code> (the merge of PR #2). This list is generated from git, and the build fails if a file has no description.</p><details class="files"><summary>Show all 62 files</summary><div class="table"><table><thead><tr><th>File</th><th>Role</th></tr></thead><tbody><tr><td><code>CLAUDE.md</code></td><td>Added the phase-explainer and schema-change rules</td></tr><tr><td><code>backend/prisma/seed.ts</code></td><td>Six real classes, photo paths and alt text, dated sessions</td></tr><tr><td><code>backend/src/app.controller.spec.ts</code></td><td>Status check now points at /status</td></tr><tr><td><code>backend/src/app.module.ts</code></td><td>Registers the catalogue and enquiries modules; global limit 120/min</td></tr><tr><td><code>backend/src/app.service.ts</code></td><td>Status check now points at /status</td></tr><tr><td><code>backend/src/catalogue/availability.spec.ts</code></td><td>Seat rule tests</td></tr><tr><td><code>backend/src/catalogue/availability.ts</code></td><td><code>seatHoldingBookings</code>, <code>seatsLeft</code></td></tr><tr><td><code>backend/src/catalogue/catalogue.module.ts</code></td><td>Wires the two catalogue controllers</td></tr><tr><td><code>backend/src/catalogue/catalogue.service.ts</code></td><td>Every catalogue query</td></tr><tr><td><code>backend/src/catalogue/catalogue.types.ts</code></td><td>Response types</td></tr><tr><td><code>backend/src/catalogue/dto/session-range.dto.spec.ts</code></td><td>Range tests</td></tr><tr><td><code>backend/src/catalogue/dto/session-range.dto.ts</code></td><td><code>resolveRange</code>: 31-day default, 92-day cap</td></tr><tr><td><code>backend/src/catalogue/sessions.controller.ts</code></td><td><code>GET /sessions</code>, <code>GET /sessions/:id/availability</code></td></tr><tr><td><code>backend/src/catalogue/workshops.controller.ts</code></td><td><code>GET /workshops</code>, <code>/:slug</code>, <code>/:slug/sessions</code></td></tr><tr><td><code>backend/src/enquiries/dto/create-enquiry.dto.ts</code></td><td>Contact form validation</td></tr><tr><td><code>backend/src/enquiries/enquiries.controller.ts</code></td><td><code>POST /contact</code>, 5 per 10 minutes</td></tr><tr><td><code>backend/src/enquiries/enquiries.module.ts</code></td><td>Wires the enquiries controller</td></tr><tr><td><code>backend/src/enquiries/enquiries.service.spec.ts</code></td><td>Honeypot and insert tests</td></tr><tr><td><code>backend/src/enquiries/enquiries.service.ts</code></td><td>Honeypot, then the insert</td></tr><tr><td><code>backend/test/catalogue/sessions.e2e-spec.ts</code></td><td>HTTP tests for sessions</td></tr><tr><td><code>backend/test/catalogue/workshops.e2e-spec.ts</code></td><td>HTTP tests for workshops</td></tr><tr><td><code>backend/test/enquiries/contact.e2e-spec.ts</code></td><td>HTTP tests for the contact post</td></tr><tr><td><code>backend/test/utils/catalogue.ts</code></td><td>Test data builders</td></tr><tr><td><code>backend/test/utils/test-app.ts</code></td><td>Test app setup for the new modules</td></tr><tr><td><code>docs/SPEC.md</code></td><td>ADR-034 to ADR-038 and phase status</td></tr><tr><td><code>docs/client/2026-11-07_progress-note.md</code></td><td>Draft progress note for Rehana</td></tr><tr><td><code>docs/deploy/README.md</code></td><td>Status card moved to /status</td></tr><tr><td><code>docs/explainers/phase-2-catalogue.html</code></td><td>This page</td></tr><tr><td><code>docs/explainers/phase-2/calendar.jpg</code></td><td>Screenshot</td></tr><tr><td><code>docs/explainers/phase-2/class.jpg</code></td><td>Screenshot</td></tr><tr><td><code>docs/explainers/phase-2/contact.jpg</code></td><td>Screenshot</td></tr><tr><td><code>docs/explainers/phase-2/home.jpg</code></td><td>Screenshot</td></tr><tr><td><code>frontend/public/brand/logo-full.png</code></td><td>Logo</td></tr><tr><td><code>frontend/public/brand/logo-mark.png</code></td><td>Logo mark</td></tr><tr><td><code>frontend/public/images/classes/batik-online.jpg</code></td><td>Class photo, served by Vercel</td></tr><tr><td><code>frontend/public/images/classes/batik-workshop.jpg</code></td><td>Class photo, served by Vercel</td></tr><tr><td><code>frontend/public/images/classes/kids-and-parents-paint-together.jpg</code></td><td>Class photo, served by Vercel</td></tr><tr><td><code>frontend/public/images/classes/pakistani-woodblock-printing.jpg</code></td><td>Class photo, served by Vercel</td></tr><tr><td><code>frontend/public/images/classes/shibori-online.jpg</code></td><td>Class photo, served by Vercel</td></tr><tr><td><code>frontend/public/images/classes/shibori-workshop.jpg</code></td><td>Class photo, served by Vercel</td></tr><tr><td><code>frontend/src/app/calendar/page.tsx</code></td><td>Flow 5</td></tr><tr><td><code>frontend/src/app/classes/[slug]/page.tsx</code></td><td>Flow 1</td></tr><tr><td><code>frontend/src/app/classes/page.tsx</code></td><td>Flow 4</td></tr><tr><td><code>frontend/src/app/contact/page.tsx</code></td><td>Flow 3</td></tr><tr><td><code>frontend/src/app/globals.css</code></td><td>Fabric Fun tokens for Tailwind</td></tr><tr><td><code>frontend/src/app/layout.tsx</code></td><td>Fonts, header, footer</td></tr><tr><td><code>frontend/src/app/not-found.tsx</code></td><td>The 404 page</td></tr><tr><td><code>frontend/src/app/page.tsx</code></td><td>Flow 4</td></tr><tr><td><code>frontend/src/app/status/page.tsx</code></td><td>The API status card, moved off the home page</td></tr><tr><td><code>frontend/src/components/api-unavailable.tsx</code></td><td>The "couldn't load" message</td></tr><tr><td><code>frontend/src/components/class-card.tsx</code></td><td>A class card</td></tr><tr><td><code>frontend/src/components/contact-form.tsx</code></td><td>Flow 3</td></tr><tr><td><code>frontend/src/components/session-list.tsx</code></td><td>Flow 2</td></tr><tr><td><code>frontend/src/components/site-footer.tsx</code></td><td>Footer</td></tr><tr><td><code>frontend/src/components/site-header.tsx</code></td><td>Header and navigation</td></tr><tr><td><code>frontend/src/components/ui.ts</code></td><td>Shared class names</td></tr><tr><td><code>frontend/src/lib/adelaide.test.mjs</code></td><td>Adelaide time tests</td></tr><tr><td><code>frontend/src/lib/adelaide.ts</code></td><td>Dates in Australia/Adelaide; month ranges</td></tr><tr><td><code>frontend/src/lib/catalogue-types.ts</code></td><td>View types and the class-type filter</td></tr><tr><td><code>frontend/src/lib/catalogue.ts</code></td><td><code>get()</code> and the catalogue calls</td></tr><tr><td><code>frontend/src/lib/format.test.mjs</code></td><td>Formatting tests</td></tr><tr><td><code>frontend/src/lib/format.ts</code></td><td>Prices, seats left, "Fully booked"</td></tr></tbody></table></div></details><footer>Code excerpts are read from commit <code>94abb4a</code> by <code>docs/explainers/tools/phase2.py</code>, which fails if any excerpt no longer starts where it says. 27 excerpts.</footer>
 </main>
 </body>
 </html>

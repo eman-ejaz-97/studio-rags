@@ -75,8 +75,11 @@ by eye.
 
 The developer owns this project. Every phase ends with an HTML explainer in
 `docs/explainers/`: what was built, how it works end to end, why, how it fails,
-how to see it running. Use the `explain-the-change` skill's build script so code
-excerpts are verified against the repo. A phase is not done without it.
+how to see it running. Build it with a script in `docs/explainers/tools/` (one per
+page, sharing `explainer.py`; see ADR-039), which reads code excerpts from git
+and fails if one has moved. Follow each user action hop by hop, tagged with the
+host it runs on. Do not use the `explain-the-change` skill's template look. A
+phase is not done without it.
 
 ## Schema changes
 
