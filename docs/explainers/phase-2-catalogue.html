@@ -1,0 +1,1105 @@
+<title>The class catalogue and the public website</title>
+<meta name="description" content="Phase 2 builds the part of Studio Rags that anyone can see without signing in. Visitors can browse Rehana&#x27;s six classes, see each class&#x27;s upcoming dates and how many places are left, browse a calendar, and send her a message. The backend ga">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #f7f8fa; --surface: #ffffff; --surface-2: #f1f3f6; --text: #1b1f27; --muted: #5b6474;
+  --border: #e2e6ec; --accent: #2f5bd3; --accent-soft: #e8eefc; --code-bg: #f4f6f9; --code-text: #1f2633;
+  --ok: #1d7a46; --ok-bg: #e3f4ea; --warn: #9a5b00; --warn-bg: #fdf0dc; --bad: #b42318; --bad-bg: #fde8e6;
+  --info: #2f5bd3; --info-bg: #e8eefc; --why: #6b3fb0; --why-bg: #f1e9fb; --term: #0f6e74; --term-bg: #e1f4f4;
+  --hl-key: #7a3fb0; --hl-str: #1d7a46; --hl-num: #b45309; --hl-lit: #2f5bd3; --hl-meta: #5b6474; --hl-title: #a3122f;
+  --shadow: 0 1px 2px rgba(16,24,40,.04), 0 1px 3px rgba(16,24,40,.06);
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0f1218; --surface: #161a22; --surface-2: #1c212b; --text: #e6e9ef; --muted: #9aa3b2;
+    --border: #2a303c; --accent: #8aa8ff; --accent-soft: #1e2840; --code-bg: #12161d; --code-text: #dfe4ec;
+    --ok: #5fd08f; --ok-bg: #12301f; --warn: #f2b45a; --warn-bg: #33250f; --bad: #ff8a80; --bad-bg: #3a1714;
+    --info: #8aa8ff; --info-bg: #1a2238; --why: #c89bff; --why-bg: #2a1d3d; --term: #6fd6dc; --term-bg: #10302f;
+    --hl-key: #c89bff; --hl-str: #7fdca0; --hl-num: #f5b971; --hl-lit: #8aa8ff; --hl-meta: #9aa3b2; --hl-title: #ff9eb1;
+    --shadow: none; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0f1218; --surface: #161a22; --surface-2: #1c212b; --text: #e6e9ef; --muted: #9aa3b2;
+  --border: #2a303c; --accent: #8aa8ff; --accent-soft: #1e2840; --code-bg: #12161d; --code-text: #dfe4ec;
+  --ok: #5fd08f; --ok-bg: #12301f; --warn: #f2b45a; --warn-bg: #33250f; --bad: #ff8a80; --bad-bg: #3a1714;
+  --info: #8aa8ff; --info-bg: #1a2238; --why: #c89bff; --why-bg: #2a1d3d; --term: #6fd6dc; --term-bg: #10302f;
+  --hl-key: #c89bff; --hl-str: #7fdca0; --hl-num: #f5b971; --hl-lit: #8aa8ff; --hl-meta: #9aa3b2; --hl-title: #ff9eb1;
+  --shadow: none; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; scroll-padding-top: 24px; }
+body {
+  margin: 0; background: var(--bg); color: var(--text);
+  font: 15.5px/1.7 Inter, system-ui, -apple-system, "Segoe UI", sans-serif; -webkit-font-smoothing: antialiased;
+}
+a { color: var(--accent); text-decoration: none; }
+a:hover { text-decoration: underline; }
+.layout { max-width: 1220px; margin: 0 auto; padding: 32px 24px 80px; display: grid; grid-template-columns: 250px minmax(0, 1fr); gap: 44px; }
+.toc { position: sticky; top: 24px; align-self: start; max-height: calc(100vh - 48px); overflow: auto; font-size: 13.5px; }
+.toc h2 { font-size: 11.5px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin: 0 0 10px; font-weight: 600; }
+.toc ul { list-style: none; margin: 0; padding: 0; }
+.toc li a { display: block; padding: 5px 10px; border-radius: 6px; color: var(--muted); border-left: 2px solid transparent; line-height: 1.4; }
+.toc li a:hover { background: var(--surface-2); color: var(--text); text-decoration: none; }
+.toc li a.active { color: var(--accent); border-left-color: var(--accent); background: var(--accent-soft); }
+.toc li.h3 a { padding-left: 22px; font-size: 13px; }
+.toc-mobile { display: none; }
+main { min-width: 0; }
+.hero { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 28px 30px; box-shadow: var(--shadow); margin-bottom: 32px; }
+.hero h1 { font-size: 30px; line-height: 1.2; margin: 0 0 14px; letter-spacing: -.01em; }
+.hero p { color: var(--muted); margin: 0 0 10px; max-width: 80ch; }
+.hero p:last-child { margin-bottom: 0; }
+.eyebrow { font-size: 12px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--accent); margin: 0 0 6px; }
+.chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px; }
+.chip { font-size: 12.5px; font-weight: 500; padding: 3px 10px; border-radius: 999px; border: 1px solid var(--border); background: var(--surface-2); color: var(--muted); line-height: 1.6; }
+.chip.ok { color: var(--ok); background: var(--ok-bg); border-color: transparent; }
+.chip.warn { color: var(--warn); background: var(--warn-bg); border-color: transparent; }
+.chip.bad { color: var(--bad); background: var(--bad-bg); border-color: transparent; }
+.content h2 { font-size: 22px; margin: 52px 0 14px; border-top: 1px solid var(--border); padding-top: 30px; letter-spacing: -.005em; }
+.content h2:first-child { margin-top: 0; border-top: 0; padding-top: 0; }
+.content h3 { font-size: 17.5px; margin: 36px 0 10px; }
+.content h4 { font-size: 15.5px; margin: 26px 0 8px; }
+.content p, .content li { max-width: 80ch; }
+.content ul, .content ol { padding-left: 24px; }
+.content li { margin: 5px 0; }
+.content li > ul, .content li > ol { margin: 4px 0; }
+.content hr { border: 0; border-top: 1px solid var(--border); margin: 32px 0; }
+code, pre { font-variant-ligatures: none; font-feature-settings: "liga" 0, "calt" 0; }
+code { font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace; font-size: .86em; background: var(--code-bg); color: var(--code-text); border: 1px solid var(--border); padding: .08em .38em; border-radius: 5px; overflow-wrap: anywhere; }
+.codeblock { margin: 16px 0 18px; border: 1px solid var(--border); border-radius: 10px; overflow: hidden; background: var(--code-bg); }
+.code-head { display: flex; justify-content: space-between; gap: 12px; padding: 7px 14px; border-bottom: 1px solid var(--border); background: var(--surface-2); font: 500 12.5px "JetBrains Mono", monospace; color: var(--muted); }
+.code-head .path { overflow-wrap: anywhere; }
+.code-head .lang { text-transform: uppercase; letter-spacing: .06em; font-size: 11px; flex: none; }
+pre.code { position: relative; margin: 0; padding: 14px 16px; overflow-x: auto; font-size: 13px; line-height: 1.6; display: flex; gap: 16px; }
+pre.code code { background: none; border: 0; padding: 0; font-size: inherit; overflow-wrap: normal; white-space: pre; flex: 1; }
+pre.code .gutter { flex: none; text-align: right; color: var(--muted); opacity: .7; user-select: none; white-space: pre; font-family: "JetBrains Mono", monospace; border-right: 1px solid var(--border); padding-right: 12px; min-width: 3ch; }
+.copy { position: absolute; top: 8px; right: 8px; font: 500 12px Inter, system-ui, sans-serif; padding: 4px 10px; border-radius: 6px; border: 1px solid var(--border); background: var(--surface); color: var(--muted); cursor: pointer; opacity: 0; transition: opacity .15s; }
+pre.code:hover .copy, .copy:focus-visible { opacity: 1; }
+@media (hover: none) { .copy { opacity: 1; } }
+.hljs-attr, .hljs-variable { color: var(--hl-key); }
+.hljs-string, .hljs-regexp { color: var(--hl-str); }
+.hljs-number { color: var(--hl-num); }
+.hljs-literal, .hljs-keyword, .hljs-built_in, .hljs-type { color: var(--hl-lit); }
+.hljs-meta, .hljs-comment { color: var(--hl-meta); font-style: italic; }
+.hljs-title, .hljs-title.function_, .hljs-title.class_ { color: var(--hl-title); }
+.hljs-punctuation, .hljs-operator { color: var(--muted); }
+.table-wrap { overflow-x: auto; border: 1px solid var(--border); border-radius: 10px; margin: 16px 0; background: var(--surface); box-shadow: var(--shadow); }
+table { border-collapse: collapse; width: 100%; font-size: 14px; }
+th, td { text-align: left; vertical-align: top; padding: 9px 14px; border-bottom: 1px solid var(--border); }
+th { background: var(--surface-2); font-weight: 600; font-size: 13px; color: var(--muted); white-space: nowrap; }
+tr:last-child td { border-bottom: 0; }
+td code { white-space: normal; overflow-wrap: break-word; }
+.callout { border-radius: 10px; padding: 12px 16px; margin: 16px 0; border: 1px solid transparent; background: var(--surface-2); }
+.callout > :last-child { margin-bottom: 0; }
+.callout > p:first-of-type { margin-top: 0; }
+.callout .callout-label { display: block; font-size: 12px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; margin-bottom: 4px; }
+.callout.note { background: var(--info-bg); } .callout.note .callout-label { color: var(--info); }
+.callout.why { background: var(--why-bg); } .callout.why .callout-label { color: var(--why); }
+.callout.term { background: var(--term-bg); } .callout.term .callout-label { color: var(--term); }
+.callout.example { background: var(--ok-bg); } .callout.example .callout-label { color: var(--ok); }
+.callout.watch { background: var(--warn-bg); } .callout.watch .callout-label { color: var(--warn); }
+.callout.unverified { background: var(--bad-bg); } .callout.unverified .callout-label { color: var(--bad); }
+blockquote:not(.callout) { margin: 16px 0; padding: 4px 16px; border-left: 3px solid var(--border); color: var(--muted); }
+figure.diagram { margin: 20px 0; padding: 16px; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; overflow-x: auto; box-shadow: var(--shadow); }
+figure.diagram pre.mermaid { margin: 0; background: none; text-align: center; color: var(--text); font-size: 13px; }
+figure.diagram figcaption { margin-top: 10px; font-size: 13px; color: var(--muted); text-align: center; }
+.diagram-error { font-size: 13px; color: var(--bad); margin-bottom: 8px; }
+details { border: 1px solid var(--border); border-radius: 10px; background: var(--surface); margin: 10px 0; padding: 0 16px; }
+details > summary { cursor: pointer; padding: 12px 0; font-weight: 600; }
+details[open] > summary { border-bottom: 1px solid var(--border); margin-bottom: 10px; }
+details > :last-child { margin-bottom: 14px; }
+pre.raw { white-space: pre-wrap; font: 13px/1.6 "JetBrains Mono", monospace; }
+strong { font-weight: 600; }
+@media (max-width: 940px) {
+  .layout { grid-template-columns: minmax(0, 1fr); gap: 0; padding: 20px 16px 64px; }
+  .toc { display: none; }
+  .toc-mobile { display: block; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; margin: 0 0 24px; padding: 0; font-size: 14px; }
+  .toc-mobile summary { padding: 12px 16px; }
+  .toc-mobile ul { list-style: none; margin: 0; padding: 0 8px 10px; }
+  .toc-mobile li a { display: block; padding: 6px 10px; color: var(--muted); border-radius: 6px; }
+  .toc-mobile li.h3 a { padding-left: 24px; }
+  .hero { padding: 22px 18px; }
+  .hero h1 { font-size: 25px; }
+}
+</style>
+
+<div class="layout">
+  <nav class="toc" aria-label="On this page"><h2>On this page</h2><ul id="toc"></ul></nav>
+  <main>
+    <div id="hero-slot"></div>
+    <details class="toc-mobile"><summary>On this page</summary><ul id="toc-mobile"></ul></details>
+    <article id="doc" class="content"><noscript>This page needs JavaScript to render.</noscript></article>
+  </main>
+</div>
+
+<script type="text/markdown" id="explainer-source">
+<p class="eyebrow">Studio Rags · Phase 2 explainer</p>
+
+# The class catalogue and the public website
+
+Phase 2 builds the part of Studio Rags that anyone can see without signing in. Visitors can browse Rehana's six classes, see each class's upcoming dates and how many places are left, browse a calendar, and send her a message. The backend gains a read-only catalogue API and a contact endpoint. The frontend becomes a real website in the Fabric Fun design. Booking and payment come in Phase 3, so every date currently offers "Ask about this date" instead of "Book".
+
+<div class="chips"><span class="chip ok">Local: working</span><span class="chip ok">All CI checks green</span><span class="chip warn">Branch phase-2/catalogue, not merged</span><span class="chip warn">Staging: not deployed yet</span><span class="chip">Public, no sign-in</span><span class="chip">No database migration</span></div>
+
+## Words you need
+
+> [!TERM] Catalogue
+> Everything a visitor browses before buying: the classes (called **workshops** in the code), their dates (called **sessions**), photos, prices and cancellation terms. "Indonesian Batik Workshop" is a workshop; "Saturday 14 November at 10:00 am" is one of its sessions.
+
+> [!TERM] Session
+> One dated occurrence of a class, with its own start time, end time and capacity (number of places). A workshop has many sessions.
+
+> [!TERM] Seat hold (PENDING booking)
+> When checkout is built in Phase 3, starting to book creates a booking with status `PENDING` and a deadline, `holdExpiresAt`. Until that moment the places are reserved for that person. If they don't pay in time, the hold lapses and the places come back. This phase doesn't create holds, but it must already count them correctly.
+
+> [!TERM] Seats left
+> Capacity minus the places taken. Places are taken by confirmed bookings, plus pending bookings whose hold hasn't run out. The result is never negative. A session with capacity 8, one confirmed booking for 1 place and one live hold for 2 has 5 left.
+
+> [!TERM] Slug
+> The readable name of a class in its web address: `batik-workshop` in `/classes/batik-workshop`. It is unique per class.
+
+> [!TERM] Public route
+> An API route that works without signing in. In this project every route is locked by default, and a route opens only when it carries the `@Public()` marker. Forgetting the marker leaves a route locked, never open.
+
+> [!TERM] Throttle
+> A limit on how often one visitor may call a route. The contact form allows 5 messages per visitor per 10 minutes. The 6th gets HTTP status 429, "Too many requests".
+
+> [!TERM] Honeypot
+> A form field hidden from people and screen readers. Spam bots fill in every field they find, so a filled honeypot means a bot. The API quietly throws that message away but still answers "thank you", so the bot learns nothing.
+
+> [!TERM] Server rendering and the data cache
+> The Next.js frontend builds each page's HTML on its own server when a visitor asks for it. To do that it calls the API. Next keeps each API answer for 60 seconds (its **data cache**), so the second visitor in that minute gets the page without another API call.
+
+> [!TERM] Hydration
+> After the HTML arrives, React starts up in the browser and attaches itself to the page. If the browser would draw different text from what the server sent (a date formatted differently, say), React reports a hydration mismatch. That is why dates are formatted with care (step 5 of the first scenario).
+
+> [!TERM] Adelaide time
+> The database stores every moment in UTC. The website always shows Adelaide time, wherever the visitor is, because the studio is in Sefton Park. Adelaide is UTC+10:30 in summer (daylight saving, October to April) and UTC+9:30 in winter. So `2026-11-13T23:30:00Z` is 10:00 am on Saturday 14 November in Adelaide.
+
+## The big picture
+
+```mermaid caption="The parts involved in Phase 2"
+flowchart LR
+  subgraph Browser["Visitor's browser"]
+    page["Page HTML"]
+    live["SessionList and ContactForm<br/>(run in the browser)"]
+  end
+  subgraph Front["Frontend: Next.js"]
+    pages["Pages: home, classes,<br/>class detail, calendar, contact"]
+    lib["lib/catalogue.ts<br/>60 s data cache"]
+    proxy["/api/v1 rewrite"]
+  end
+  subgraph Back["Backend: NestJS API"]
+    cat["CatalogueService"]
+    enq["EnquiriesService"]
+  end
+  db[("Postgres")]
+  pages --> lib
+  lib -->|"server to server"| cat
+  page --> live
+  live -->|"same origin"| proxy
+  proxy --> cat
+  proxy --> enq
+  cat --> db
+  enq --> db
+```
+
+Read it from left to right. The frontend server builds each page by calling the catalogue through `lib/catalogue.ts`, and keeps those answers for a minute. Two components keep working in the browser after the page loads. `SessionList` re-fetches seat counts with no cache, and `ContactForm` sends messages. Both call `/api/v1/...` on the website's own address, and Next forwards those calls to the API. Using one address avoids cross-site cookie problems (ADR-026).
+
+| Part | Job |
+|---|---|
+| `CatalogueService` | Reads published classes and sessions, and counts seats left. Never writes. |
+| `EnquiriesService` | Stores a contact-form message, or discards it if it came from a bot. |
+| `lib/catalogue.ts` | The frontend's only way to read the catalogue on the server. Adds the timeout and the cache. |
+| `SessionList` | Shows a class's dates, then refreshes the places-left count live. |
+| `ContactForm` | Checks the form in the browser, sends it, and shows the result. |
+
+## How it works, step by step
+
+> [!EXAMPLE] The worked example used on this whole page
+> These values are invented for illustration. **Indonesian Batik Workshop** (`batik-workshop`, $82, 8 places) has a session on **Saturday 14 November at 10:00 am** Adelaide time, stored as `2026-11-13T23:30:00.000Z`. It is now `2026-11-07T12:00:00Z`. The session has three bookings: Ana, CONFIRMED for 1 place; Ben, PENDING for 2 places with his hold running until 12:10; Cy, PENDING for 1 place, whose hold ran out at 11:50. A visitor, Mia, opens the class page and then asks about the date.
+
+### Scenario 1: Mia opens the Batik class page
+
+```mermaid caption="Loading /classes/batik-workshop"
+sequenceDiagram
+  participant B as Mia's browser
+  participant N as Next.js server
+  participant A as API
+  participant D as Postgres
+  B->>N: GET /classes/batik-workshop
+  N->>A: GET /workshops/batik-workshop
+  N->>A: GET /workshops/batik-workshop/sessions
+  A->>D: published workshop, then sessions on sale
+  A->>D: one grouped count of seat-holding bookings
+  A-->>N: class JSON and dates with seatsLeft
+  N-->>B: HTML with dates and places left
+  Note over B: React starts in the browser
+  B->>N: GET /api/v1/workshops/batik-workshop/sessions, no-store
+  N->>A: forwarded
+  A-->>B: fresh seatsLeft
+```
+
+Start at the top left. The browser asks the Next server for the page, and the server asks the API for two things at once. The page arrives already filled in, which is fast and works without JavaScript. Then the browser asks again with caching switched off, so the places-left count on screen is the current one, not a minute old.
+
+#### Step 1: The page asks for the class and its dates together
+
+```tsx title="frontend/src/app/classes/[slug]/page.tsx:27-42" lines="27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42"
+export default async function ClassPage({ params }: Props) {
+  const { slug } = await params;
+  // Both start at once; fetch() de-duplicates the one generateMetadata made.
+  const [workshop, sessions] = await Promise.all([
+    getWorkshop(slug),
+    getWorkshopSessions(slug),
+  ]);
+
+  if (!workshop.ok && workshop.reason === "not-found") notFound();
+  if (!workshop.ok) {
+    return (
+      <div className={`${pageWrap} py-12`}>
+        <ApiUnavailable what="this class" />
+      </div>
+    );
+  }
+```
+
+- **`await params`**: in Next 16 the URL parts arrive as a Promise, so the page waits for it. `slug` is `"batik-workshop"`.
+- **`Promise.all`**: starts both API calls at the same moment instead of one after the other. On a sleeping free API this halves the wait.
+- **The comment**: `generateMetadata` (which sets the browser tab title) already asked for the same class. Next notices the identical `fetch` and makes only one network call.
+- **`notFound()`**: a missing or unpublished class shows the site's "We couldn't find that page".
+- **`ApiUnavailable`**: if the API is down or asleep, the visitor sees "We couldn't load this class just now", with a suggestion to refresh in a minute, rather than an error page. "Not found" and "unavailable" are kept apart, because telling someone a class doesn't exist when the server is only asleep would be wrong.
+
+#### Step 2: One helper does every catalogue read, with a timeout and a cache
+
+```ts title="frontend/src/lib/catalogue.ts:21-40" lines="21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40"
+const TIMEOUT_MS = 8_000;
+
+export type ApiResult<T> =
+  | { ok: true; data: T }
+  | { ok: false; reason: "not-found" | "unavailable" };
+
+async function get<T>(path: string): Promise<ApiResult<T>> {
+  try {
+    const res = await fetch(`${apiOrigin()}/api/v1${path}`, {
+      next: { revalidate: REVALIDATE_SECONDS, tags: ["catalogue"] },
+      signal: AbortSignal.timeout(TIMEOUT_MS),
+      headers: { accept: "application/json" },
+    });
+    if (res.status === 404) return { ok: false, reason: "not-found" };
+    if (!res.ok) return { ok: false, reason: "unavailable" };
+    return { ok: true, data: (await res.json()) as T };
+  } catch {
+    return { ok: false, reason: "unavailable" };
+  }
+}
+```
+
+- **`TIMEOUT_MS = 8_000`**: Render's free API takes about a minute to wake, and holds the request open while it does. Eight seconds is long enough for a normal answer and short enough that Mia sees "try again" rather than a blank tab.
+- **`ApiResult`**: every caller gets one of three answers (data, not found, unavailable) and must handle each. A page cannot forget the API might be down, because TypeScript won't let it read `data` without checking `ok`.
+- **`apiOrigin()`**: on the server, the API's own address (`http://localhost:3001` locally, the Render address on staging).
+- **`revalidate: REVALIDATE_SECONDS`** (60): Next keeps this answer for a minute. The `catalogue` tag lets a later phase clear it straight away when Rehana edits a class.
+- **`catch`**: a timeout or a refused connection lands here, and both become "unavailable". A failed request is not cached, so the next visitor tries again.
+
+#### Step 3: The API finds the dates that are on sale
+
+```ts title="backend/src/catalogue/catalogue.service.ts:68-75" lines="68,69,70,71,72,73,74,75"
+/** Public sessions: on sale now, for a class that is published. */
+function onSale(now: Date): Prisma.SessionWhereInput {
+  return {
+    status: SessionStatus.SCHEDULED,
+    startsAt: { gt: now },
+    workshop: { status: WorkshopStatus.PUBLISHED },
+  };
+}
+```
+
+This one filter defines "on sale" for every public route. A session is on sale when all three hold:
+
+- it is **SCHEDULED**, not cancelled or completed;
+- it **starts after now**: a class that began five minutes ago can't be booked, so it isn't shown;
+- its **class is PUBLISHED**: while Rehana is still drafting a class, none of its dates leak out.
+
+```ts title="backend/src/catalogue/catalogue.service.ts:139-160" lines="139,140,141,142,143,144,145,146,147,148,149,150,151,152,153,154,155,156,157,158,159,160"
+  /** Upcoming dates for one class, sold-out ones included and flagged. */
+  async listWorkshopSessions(slug: string, now: Date): Promise<SessionView[]> {
+    const workshop = await this.prisma.workshop.findFirst({
+      where: { slug, status: WorkshopStatus.PUBLISHED },
+      select: { id: true, basePriceCents: true },
+    });
+    if (!workshop) throw new NotFoundException('Class not found');
+
+    const sessions = await this.prisma.session.findMany({
+      where: { ...onSale(now), workshopId: workshop.id },
+      orderBy: { startsAt: 'asc' },
+      take: WORKSHOP_SESSIONS_LIMIT,
+      select: sessionSelect,
+    });
+    const taken = await this.seatsTaken(
+      sessions.map((s) => s.id),
+      now,
+    );
+    return sessions.map((s) =>
+      toSession(s, workshop.basePriceCents, taken.get(s.id) ?? 0),
+    );
+  }
+```
+
+- **The first query** turns the slug into the workshop's id and base price. An unpublished class gets the same 404 as a missing one, so the public can't tell a draft exists.
+- **`orderBy` and `take: WORKSHOP_SESSIONS_LIMIT`** (24): soonest first, and never an unbounded list.
+- **`select: sessionSelect`**: lists exactly the columns to read. That list leaves out `onlineJoinUrl`, the Zoom link, which only confirmed customers may see (ADR-015). Because the column is never read, it can't end up in a response by accident. An end-to-end test checks every public response for it.
+- **`seatsTaken`** (next step) counts the places for all these sessions in one query.
+- **`toSession`** works out the price (the session's own price if it has one, otherwise the class's) and the seats left.
+
+> [!EXAMPLE]
+> `slug = "batik-workshop"` resolves to the workshop, with `basePriceCents = 8200`. The Saturday 14 November session passes the filter: it is SCHEDULED, it starts at 2026-11-13T23:30Z (after now, 2026-11-07T12:00Z), and the class is PUBLISHED.
+
+#### Step 4: Seats are counted with one rule, in one query
+
+```ts title="backend/src/catalogue/availability.ts:11-26" lines="11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26"
+export function seatHoldingBookings(now: Date): Prisma.BookingWhereInput {
+  return {
+    OR: [
+      { status: BookingStatus.CONFIRMED },
+      { status: BookingStatus.PENDING, holdExpiresAt: { gt: now } },
+    ],
+  };
+}
+
+/**
+ * Never negative. Capacity may be lowered below what is already booked
+ * (§ 5, ADR-012); that session is simply full, not "-2 left".
+ */
+export function seatsLeft(capacity: number, taken: number): number {
+  return Math.max(0, capacity - taken);
+}
+```
+
+- **`seatHoldingBookings`**: the definition of a taken place. It is a confirmed booking, or a pending one whose hold ends **after** now. A hold that has run out stops counting at that exact moment. It doesn't wait for a background job to mark it `EXPIRED`.
+- **`seatsLeft`**: subtracts and never goes below zero. If Rehana lowers a class from 8 places to 4 after 6 have booked, the page says "Fully booked", not "-2 places left".
+
+```ts title="backend/src/catalogue/catalogue.service.ts:228-240" lines="228,229,230,231,232,233,234,235,236,237,238,239,240"
+  /** Seats held per session, in one grouped query. */
+  private async seatsTaken(
+    sessionIds: string[],
+    now: Date,
+  ): Promise<Map<string, number>> {
+    if (sessionIds.length === 0) return new Map();
+    const rows = await this.prisma.booking.groupBy({
+      by: ['sessionId'],
+      where: { sessionId: { in: sessionIds }, ...seatHoldingBookings(now) },
+      _sum: { seats: true },
+    });
+    return new Map(rows.map((r) => [r.sessionId, r._sum.seats ?? 0]));
+  }
+```
+
+- **The early return**: with no sessions there is nothing to ask, so no query runs.
+- **`groupBy`** adds up `seats` per session in the database. For 24 dates that is one query, not 24. Asking once per session is the classic "N+1" slowdown.
+- **The `Map`** lets `toSession` look up each session's total. A session with no seat-holding bookings has no row, hence `?? 0`.
+
+> [!EXAMPLE]
+> For the Saturday session the filter keeps Ana (CONFIRMED, 1) and Ben (PENDING, hold until 12:10, after 12:00, 2 places). It drops Cy, whose hold ended at 11:50. `_sum.seats` is 3, so `seatsLeft(8, 3)` is **5**. The API answers `{ "startsAt": "2026-11-13T23:30:00.000Z", "priceCents": 8200, "capacity": 8, "seatsLeft": 5, "isFull": false, ... }`.
+
+> [!WATCH] Phase 3 must use this same rule
+> When checkout is built, the booking transaction must count with `seatHoldingBookings`, under the session row lock (ADR-008). If checkout and the catalogue counted differently, the page could say "5 left" while checkout says "full", or the other way round.
+
+#### Step 5: The browser shows Adelaide time and refreshes the count
+
+```tsx title="frontend/src/components/session-list.tsx:31-46" lines="31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46"
+  useEffect(() => {
+    const controller = new AbortController();
+    fetch(`/api/v1/workshops/${encodeURIComponent(slug)}/sessions`, {
+      cache: "no-store",
+      signal: controller.signal,
+      headers: { accept: "application/json" },
+    })
+      .then((res) => (res.ok ? res.json() : null))
+      .then((body: { sessions: SessionView[] } | null) => {
+        if (body) setSessions(body.sessions);
+      })
+      .catch(() => {
+        // Aborted on unmount, or the API is asleep: keep the server's list.
+      });
+    return () => controller.abort();
+  }, [slug]);
+```
+
+- **`useEffect`** runs once in the browser after the page appears. The server's list (up to a minute old) is already on screen.
+- **`cache: "no-store"`**: skips every cache, so the count is the current one. If Ben's hold lapses at 12:10 and Mia opens the page at 12:11, the server's cached copy might still say 5. The refresh shows 7.
+- **`AbortController`**: if Mia leaves the page before the answer arrives, the request is cancelled. That avoids updating a page that is no longer there.
+- **`.catch`**: a failed refresh changes nothing. Mia keeps the server's numbers instead of seeing an error.
+
+The times use Adelaide's clock, assembled from parts:
+
+```ts title="frontend/src/lib/adelaide.ts:42-63" lines="42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63"
+/**
+ * Assembled from parts rather than taken from format(): punctuation and spaces
+ * differ between ICU versions (Node prints "Sat, 14 Nov"), and the server and
+ * the browser must print the same text or React reports a hydration mismatch.
+ */
+function partsOf(format: Intl.DateTimeFormat, iso: string) {
+  return Object.fromEntries(
+    format.formatToParts(new Date(iso)).map((p) => [p.type, p.value]),
+  ) as Partial<Record<Intl.DateTimeFormatPartTypes, string>>;
+}
+
+/** "Sat 14 Nov" */
+export function formatDay(iso: string): string {
+  const p = partsOf(dayFormat, iso);
+  return `${p.weekday} ${p.day} ${p.month}`;
+}
+
+/** "Saturday 14 November" */
+export function formatLongDay(iso: string): string {
+  const p = partsOf(longDayFormat, iso);
+  return `${p.weekday} ${p.day} ${p.month}`;
+}
+```
+
+- **`partsOf`** asks the browser's date library for the pieces (weekday, day, month) in Adelaide time, rather than a finished string.
+- **Why pieces**: Node on the server printed "Sat, 14 Nov" with a comma, and a browser can print it without one. If the two disagree, React reports a hydration mismatch. Joining the pieces ourselves makes both print exactly "Sat 14 Nov".
+
+> [!EXAMPLE]
+> Mia sees **Saturday 14 November**, "10:00 am – 1:00 pm · Studio Rags, Sefton Park SA", a sand-coloured **5 places left** chip, and an **Ask about this date** button. A screen reader announces that button as "Ask about Indonesian Batik Workshop on Saturday 14 November, 10:00 am".
+
+### Scenario 2: Mia asks about the date
+
+```mermaid caption="From 'Ask about this date' to a stored enquiry"
+sequenceDiagram
+  participant B as Mia's browser
+  participant N as Next.js server
+  participant A as API
+  participant D as Postgres
+  B->>N: GET /contact?class=batik-workshop&date=2026-11-13T23:30:00.000Z
+  N->>A: GET /workshops/batik-workshop
+  A-->>N: the class title
+  N-->>B: form with the message pre-filled
+  Note over B: Mia adds her name and email
+  B->>B: validate in the browser
+  B->>N: POST /api/v1/contact
+  N->>A: forwarded, with Mia's address
+  A->>A: throttle check, then validation
+  A->>D: INSERT INTO enquiries
+  A-->>B: 202 and a thank-you message
+  Note over B: focus moves to "Message sent"
+```
+
+The button opens the contact page with the class and date in the address. The server turns those into a ready-written message. When Mia sends it, the browser itself posts to the API, so the five-a-minute limit counts Mia and nobody else.
+
+#### Step 1: The contact page pre-fills the message, but only from real data
+
+```tsx title="frontend/src/app/contact/page.tsx:13-26" lines="13,14,15,16,17,18,19,20,21,22,23,24,25,26"
+/**
+ * "Ask about this date" links here with ?class=<slug>&date=<ISO>. The message
+ * is pre-filled from the real class, so a made-up slug or date in the URL only
+ * ever produces a blank form, never text the visitor did not choose.
+ */
+async function draftMessage(slug?: string, date?: string): Promise<string> {
+  if (!slug) return "";
+  const workshop = await getWorkshop(slug);
+  if (!workshop.ok) return "";
+  const when = date && !Number.isNaN(Date.parse(date)) ? date : null;
+  return when
+    ? `Hello Rehana, I’d like a place in ${workshop.data.title} on ${formatLongDay(when)} at ${formatTime(when)}.`
+    : `Hello Rehana, I’d like to know about the next ${workshop.data.title}.`;
+}
+```
+
+- **The title comes from the API, never from the URL.** Someone could send a link with `?class=anything`, and the worst they get is a blank form. Text copied from the URL never appears on the page.
+- **`Date.parse`** rejects a nonsense date, and then the message just asks about "the next" class.
+- **`formatLongDay` and `formatTime`** are the same Adelaide-time helpers as before.
+
+> [!EXAMPLE]
+> The form opens with: "Hello Rehana, I’d like a place in Indonesian Batik Workshop on Saturday 14 November at 10:00 am."
+
+#### Step 2: The form checks itself, then posts from the browser
+
+```tsx title="frontend/src/components/contact-form.tsx:82-110" lines="82,83,84,85,86,87,88,89,90,91,92,93,94,95,96,97,98,99,100,101,102,103,104,105,106,107,108,109,110"
+    const found = validate(values, kind);
+    setErrors(found);
+    const first = ORDER.find((f) => found[f]);
+    if (first) {
+      form.querySelector<HTMLElement>(`[name="${first}"]`)?.focus();
+      setStatus({ state: "idle" });
+      return;
+    }
+
+    setStatus({ state: "sending" });
+    const body: Record<string, unknown> = {
+      kind,
+      name: values.name,
+      email: values.email,
+      message: values.message,
+    };
+    if (value("website")) body.website = value("website");
+    if (values.phone.trim()) body.phone = values.phone;
+    if (kind === "PRIVATE_EVENT") {
+      if (values.preferredDate) body.preferredDate = values.preferredDate;
+      if (values.guestCount) body.guestCount = Number(values.guestCount);
+    }
+
+    try {
+      const res = await fetch("/api/v1/contact", {
+        method: "POST",
+        headers: { "content-type": "application/json", accept: "application/json" },
+        body: JSON.stringify(body),
+      });
+```
+
+- **`validate`** applies the same rules as the API: a name, an email that looks like one, and a message of at least 10 characters. Most mistakes are caught without a network call.
+- **Errors**: each shows in words under its field ("Enter your name"), the field is marked invalid for screen readers, and focus jumps to the first wrong field. Colour is never the only signal.
+- **`website`** is the honeypot. It is only sent if something filled it in, and a person can't see it to do so.
+- **The private-event fields** (preferred date, guest count) are sent only for a private-event enquiry.
+- **`fetch("/api/v1/contact")`**: sent from Mia's browser, on the website's own address. See "Why it's built this way" for why this isn't a Next server action.
+
+#### Step 3: The API throttles, validates and stores
+
+```ts title="backend/src/enquiries/enquiries.controller.ts:14-22" lines="14,15,16,17,18,19,20,21,22"
+  /** FR-C13, and private-event enquiries (ADR-019). */
+  @Public()
+  @Post()
+  @HttpCode(HttpStatus.ACCEPTED)
+  @Throttle({ default: { limit: 5, ttl: 600_000 } })
+  async create(@Body() dto: CreateEnquiryDto): Promise<{ message: string }> {
+    await this.enquiries.create(dto);
+    return { message: ENQUIRY_RECEIVED };
+  }
+```
+
+- **`@Public()`**: no sign-in needed to send a message.
+- **`@HttpCode(ACCEPTED)`** (202): "received", which is truthful. She hasn't read it yet.
+- **`@Throttle`**: 5 per visitor per 600,000 ms (10 minutes). This replaces the site-wide 120 a minute for this route only.
+- **`@Body() dto: CreateEnquiryDto`**: before this line runs, Nest's validation checks the body against the rules in the DTO and rejects unknown fields with 400. So by the time the service runs, the data is well formed.
+
+```ts title="backend/src/enquiries/enquiries.service.ts:19-43" lines="19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43"
+  async create(dto: CreateEnquiryDto): Promise<EnquiryOutcome> {
+    if (dto.website) {
+      this.logger.warn('Contact form honeypot filled; enquiry discarded');
+      return 'discarded';
+    }
+
+    const kind = dto.kind ?? EnquiryKind.GENERAL;
+    const isPrivateEvent = kind === EnquiryKind.PRIVATE_EVENT;
+
+    await this.prisma.enquiry.create({
+      data: {
+        kind,
+        name: dto.name,
+        email: dto.email,
+        phone: dto.phone || null,
+        message: dto.message,
+        preferredDate:
+          isPrivateEvent && dto.preferredDate
+            ? new Date(dto.preferredDate)
+            : null,
+        guestCount: isPrivateEvent ? (dto.guestCount ?? null) : null,
+      },
+    });
+    return 'stored';
+  }
+```
+
+- **The honeypot check** comes first. A bot's message is logged as a warning and never stored. The controller still returns the same thank-you either way.
+- **`kind`** defaults to a general question.
+- **The private-event fields** are kept only for a private event. A general question that somehow carried a guest count stores `null`, so her inbox never shows misleading details.
+
+> [!EXAMPLE]
+> A new row in `enquiries`: `kind = GENERAL`, Mia's name and email, `phone = null`, the pre-filled message, `preferredDate = null`, `guestCount = null`, `handledAt = null`. The browser receives `202 {"message":"Thank you. Your message has reached Studio Rags, and Rehana will reply by email."}`. The form is replaced by a green "Message sent" panel, and keyboard focus moves onto its heading so a screen reader reads it out.
+
+> [!WATCH] Nobody is told yet
+> The message is stored, but no email goes to Rehana until the mail module arrives in Phase 4 (SPEC § 10 item 22). On staging, enquiries can only be seen in the database.
+
+### Scenario 3: The calendar
+
+The calendar (`/calendar?month=2026-11`) shows one month as a list grouped by day. It calls `GET /sessions?from=…&to=…`. The month's edges are worked out in Adelaide time: November starts at midnight on 1 November in Adelaide, which is `2026-10-31T13:30:00Z`.
+
+```ts title="backend/src/catalogue/dto/session-range.dto.ts:27-45" lines="27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45"
+export function resolveRange(
+  dto: SessionRangeDto,
+  now: Date,
+): { from: Date; to: Date } {
+  const from = dto.from ? new Date(dto.from) : now;
+  const to = dto.to
+    ? new Date(dto.to)
+    : new Date(from.getTime() + DEFAULT_RANGE_DAYS * DAY_MS);
+
+  if (to <= from) {
+    throw new BadRequestException('to must be later than from');
+  }
+  if (to.getTime() - from.getTime() > MAX_RANGE_DAYS * DAY_MS) {
+    throw new BadRequestException(
+      `A range can cover at most ${MAX_RANGE_DAYS} days`,
+    );
+  }
+  return { from, to };
+}
+```
+
+- **Defaults**: with no `from`, it starts now. With no `to`, it covers 31 days.
+- **Two refusals**: a window that ends before it starts, and one longer than 92 days. A request for a whole year is refused, not quietly cut short, so a caller never mistakes part of the answer for all of it.
+- The service also requires `startsAt > now` inside the window. On 7 November, the November page lists only dates from now onwards.
+
+The page lets visitors move between the current month and six months ahead. The Previous and Next links carry hidden text for screen readers, such as "Next month, December 2026".
+
+## The data
+
+Phase 2 adds no tables and changes none. It reads tables that Phase 1 created, and writes only to `enquiries`.
+
+```mermaid caption="Tables Phase 2 reads (and the one it writes)"
+erDiagram
+  workshops ||--o{ sessions : "has dates"
+  workshops ||--o{ workshop_images : "has photos"
+  workshops }o--o| refund_policies : "may override"
+  sessions ||--o{ bookings : "seats taken by"
+  workshops {
+    string slug "unique, in the URL"
+    string status "only PUBLISHED is public"
+    int basePriceCents "8200 for Batik"
+  }
+  sessions {
+    datetime startsAt "UTC"
+    int capacity "children, for the kids class"
+    int priceCentsOverride "null means use the class price"
+    string onlineJoinUrl "never read by the catalogue"
+    string status "SCHEDULED is on sale"
+  }
+  bookings {
+    int seats
+    string status "CONFIRMED or PENDING count"
+    datetime holdExpiresAt "PENDING counts until this"
+  }
+  enquiries {
+    string kind "GENERAL or PRIVATE_EVENT"
+    string message
+    datetime handledAt "null until she deals with it"
+  }
+```
+
+Start with `workshops`: each has many `sessions` and photos, and may point to its own refund policy. If it doesn't, the default policy applies. Bookings hang off sessions, and they are what the seat count adds up. `enquiries` stands alone.
+
+Whether a booking takes places depends on its status and, for PENDING, on the clock:
+
+```mermaid caption="When a booking takes places"
+stateDiagram-v2
+  [*] --> PENDING: checkout starts (Phase 3)
+  PENDING --> CONFIRMED: payment succeeds
+  PENDING --> EXPIRED: sweep marks it
+  CONFIRMED --> CANCELLED
+  note right of PENDING
+    takes places only while
+    holdExpiresAt is after now
+  end note
+  note right of CONFIRMED
+    always takes places
+  end note
+```
+
+A PENDING booking stops taking places when its hold runs out, even before the sweep marks it EXPIRED. That's what the `holdExpiresAt: { gt: now }` condition in step 4 means.
+
+**Seed data.** `npm run db:seed` gives each class one photo, with alt text that describes the actual picture, and five upcoming dates in Adelaide time. Batik is every second Saturday at 10:00, the online Batik class every third Wednesday at 18:30, and so on. Dates are added only when a class has none on sale, so running the seed again never doubles the calendar. Online sessions get a placeholder Zoom link, which the catalogue never exposes.
+
+## Why it's built this way
+
+### Pages are built per request, data cached for a minute (ADR-034)
+- **Chosen**: every catalogue page is rendered when someone asks for it. The API answers behind it are kept for 60 seconds.
+- **Alternatives**: build every page once at deploy time (static), or cache nothing.
+- **Why**: a static build needs the API during CI's build, and CI has no API. It would also show yesterday's dates until the next deploy. No cache at all would mean one API call per page view against a free server. A minute's cache means at most one call per page per minute.
+- **Cost**: a page can show a count up to a minute old, which is why `SessionList` refreshes it live in the browser.
+
+### Seat counts are computed, not stored
+- **Chosen**: seats left is worked out from bookings on every request.
+- **Alternative**: a `seatsTaken` column on `sessions`, updated whenever a booking changes.
+- **Why**: a stored counter has to be kept right on every path: booking, payment, cancellation, and every hold that expires. Expiry happens with nothing to trigger an update. The computed count can't drift, and the `(sessionId, status, holdExpiresAt)` index on bookings keeps it fast.
+- **Cost**: one grouped query per request. With a handful of bookings per session, that is negligible.
+
+### Sold-out dates stay visible (ADR-037)
+- **Chosen**: a full session is listed with "Fully booked" and no button.
+- **Alternative**: hide it.
+- **Why**: a hidden date looks like a class that never ran. A full one tells visitors the class is popular, and that another date, or a message to Rehana, is the way in.
+
+### The contact form posts from the browser (ADR-038)
+- **Chosen**: the browser sends `POST /api/v1/contact` itself.
+- **Alternative**: a Next "server action", where the Next server receives the form and calls the API.
+- **Why**: the API counts the 5-per-10-minutes limit per visitor address. With a server action, every visitor's message would arrive from Vercel's server, so one busy visitor could use up everyone's allowance.
+
+### Purple header button, not the mockup's gold (ADR-035)
+- **Chosen**: "Book a class" in the header is purple. Gold appears only on the purple sections.
+- **Why**: the header sits on cream paper, where gold text reaches 2.19:1 contrast against the 4.5:1 that WCAG AA requires. On purple, gold reaches 4.55:1 or more.
+
+### Darker input borders (ADR-036)
+- **Chosen**: field edges `#8E7E98` (3.76:1 on white), instead of the mockup's `#E2D6E8` (1.4:1).
+- **Why**: WCAG 2.2 AA asks that you can see where an input is, at 3:1 against its surroundings (criterion 1.4.11). The browser check found the mockup's lilac nearly invisible. Card borders keep the light lilac because they are decorative, and the text inside each card identifies it.
+
+### One "on sale" filter and one seat rule, shared
+- **Chosen**: `onSale` and `seatHoldingBookings` are each defined once and used by every route.
+- **Why**: if the class page, the calendar and the availability check each wrote their own filter, sooner or later one would forget "published" or "hold expired". Then the same session would show different counts on different pages.
+
+## When things go wrong
+
+| What fails | What the system does | What the person sees | How to spot it |
+|---|---|---|---|
+| API asleep (Render free tier, after 15 minutes idle) | Server fetch gives up after 8 s, returns "unavailable", nothing cached | "We couldn't load the classes just now", asking them to wait a minute and refresh, or message Rehana. The home page's hero photos still show, because they are local files | Frontend logs show no error. `/status` shows the API as down until it wakes, about a minute |
+| API down mid-visit | `SessionList` refresh fails silently | The server's numbers, up to a minute old, stay on screen | Browser network tab: a failed `/api/v1/.../sessions` |
+| Class unpublished or slug wrong | API returns 404 "Class not found" | "We couldn't find that page", with a link to all classes | API log line with 404 |
+| Hold expires while a cached page is shown | Next request counts it as free | Cached HTML may say 5 left; the live refresh shows 7 | Expected behaviour, not an error |
+| Visitor sends a 6th message within 10 minutes | Throttle answers 429 before validation runs | "You've sent several messages in a short time. Please wait ten minutes and try again." | API log 429 on `/contact` |
+| Form invalid (missing name, etc.) | Browser check stops it. If it got past, the API returns 400 with each problem | Errors in words under each field, focus on the first | 400 in the network tab |
+| Network drops while sending | `fetch` throws | "We couldn't send your message. Check your internet connection and try again." Nothing is stored | Nothing on the server |
+| Bot fills the honeypot | Message logged as a warning and discarded | The bot gets the normal thank-you | `WARN [EnquiriesService] Contact form honeypot filled` |
+| Calendar range over 92 days, or backwards | 400 with a reason | Not reachable from the site's links; only hand-made URLs | 400 on `/sessions` |
+
+## See it yourself
+
+All of this is for your **local** machine: Docker Postgres on port 5433, the API on 3001, the site on 3100. Never point these at Neon.
+
+```bash title="Start everything (two terminals)"
+cd backend && nvm use && npm run start:dev
+cd frontend && nvm use && npx next dev -p 3100
+```
+
+Port 3100 is used because your `fit-app` project often runs on 3000. Then open `http://localhost:3100`.
+
+```bash title="Ask the API directly"
+curl -s localhost:3001/api/v1/workshops | python3 -m json.tool | head -40
+curl -s localhost:3001/api/v1/workshops/batik-workshop/sessions | python3 -m json.tool
+curl -s "localhost:3001/api/v1/sessions?from=2026-11-01&to=2026-12-01" | python3 -m json.tool | head
+curl -si localhost:3001/api/v1/sessions/SESSION_ID/availability | grep -i cache-control
+# cache-control: no-store
+```
+
+Replace `SESSION_ID` with an `id` from the sessions answer.
+
+```sql title="See seats and enquiries in the local database"
+-- docker exec -it studio_rags_db psql -U studio -d studio_rags
+SELECT w.slug,
+       (s."startsAt" AT TIME ZONE 'UTC') AT TIME ZONE 'Australia/Adelaide' AS adelaide_time,
+       s.capacity
+FROM sessions s JOIN workshops w ON w.id = s."workshopId"
+WHERE s."startsAt" > now() ORDER BY s."startsAt" LIMIT 10;
+
+SELECT kind, name, left(message, 40), "createdAt" FROM enquiries ORDER BY "createdAt" DESC LIMIT 5;
+```
+
+> [!WATCH] The time zone in SQL
+> The columns hold UTC without a zone marker. `AT TIME ZONE 'UTC'` first says "this is UTC", and then `AT TIME ZONE 'Australia/Adelaide'` converts it. Skip the first step and the times come out wrong by 10.5 hours.
+
+```bash title="The tests that prove it"
+cd backend && npx jest src/catalogue src/enquiries
+cd backend && npm run test:e2e:prepare && npm run test:e2e -- catalogue enquiries
+cd frontend && npm test
+```
+
+The end-to-end tests that carry the most weight:
+
+- `counts confirmed bookings and live holds, and frees expired holds`
+- `goes up again the moment a hold expires`
+- `never shows a negative count when capacity is lowered below what is booked`
+- `never puts the Zoom link in any public response`
+- `never returns a session that has already started, even inside the range`
+
+To prove the first two can catch a real bug, the hold-expiry condition was temporarily removed from `seatHoldingBookings`, and both tests failed. They pass with it restored.
+
+## What changed
+
+Commit `d900a03` on branch `phase-2/catalogue`. **No migration**, no new environment variables.
+
+**Backend, catalogue (new)**
+
+| File | Role |
+|---|---|
+| `backend/src/catalogue/availability.ts` | The seat rule, seats left, and price choice |
+| `backend/src/catalogue/availability.spec.ts` | Unit tests for those three |
+| `backend/src/catalogue/catalogue.service.ts` | All catalogue reads |
+| `backend/src/catalogue/catalogue.types.ts` | The JSON shapes the API returns |
+| `backend/src/catalogue/catalogue.module.ts` | Wires the controllers and service together |
+| `backend/src/catalogue/workshops.controller.ts` | `/workshops`, `/workshops/:slug`, `/workshops/:slug/sessions` |
+| `backend/src/catalogue/sessions.controller.ts` | `/sessions` and `/sessions/:id/availability` |
+| `backend/src/catalogue/dto/session-range.dto.ts` | Checks and bounds the calendar's date window |
+| `backend/src/catalogue/dto/session-range.dto.spec.ts` | Unit tests for the window |
+
+**Backend, enquiries (new)**
+
+| File | Role |
+|---|---|
+| `backend/src/enquiries/enquiries.controller.ts` | `POST /contact`, throttled |
+| `backend/src/enquiries/enquiries.service.ts` | Stores, or discards a bot's message |
+| `backend/src/enquiries/enquiries.service.spec.ts` | Unit tests |
+| `backend/src/enquiries/dto/create-enquiry.dto.ts` | The form's rules and error messages |
+| `backend/src/enquiries/enquiries.module.ts` | Wiring |
+
+**Backend, changed**
+
+| File | Change |
+|---|---|
+| `backend/src/app.module.ts` | Imports the two new modules |
+| `backend/src/app.service.ts` | Comment now points at the status page's new path |
+| `backend/src/app.controller.spec.ts` | Reads the status page timeout from `frontend/src/app/status/page.tsx` |
+| `backend/prisma/seed.ts` | Photos, alt text and Adelaide-time demo dates |
+
+**Backend tests**
+
+| File | Role |
+|---|---|
+| `backend/test/catalogue/workshops.e2e-spec.ts` | Class list, detail, dates, seat rule, Zoom link never public |
+| `backend/test/catalogue/sessions.e2e-spec.ts` | Calendar window, live availability, hold expiry |
+| `backend/test/enquiries/contact.e2e-spec.ts` | Storing, validation, honeypot, throttle |
+| `backend/test/utils/catalogue.ts` | Helpers to create classes, sessions and bookings in tests |
+| `backend/test/utils/test-app.ts` | The test reset now also clears workshops, refund policies and enquiries |
+
+**Frontend pages**
+
+| File | Role |
+|---|---|
+| `frontend/src/app/layout.tsx` | Skip link, test-site banner, header, footer |
+| `frontend/src/app/page.tsx` | The new home page |
+| `frontend/src/app/status/page.tsx` | The old status page, moved from `/` |
+| `frontend/src/app/classes/page.tsx` | Class list with the studio, online and kids filter |
+| `frontend/src/app/classes/[slug]/page.tsx` | One class: facts, dates, cancellation terms |
+| `frontend/src/app/calendar/page.tsx` | Month view as a list by day |
+| `frontend/src/app/contact/page.tsx` | Contact page with the pre-filled message |
+| `frontend/src/app/not-found.tsx` | The 404 page |
+| `frontend/src/app/globals.css` | Every Fabric Fun colour, font and radius token |
+
+**Frontend components and helpers**
+
+| File | Role |
+|---|---|
+| `frontend/src/components/site-header.tsx` | Logo, nav, purple button, quatrefoil strip |
+| `frontend/src/components/site-footer.tsx` | Footer |
+| `frontend/src/components/class-card.tsx` | The class card and price tag ("$42 child + adult") |
+| `frontend/src/components/session-list.tsx` | Dates with the live refresh |
+| `frontend/src/components/contact-form.tsx` | The form |
+| `frontend/src/components/api-unavailable.tsx` | The "try again" message |
+| `frontend/src/components/ui.ts` | Shared button and link styles |
+| `frontend/src/lib/catalogue.ts` | Server fetches with timeout and cache |
+| `frontend/src/lib/catalogue-types.ts` | Frontend copy of the API's shapes |
+| `frontend/src/lib/adelaide.ts` | Adelaide-time formatting and month maths |
+| `frontend/src/lib/adelaide.test.mjs` | Tests for it, including daylight-saving edges |
+| `frontend/src/lib/format.ts` | Prices, durations, "5 places left" |
+| `frontend/src/lib/format.test.mjs` | Tests for it |
+
+**Images** (her photos, with permission given on 2026-09-12)
+
+- `frontend/public/brand/logo-full.png`, `frontend/public/brand/logo-mark.png`
+- `frontend/public/images/classes/batik-workshop.jpg`, `frontend/public/images/classes/shibori-workshop.jpg`, `frontend/public/images/classes/pakistani-woodblock-printing.jpg`, `frontend/public/images/classes/batik-online.jpg`, `frontend/public/images/classes/shibori-online.jpg`, `frontend/public/images/classes/kids-and-parents-paint-together.jpg`
+
+**Docs**
+
+| File | Change |
+|---|---|
+| `docs/SPEC.md` | Phase 2 status, ADR-033 to ADR-038, open items 19 to 24 |
+| `CLAUDE.md` | The explainer-per-phase and open-schema agreements |
+| `docs/deploy/README.md` | The status card is now at `/status` |
+| `docs/client/2026-11-07_progress-note.md` | Draft progress note for Rehana |
+
+**Deploying and rolling back.** Merging to `main` runs CI, then Render and Vercel deploy. There is no migration, so nothing changes on Neon. Rolling back is a revert of the merge. The seed has to be run on staging once, by hand and with your go-ahead, to give the staging site photos and dates.
+
+## Limits and open questions
+
+- **Not on staging yet.** All of this has run locally only. Staging needs the Render and Vercel set-up in `docs/deploy/README.md`.
+- **Rehana gets no email for enquiries** until Phase 4 (SPEC § 10 item 22).
+- **Late-cancellation wording** says "a $15 per person fee applies" and nothing about cash or voucher, until she answers § 10 item 4.
+- **The "Hello, I'm Rehana" text** is ours and needs her approval (item 21). The class descriptions are her short Eventbrite ones (item 19).
+- **Tokens come from the mockup HTML**, not Figma, because the connected Figma account can't open the file (item 20).
+- **Shared throttle on staging.** The page fetches from Vercel's servers count as one visitor against the global 120-a-minute limit (item 24). The 60-second cache keeps the real rate far below that.
+- **The header nav doesn't mark the current page.** The filter chips on `/classes` do. Adding `aria-current` to the header needs a small browser-side component, so it's left for Phase 3.
+- **The Figma "Book a class" was gold.** It's purple here on purpose (ADR-035). Worth telling the client if she notices.
+
+## Read the code yourself
+
+1. `backend/src/catalogue/availability.ts`: the whole seat rule in 30 lines. Start here.
+2. `backend/src/catalogue/catalogue.service.ts`: look for `onSale`, `sessionSelect` (and what it leaves out), and `seatsTaken`.
+3. `backend/src/catalogue/sessions.controller.ts`: the `no-store` header and why.
+4. `backend/test/catalogue/workshops.e2e-spec.ts`: the seat-rule tests read as a specification.
+5. `frontend/src/lib/catalogue.ts`: timeout, cache, and the three-way result.
+6. `frontend/src/app/classes/[slug]/page.tsx`, then `frontend/src/components/session-list.tsx`: server first, then the live refresh.
+7. `frontend/src/components/contact-form.tsx`: validation, focus handling, and the error messages.
+8. `frontend/src/app/globals.css`: the tokens, each with its use.
+
+## Check your understanding
+
+<details><summary>Ben's hold runs until 12:10. At 12:10:00 exactly, does he still hold his 2 places?</summary>
+
+No. The rule is `holdExpiresAt > now` (strictly after). At 12:10:00 it is equal, not after, so his places are free. See Scenario 1, step 4.
+
+</details>
+
+<details><summary>Rehana lowers the Saturday class from 8 places to 2. Ana and Ben's bookings remain. What does the page show?</summary>
+
+"Fully booked", and no button. Three places are taken against a capacity of 2, and `seatsLeft` uses `Math.max(0, …)`, so it shows 0, never -1. The date stays visible (ADR-037).
+
+</details>
+
+<details><summary>Why can't a mistake in the catalogue code leak the Zoom link, even if someone adds a new route?</summary>
+
+Every catalogue query reads sessions through `sessionSelect`, which lists the columns to read and leaves `onlineJoinUrl` out. A column that is never read can't be returned. A new route that wrote its own query could still read it, which is why an end-to-end test checks every public response for the link.
+
+</details>
+
+<details><summary>The API is asleep when Mia opens the home page. What does she see, and what does the next visitor 30 seconds later see?</summary>
+
+Mia waits up to 8 seconds, then sees the hero photos and "We couldn't load the classes just now" (the failed fetch is not cached). The API keeps waking in the background. If it is awake 30 seconds later, the next visitor gets the full page, and that answer is then cached for a minute.
+
+</details>
+
+<details><summary>Someone emails Mia a link: /contact?class=batik-workshop&date=not-a-date. What does the message box say?</summary>
+
+"Hello Rehana, I'd like to know about the next Indonesian Batik Workshop." The class exists, so its real title is used. `Date.parse` rejects the date, so the message leaves the date out. See Scenario 2, step 1.
+
+</details>
+
+<details><summary>Why would moving the contact form to a Next server action weaken the spam limit?</summary>
+
+The limit counts per sending address. With a server action, every message would come from the Next server's address, so all visitors would share one allowance of 5 per 10 minutes. See ADR-038.
+
+</details>
+
+## Changelog
+
+| Date | Commit | What changed |
+|---|---|---|
+| 2026-11-07 | `d900a03` | Phase 2 built: catalogue API, contact endpoint, seed photos and dates, the public website in Fabric Fun. Page created. |
+
+</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/markdown-it/13.0.2/markdown-it.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/http.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/dockerfile.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/pgsql.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mermaid/10.9.1/mermaid.min.js"></script>
+<script>
+(function () {
+  var src = document.getElementById('explainer-source').textContent.replace(/<\\\/script/gi, '</script');
+  var doc = document.getElementById('doc');
+
+  function esc(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
+  function attrsOf(info) { var out = {}, m, re = /(\w+)="([^"]*)"/g; while ((m = re.exec(info))) out[m[1]] = m[2]; return out; }
+
+  if (!window.markdownit) {
+    var raw = document.createElement('pre'); raw.className = 'raw'; raw.textContent = src;
+    doc.innerHTML = ''; doc.appendChild(raw); return;
+  }
+
+  var md = window.markdownit({ html: true, linkify: true, typographer: false });
+  md.renderer.rules.fence = function (tokens, idx) {
+    var t = tokens[idx], info = (t.info || '').trim(), lang = info.split(/\s+/)[0] || '', a = attrsOf(info);
+    var code = t.content.replace(/\n$/, '');
+    if (lang === 'mermaid') {
+      return '<figure class="diagram"><pre class="mermaid">' + esc(code) + '</pre>' + (a.caption ? '<figcaption>' + esc(a.caption) + '</figcaption>' : '') + '</figure>';
+    }
+    var body = (window.hljs && lang && hljs.getLanguage(lang)) ? hljs.highlight(code, { language: lang, ignoreIllegals: true }).value : esc(code);
+    var nums = a.lines ? a.lines.split(',') : null;
+    var gutter = nums ? '<span class="gutter" aria-hidden="true">' + nums.map(function (n) { return n || '⋮'; }).join('\n') + '</span>' : '';
+    var head = (a.title || lang) ? '<div class="code-head"><span class="path">' + esc(a.title || '') + '</span>' + (lang ? '<span class="lang">' + esc(lang) + '</span>' : '') + '</div>' : '';
+    return '<div class="codeblock">' + head + '<pre class="code"><button class="copy" type="button">Copy</button>' + gutter + '<code class="hljs">' + body + '</code></pre></div>';
+  };
+  doc.innerHTML = md.render(src);
+
+  // GitHub-style callouts: > [!WHY] optional title
+  var LABELS = { NOTE: 'Note', WHY: 'Why', TERM: 'Term', EXAMPLE: 'Example', WATCH: 'Watch out', UNVERIFIED: 'Not verified' };
+  doc.querySelectorAll('blockquote').forEach(function (bq) {
+    var p = bq.querySelector('p'); if (!p) return;
+    var m = p.innerHTML.match(/^\s*\[!(\w+)\]([^\n]*)\n?/); if (!m || !LABELS[m[1].toUpperCase()]) return;
+    var kind = m[1].toUpperCase(), title = m[2].trim();
+    p.innerHTML = p.innerHTML.slice(m[0].length);
+    if (!p.innerHTML.trim()) p.remove();
+    bq.classList.add('callout', kind.toLowerCase());
+    var label = document.createElement('span'); label.className = 'callout-label';
+    label.innerHTML = esc(LABELS[kind]) + (title ? ': ' + title : '');
+    bq.insertBefore(label, bq.firstChild);
+  });
+
+  doc.querySelectorAll('table').forEach(function (tb) {
+    var w = document.createElement('div'); w.className = 'table-wrap'; tb.parentNode.insertBefore(w, tb); w.appendChild(tb);
+  });
+
+  // Everything from the H1 (or an eyebrow line just above it) to the first H2 becomes the page header.
+  var first = doc.firstElementChild;
+  var start = first && first.tagName === 'H1' ? first
+    : first && first.classList.contains('eyebrow') && first.nextElementSibling && first.nextElementSibling.tagName === 'H1' ? first : null;
+  if (start) {
+    var hero = document.createElement('header'); hero.className = 'hero';
+    var n = start;
+    while (n && n.tagName !== 'H2') { var next = n.nextElementSibling; hero.appendChild(n); n = next; }
+    document.getElementById('hero-slot').appendChild(hero);
+  }
+
+  var used = {}, items = [];
+  doc.querySelectorAll('h2, h3').forEach(function (h) {
+    var id = h.textContent.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'section';
+    while (used[id]) id += '-2';
+    used[id] = 1; h.id = id;
+    items.push('<li class="' + h.tagName.toLowerCase() + '"><a href="#' + id + '">' + esc(h.textContent) + '</a></li>');
+  });
+  document.getElementById('toc').innerHTML = items.join('');
+  document.getElementById('toc-mobile').innerHTML = items.join('');
+  document.querySelectorAll('.toc-mobile a').forEach(function (a) { a.addEventListener('click', function () { a.closest('details').open = false; }); });
+
+  doc.querySelectorAll('pre.code .copy').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var text = btn.parentElement.querySelector('code').innerText;
+      var done = function (label) { btn.textContent = label; setTimeout(function () { btn.textContent = 'Copy'; }, 1400); };
+      try { navigator.clipboard.writeText(text).then(function () { done('Copied'); }, function () { done('Press Ctrl+C'); }); } catch (e) { done('Press Ctrl+C'); }
+    });
+  });
+
+  var links = {}; document.querySelectorAll('.toc a').forEach(function (a) { links[a.getAttribute('href').slice(1)] = a; });
+  if ('IntersectionObserver' in window) {
+    var current = null;
+    var io = new IntersectionObserver(function (entries) {
+      entries.forEach(function (e) {
+        if (e.isIntersecting && links[e.target.id]) { if (current) current.classList.remove('active'); current = links[e.target.id]; current.classList.add('active'); }
+      });
+    }, { rootMargin: '0px 0px -70% 0px' });
+    doc.querySelectorAll('h2[id], h3[id]').forEach(function (h) { io.observe(h); });
+  }
+
+  if (window.mermaid) {
+    var css = getComputedStyle(document.documentElement), v = function (k) { return css.getPropertyValue(k).trim(); };
+    mermaid.initialize({
+      startOnLoad: false, securityLevel: 'strict', theme: 'base',
+      themeVariables: {
+        fontFamily: 'Inter, system-ui, sans-serif', fontSize: '14px',
+        primaryColor: v('--accent-soft'), primaryBorderColor: v('--accent'), primaryTextColor: v('--text'),
+        secondaryColor: v('--surface-2'), tertiaryColor: v('--surface'), lineColor: v('--muted'), textColor: v('--text'),
+        mainBkg: v('--accent-soft'), nodeBorder: v('--accent'), clusterBkg: v('--surface-2'), clusterBorder: v('--border'),
+        actorBkg: v('--accent-soft'), actorBorder: v('--accent'), actorTextColor: v('--text'), signalColor: v('--text'), signalTextColor: v('--text'),
+        labelBoxBkgColor: v('--surface-2'), labelBoxBorderColor: v('--border'), labelTextColor: v('--text'), loopTextColor: v('--text'),
+        noteBkgColor: v('--warn-bg'), noteBorderColor: v('--warn'), noteTextColor: v('--text'),
+        activationBkgColor: v('--surface-2'), activationBorderColor: v('--accent'), sequenceNumberColor: v('--surface'),
+        edgeLabelBackground: v('--surface'), background: v('--surface')
+      },
+      sequence: { wrap: true, mirrorActors: false, showSequenceNumbers: false },
+      flowchart: { htmlLabels: true, curve: 'basis' }
+    });
+    var nodes = Array.prototype.slice.call(doc.querySelectorAll('pre.mermaid'));
+    var showSource = function (node, text) {
+      var fig = node.parentElement, note = document.createElement('div');
+      note.className = 'diagram-error'; note.textContent = 'This diagram has a syntax error; its source is shown instead.';
+      var pre = document.createElement('pre'); pre.className = 'raw'; pre.textContent = text;
+      fig.replaceChild(pre, node); fig.insertBefore(note, pre);
+    };
+    // Measure labels only once the web font is in, or boxes come out too narrow and clip the text.
+    // Render one diagram at a time, each under its own id: mermaid.run can hand several diagrams
+    // the same id, and then draws them all into the first one.
+    var fontsReady = (document.fonts && document.fonts.ready) ? document.fonts.ready.catch(function () {}) : Promise.resolve();
+    nodes.reduce(function (chain, node, i) {
+      return chain.then(function () {
+        var text = node.textContent;
+        return mermaid.parse(text, { suppressErrors: true }).then(function (ok) {
+          if (!ok) return showSource(node, text);
+          return mermaid.render('explainer-diagram-' + (i + 1), text).then(function (out) {
+            node.innerHTML = out.svg;
+            node.setAttribute('data-processed', 'true');
+            if (out.bindFunctions) out.bindFunctions(node);
+          });
+        }).catch(function () { showSource(node, text); });
+      });
+    }, fontsReady);
+  }
+})();
+</script>
