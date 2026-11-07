@@ -71,6 +71,19 @@ by eye.
   `npm run lint`, `npm run typecheck`, `npm test`, `npx next build` in
   `frontend/`. CI runs the same and gates staging.
 
+## Phase explainers
+
+The developer owns this project. Every phase ends with an HTML explainer in
+`docs/explainers/`: what was built, how it works end to end, why, how it fails,
+how to see it running. Use the `explain-the-change` skill's build script so code
+excerpts are verified against the repo. A phase is not done without it.
+
+## Schema changes
+
+While in development, migrations may add, rewrite or drop tables freely —
+against local Docker Postgres. Neon rules above still apply, and flag any
+destructive migration before it merges to `main`.
+
 ## Client communication
 
 Everything the client sees goes in `docs/client/`, in plain language, written for

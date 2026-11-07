@@ -1,6 +1,6 @@
 # Studio Rags — Living Specification
 
-**Status:** v0.7 · Last updated 2026-09-12
+**Status:** v0.7 · Last updated 2026-11-07
 **Source of truth.** If this file and any other document disagree, this file wins
 (except the client-signed SRS on scope — see § 2).
 
@@ -81,6 +81,9 @@ classes.** Paint with Mate and Kids' Tie Dye are excluded from the initial build
 not from the product. Both are ordinary classes in shapes we already support, so
 she adds them herself from the dashboard after launch with no development work.
 Six is the design and test set, not a ceiling.
+
+**Kids and parents paint together, $42 (ADR-033, 2026-11-07).** That price covers
+the child and the accompanying adult together. The adult is not a second charge.
 
 **The Master Class withdrawal (2026-09-12)** removed the prepaid-entitlement
 model entirely: no `Enrolment`, no credits, no 6-month expiry, no `COURSE`
@@ -501,12 +504,13 @@ her own room, and it is the only reading that cannot silently overfill it.
 The admin UI states this explicitly on the capacity field for that workshop, so
 there is no ambiguity when she sets the number.
 
+**Price, confirmed 2026-11-07 (ADR-033).** The $42 covers the child and the
+accompanying adult together: one booking, one charge. The adult is not a second
+paid seat and does not consume a place. Capacity remains a count of children.
+
 **`BookingAttendee`** — `id`, `bookingId`, `firstName`, `age`. Captured at
 booking for the kids class so the admin knows who is coming, and so the 7–15 age
 range is validated at the point of sale rather than at the door.
-
-Still open: whether the accompanying adult pays, or the price covers the pair
-(§ 10 item 2). That is a pricing question only — it does not change this model.
 
 **`WorkshopImage`** — `id`, `workshopId`, `url`, `alt` (required, non-empty —
 accessibility is not optional), `width`, `height`, `position`, `isHero`.
@@ -784,8 +788,8 @@ to feed.
 | --- | --- | --- |
 | 0 | Baseline | Repo re-baselined, spec written, tooling, CI, ADRs — **done 2026-11-03** |
 | 1 | Auth & data | Prisma schema, migrations, seed, register/login/reset, roles — **done 2026-09-12; hardened and tested 2026-11-03** |
-| 2 | Catalog | Workshops, sessions, public site: home, list, detail, calendar, contact ← *we are here* |
-| 3 | Booking & payment | Seat holds, Stripe intents, webhook confirmation, confirmation email |
+| 2 | Catalog | Workshops, sessions, public site: home, list, detail, calendar, contact — **built 2026-11-07 on `phase-2/catalogue`, awaiting merge** |
+| 3 | Booking & payment | Sign-in UI (moved from phase 2), seat holds, Stripe intents, webhook confirmation, confirmation email ← *next* |
 | 4 | Customer account | Booking history, profile, reminder emails, admin notifications |
 
 **Trimester 2 — admin, extras, handover**
@@ -832,7 +836,7 @@ change what gets built.
 | ~~3~~ | ~~Private events and travel surcharge~~ — **closed 2026-09-12 by the developer.** Offline, enquiry form only. ADR-019 confirmed; FR-P3 stands unchanged. | — | Closed |
 | 4 | **Late cancellation — cash or voucher?** Inside 14 business days, is it a refund minus $15 per person, or a credit voucher minus $15? Her policy implies voucher but does not say it. | Refund logic, phase 3 | Client |
 | 5 | **Gift card expiry.** Hers says 12 months. Australian Consumer Law requires a minimum of 3 years on gift cards sold to consumers. Must be raised in writing. | Phase 6; legal exposure | Us to raise → Client decides |
-| 6 | **Kids class price, $42** — is that per child, or does it cover the child and the accompanying adult together? Capacity is settled (ADR-016); this is pricing. | Pricing display, phase 2 | Client |
+| ~~6~~ | ~~Kids class price, $42~~ — **closed 2026-11-07 (ADR-033).** The price covers the child and the accompanying adult together. The adult is not charged separately and does not take a seat. | — | Closed |
 | 7 | **Master Class — withdrawn or postponed?** If she still teaches it, we keep `productType` open so it can return without a migration. | Schema tidiness only | Client |
 | 8 | Public-holiday calendar for South Australia, to compute "14 business days". | Refund logic, phase 3 | Us — seed it, she can edit |
 | 9 | Domain purchase — `studiorags.com.au` recommended, supervisor endorsement pending. | Phase 9 | Us → supervisor → Client |
@@ -845,6 +849,12 @@ change what gets built.
 | 16 | **Local Postgres 17 vs Neon and CI 18.** Upgrade the dev container by dump and restore when convenient. Changing the image alone makes the existing volume unreadable. | Version parity | Us |
 | 17 | **Frontend refresh contract.** After a refresh 401, retry `GET /auth/me` once before sending the user to sign-in, so a winner response lost during a cold start is not mistaken for a signed-out user. Before `POST /auth/logout`, wait for any refresh still in flight. Otherwise that refresh's new session can outlive the sign-out (accepted risk, ADR-032). | Phase 2 auth UI | Us |
 | 18 | **Repo visibility.** The repository is public: this file, client correspondence and her policy PDF are readable by anyone. Consider making it private (GitHub Free includes 2,000 Actions minutes a month for private repos). | Client confidentiality | Developer |
+| 19 | **Her full class descriptions.** Only the short Eventbrite summaries exist, so the class pages repeat the summary. She edits them herself in the admin (phase 5), or sends text sooner. | Class page content | Client |
+| 20 | **Figma access.** The connected Figma account (the student address) has no access to file `WRSDQ8L6iHupgt77wpV0iP`. Tokens were taken from `docs/design/mockups/directions.html`, the source the Figma styles were built from. Share the file with that account, then reconcile. | Token fidelity | Developer |
+| 21 | **The "Hello, I'm Rehana" text** on the home page is ours, drawn from her emails: twenty years in textiles, fashion designer and lecturer, the only batik teacher in the Adelaide area. She approves or rewrites it before the site is shown publicly. | Home page copy | Client |
+| 22 | **Enquiries are stored but nobody is told.** `POST /contact` saves the row; the email to her arrives with the mail module (phase 4). Until then she would only see them in the database. | Contact form usefulness on staging | Us, phase 4 |
+| 23 | **Cancellation wording on class pages** shows her terms (§ 5) but stays silent on cash or voucher for late cancellations until item 4 is answered. | Class page copy | Client, via item 4 |
+| 24 | **Server-side catalogue fetches share one throttle key.** Pages fetch the catalogue from Vercel's servers, so on staging every visitor's page render arrives from Vercel. The global throttle (120 a minute, `app.module.ts`) could be hit by a busy minute of page views. Data is cached for 60 s, which keeps the real rate low. Exempt catalogue reads from the throttle, or key them differently, if it ever shows up. | Staging under load | Us, phase 8 |
 
 ### Closed by the second email of 2026-09-12
 
@@ -872,7 +882,60 @@ her approval. Resolve before the design system is built.
 
 ## 11. Current status
 
-**Phase 0 — Baseline, complete. Phase 1 not started.** Last updated 2026-09-12.
+**Phases 0 and 1 complete. Phase 2 built on branch `phase-2/catalogue`, all
+checks green, awaiting merge to `main`.** Last updated 2026-11-07.
+
+Kids & Parents pricing is settled (ADR-033): $42 covers the child and the
+accompanying adult. The class pages show it as "$42 child + adult".
+
+### Phase 2 — catalogue and public site (built 2026-11-07)
+
+Explainer for the developer: `docs/explainers/phase-2-catalogue.html`.
+
+**No schema change.** Phase 1's schema already held workshops, sessions, images
+and enquiries, so this phase has no migration.
+
+**API**, all public and read-only except the contact form:
+
+| Route | Returns |
+| --- | --- |
+| `GET /workshops` | Published classes, each with its hero photo and next date on sale |
+| `GET /workshops/:slug` | One class, with the cancellation terms that apply to it; 404 "Class not found" |
+| `GET /workshops/:slug/sessions` | Up to 24 upcoming dates, sold-out ones included and flagged |
+| `GET /sessions?from&to` | Every class date in a window: 31 days by default, 92 at most |
+| `GET /sessions/:id/availability` | Live seats left, `Cache-Control: no-store` |
+| `POST /contact` | Stores an enquiry; 202. Five per visitor per ten minutes. A hidden honeypot field discards bots silently |
+
+Seats left = capacity − (confirmed bookings + pending bookings whose hold has
+not expired), never below zero, counted with one grouped query per request.
+No query selects a session's Zoom link (ADR-015).
+
+**Seed.** Each class gets her photo (with alt text describing it) and five
+upcoming dates on a realistic weekly or fortnightly pattern in Adelaide time.
+Dates are only added when a class has none upcoming, so re-running is safe.
+
+**Frontend**, in Fabric Fun:
+
+- Site shell: skip link, test-site banner, header with the quatrefoil strip,
+  footer. The old staging status page moved to `/status`.
+- `/` home: hero, the six classes, the "Hello, I'm Rehana" section (§ 10 item 21).
+- `/classes`, with a filter for studio, online and kids (`?type=`).
+- `/classes/[slug]`: facts, upcoming dates (refreshed live in the browser),
+  and her cancellation terms. Booking is not open yet, so each date offers
+  "Ask about this date", which opens the contact form pre-filled.
+- `/calendar`: a month at a time as a list by day, six months ahead.
+- `/contact`: the enquiry form, with errors in words beside each field.
+- The full colour, type and radius token set in `globals.css` (§ 10 item 20).
+
+**Verified.** Backend: lint and typecheck clean, 435 unit tests, 116
+end-to-end tests (32 new for this phase). The seat rule was checked by
+planting the bug back in (holds counted without their expiry); two tests
+failed. Frontend: lint, typecheck, 29 tests, production build. In the browser
+at 390 px and 1280 px wide: no sideways scrolling, no text under 16 px, no text
+contrast below AA, every tap target 44 px or more, form errors announced and
+focused, success focused. That check found and fixed: 14–15 px meta text, a
+21 px back link, input borders at 1.4:1 (now 3.76:1, ADR-036), and focus lost
+after sending the form.
 
 ### Done
 
@@ -948,8 +1011,8 @@ Lint clean, typecheck clean, unit tests passing.
   Postgres bound to `127.0.0.1:5432`, so the container was unreachable through
   `localhost`. `docker-compose.yml` now takes `${POSTGRES_PORT:-5432}` and the
   local `.env` sets 5433. Anyone cloning fresh can leave the default.
-- Node 20 is required (`nvm use`). The machine defaults to 18, which neither
-  NestJS 11 nor Next.js 16 supports.
+- Node 24 is required (`nvm use`, ADR-027). The machine defaults to 18, which
+  neither NestJS 11 nor Next.js 16 supports.
 - Prisma reads the **root** `.env` via `dotenv-cli`; all `db:*` scripts wrap it.
 - `tsconfig.build.json` excludes `prisma/`, otherwise the seed file drags
   `rootDir` up and the bundle lands at `dist/src/main.js`.
@@ -1047,8 +1110,8 @@ the marketing surfaces; the interface face does the work.
 
 ### Frontend
 
-`frontend/` holds only the staging status page and the API proxy. Phase 2 builds
-the real public site on top of it, in Fabric Fun (ADR-021).
+The public catalogue site, in Fabric Fun (ADR-021), with the staging status page
+at `/status`. Sign-in and booking screens arrive in phase 3.
 
 ### Schedule
 
@@ -1070,17 +1133,20 @@ and a link to try it.
    Render Blueprint and the Vercel project (`docs/deploy/README.md`), then check
    it end to end. The first Render deploy applies the migrations on Neon (§ 10
    item 15). Verify TRUST_PROXY (§ 10 item 14).
-2. **Send her the progress note** with the staging link.
-3. **Phase 2 — catalogue and sessions**, as a thin path through booking first:
-   Fabric Fun foundations, catalogue API, home and class pages, sign-in, then
-   book and pay in Stripe test mode.
-4. Re-issue the SRS as **v1.1**: Master Class out, real catalogue and prices in,
+2. **Merge `phase-2/catalogue`** once the developer has read the explainer.
+   No migration, so the merge changes nothing on Neon.
+3. **Send her the progress note** (`docs/client/2026-11-07_progress-note.md`,
+   draft) with the staging link, and ask about § 10 items 4, 19 and 21.
+4. **Phase 3 — booking and payment**: sign-in screens (honouring § 10 item 17),
+   seat holds under the row lock, Stripe in test mode, webhook confirmation,
+   confirmation email. Needs a Stripe test account; no card is ever added.
+5. Re-issue the SRS as **v1.1**: Master Class out, real catalogue and prices in,
    her refund policy in, private events decided, and production launch outside
    the capstone (§ 10 item 13). Chase the sign-off v1.0 never received.
-5. Regenerate the Requirements and Deliverables Mapping to match.
-6. Regenerate `docs/diagrams/src/04-sequence-auth.mmd`; it predates ADR-022 and
+6. Regenerate the Requirements and Deliverables Mapping to match.
+7. Regenerate `docs/diagrams/src/04-sequence-auth.mmd`; it predates ADR-022 and
    ADR-032.
-7. **Verify the SA public-holiday dates** before they drive refunds (§ 10
+8. **Verify the SA public-holiday dates** before they drive refunds (§ 10
    item 8).
 
 ## 12. Decision log
@@ -1120,6 +1186,12 @@ and a link to try it.
 | ADR-030 | Migrations run at container start (`prisma migrate deploy`, then the API) | 2026-11-03 | § 3; Render's free plan has no pre-deploy command. A failed migration stops the container, so the previous deploy stays live. On AWS this becomes a one-off task |
 | ADR-031 | CI gates staging: Render deploys `main` only after GitHub checks pass (`autoDeployTrigger: checksPass`); CI runs Postgres 18 to match Neon | 2026-11-03 | § 9; a red build can never reach the demo site. Local dev stays on Postgres 17 until a dump-and-restore upgrade |
 | ADR-032 | A rotated refresh token that comes back after the grace window ends every session only if its successor was used (refreshed or signed out with). Otherwise only its own session ends. Each refresh records the token it spent (`refresh_tokens.rotatedFromId`) | 2026-11-03 | § 5; amends ADR-022. Review found that a refresh whose answer never arrived left the spent token in the browser. Render cold starts make that likely (§ 10 item 17). The browser's next refresh was then treated as theft and signed the user out of every device. An unused successor is what a lost answer looks like. It is also what a stolen copy looks like before the owner refreshes again. Both cases now end that session, successor included, so neither party keeps it. A token answered as theft is marked `REUSE_DETECTED`, so replaying it cannot sign the owner out again. Accepted risks: a theft caught before the owner refreshes again ends one session, not all of them; sign-out racing a refresh in flight leaves that refresh's new session live (frontend waits, item 17; a server fix would follow `rotatedFromId` under the user lock) |
+| ADR-033 | Kids & Parents price covers the child and the accompanying adult | 2026-11-07 | § 5; one charge per child. The adult attends on that ticket and is not a second seat. Capacity stays a count of children (ADR-016). Confirmed by the developer; no separate client email is on file |
+| ADR-034 | Catalogue pages render per request; the data behind them is cached for 60 s (`fetch` with `revalidate: 60`) | 2026-11-07 | § 7; a page built once at deploy time would need the API during CI's build, which has none, and would go stale when she changes a date. Per-request rendering with a short data cache keeps pages current for the cost of one API call a minute per page. Live seat counts never use the cache (`no-store`) |
+| ADR-035 | The header's *Book a class* button is purple, not the mockup's gold | 2026-11-07 | § 7; the header sits on cream paper, where gold is 2.19:1 and fails AA. Gold appears on the purple sections instead, at 4.55:1 or better. Keeps the colour rule in `CLAUDE.md` without dropping gold from the direction |
+| ADR-036 | Input borders darkened from the mockup's `#E2D6E8` to `#8E7E98` | 2026-11-07 | § 8; WCAG 2.2 AA 1.4.11 needs 3:1 for a field's edge. The mockup's lilac was 1.4:1, so the boxes nearly vanished for low-vision visitors. 3.76:1 on white, 3.67:1 on paper. Card borders keep the light lilac: they are decorative, and the text inside identifies each card |
+| ADR-037 | Sold-out dates are listed and marked "Fully booked", not hidden | 2026-11-07 | § 7; a hidden date looks like no class was planned. A full one tells a visitor the class is popular and that another date, or asking her, is the way in. The API flags them (`isFull`) and the page shows it in words |
+| ADR-038 | The contact form posts from the browser to `/api/v1/contact`, not through a Next server action | 2026-11-07 | § 6; the API throttles enquiries per visitor (5 per 10 minutes). A server action would make every visitor arrive from Vercel's servers, so one person could use up everyone's allowance. Catalogue lists are not cursor-paginated: six classes, and `/sessions` is bounded by its 92-day window |
 
 ---
 
@@ -1135,3 +1207,13 @@ and a link to try it.
   architecture is proposed by Claude and approved by the developer.
 - **Nothing marked Must ships unverified.** Payment, seat locking, and email
   each get an explicit test before being called done.
+- **Every phase ends with an explainer page** for the developer, who owns the
+  project (agreed 2026-11-07). A self-contained HTML file in `docs/explainers/`
+  covering what was built, how it works end to end, why it was built that way,
+  how it fails, and how to see it running. Code excerpts are checked against
+  the repo when the page is built. A phase is not done until its page exists.
+- **The schema is open while in development** (agreed 2026-11-07). New
+  migrations may add, rewrite or drop tables. Applied to local Docker Postgres
+  only. Neon still needs the developer's go-ahead, and a migration merged to
+  `main` reaches Neon on the next Render deploy, so any destructive one is
+  flagged before merge.

@@ -1,0 +1,244 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Phase 2 — the public site · Studio Rags</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,900&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --paper: #FFFCF6; --plum: #4E2B4B; --purple: #5B3460; --ochre: #CA7F3A;
+    --gold: #E8A134; --ink: #3a2f3d; --muted: #5f5466; --line: #e7dcea; --lilac: #f4eef6;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--paper); color: var(--ink);
+    font: 400 1.0625rem/1.65 Inter, system-ui, sans-serif; }
+  main { max-width: 760px; margin: 0 auto; padding: 3rem 1.25rem 5rem; }
+  h1, h2, h3 { font-family: Fraunces, Georgia, serif; color: var(--plum); line-height: 1.15; }
+  h1 { font-weight: 900; font-size: clamp(2.2rem, 6vw, 3.2rem); margin: .25rem 0 1rem; }
+  h1 span { color: var(--ochre); display: block; }
+  h2 { font-weight: 600; font-size: 1.75rem; margin: 3.5rem 0 1rem; }
+  h3 { font-weight: 600; font-size: 1.2rem; margin: 0 0 .4rem; }
+  .eyebrow { font-weight: 600; color: var(--purple); letter-spacing: .04em; text-transform: uppercase; font-size: 1rem; }
+  .lede { font-size: 1.2rem; color: var(--muted); }
+  .pills { display: flex; flex-wrap: wrap; gap: .5rem; padding: 0; list-style: none; }
+  .pills li { background: var(--lilac); color: var(--purple); border-radius: 999px; padding: .3rem .9rem; font-weight: 500; font-size: 1rem; }
+  figure { margin: 0 0 2.25rem; }
+  figure img { width: 100%; height: auto; display: block; border-radius: 18px; border: 1px solid var(--line);
+    box-shadow: 0 8px 28px rgba(78,43,75,.10); }
+  figcaption { margin-top: .6rem; color: var(--muted); }
+  figcaption b { color: var(--plum); }
+  .card { background: #fff; border: 1px solid var(--line); border-radius: 18px; padding: 1.25rem 1.4rem; margin-bottom: 1rem; }
+  .flow { width: 100%; height: auto; margin: .5rem 0 1.25rem; }
+  ol.steps { padding-left: 1.4rem; }
+  ol.steps li { margin-bottom: .5rem; }
+  ul.risks { list-style: none; padding: 0; }
+  ul.risks li { border-left: 4px solid var(--ochre); padding: .2rem 0 .2rem 1rem; margin-bottom: 1rem; }
+  ul.risks b { color: var(--plum); }
+  details { margin-top: .75rem; }
+  summary { cursor: pointer; color: var(--purple); font-weight: 600; min-height: 44px; display: flex; align-items: center; }
+  summary:focus-visible { outline: 3px solid var(--purple); outline-offset: 3px; border-radius: 6px; }
+  pre { background: #2b1f2e; color: #f6eef7; border-radius: 12px; padding: 1rem 1.1rem; overflow-x: auto;
+    font: 400 1rem/1.55 ui-monospace, SFMono-Regular, Menlo, monospace; margin: .5rem 0 0; }
+  .src { font: 400 1rem ui-monospace, Menlo, monospace; color: var(--muted); margin-top: .9rem; }
+  code { font-family: ui-monospace, Menlo, monospace; font-size: .92em; background: var(--lilac); padding: .05rem .35rem; border-radius: 5px; }
+  pre code { background: none; padding: 0; font-size: inherit; }
+  .next { background: var(--purple); color: #fff; border-radius: 18px; padding: 1.5rem 1.6rem; margin-top: 3.5rem; }
+  .next h2 { color: var(--gold); margin-top: 0; }
+  .next a { color: #fff; }
+  footer { color: var(--muted); font-size: 1rem; margin-top: 2.5rem; }
+</style>
+</head>
+<body>
+<main>
+
+<p class="eyebrow">Studio Rags · Phase 2 · 7 November 2026</p>
+<h1>The public site <span>is up.</span></h1>
+<p class="lede">Visitors can now browse Rehana's classes, see real dates with live seat counts, and send her a message. Online booking and payment come next, in Phase 3.</p>
+<ul class="pills">
+  <li>6 classes</li><li>6 pages</li><li>5 API endpoints</li><li>551 backend tests, 29 frontend tests</li>
+</ul>
+
+<h2>What changed, in screenshots</h2>
+
+<figure>
+  <img src="phase-2/home.jpg" alt="Home page: 'Make something with your hands' in plum and ochre, three workshop photos, and class cards with prices." loading="lazy">
+  <figcaption><b>Home.</b> The Fabric Fun look, built for real: cream paper, plum headings, the woodblock border, and her own photos.</figcaption>
+</figure>
+
+<figure>
+  <img src="phase-2/class.jpg" alt="Indonesian Batik Workshop page with price, length, place, and five upcoming Saturdays, each showing '8 places left'." loading="lazy">
+  <figcaption><b>A class page.</b> Every upcoming date, with its seat count fetched fresh in the browser so it is never a cached number.</figcaption>
+</figure>
+
+<figure>
+  <img src="phase-2/calendar.jpg" alt="Calendar for November 2026, grouped by day, with Previous and Next month links." loading="lazy">
+  <figcaption><b>Calendar.</b> Every class in one month, grouped by day. You can page from this month up to six months ahead.</figcaption>
+</figure>
+
+<figure>
+  <img src="phase-2/contact.jpg" alt="Contact form with the message pre-filled: 'Hello Rehana, I'd like a place in Indonesian Batik Workshop on Saturday 14 November at 10:00 am.'" loading="lazy">
+  <figcaption><b>Contact.</b> “Ask about this date” opens the form with the message already written. Until booking opens, this is how people reserve a place.</figcaption>
+</figure>
+
+<h2>How a visit works</h2>
+
+<svg class="flow" viewBox="0 0 720 150" role="img" aria-labelledby="flow-title">
+  <title id="flow-title">The visitor's browser asks the Next.js site on Vercel, which asks the NestJS API on Render, which reads Postgres on Neon.</title>
+  <defs><marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#5B3460"/></marker></defs>
+  <g font-family="Inter, sans-serif" text-anchor="middle">
+    <rect x="4" y="30" width="150" height="80" rx="16" fill="#fff" stroke="#5B3460" stroke-width="2"/>
+    <text x="79" y="66" font-size="17" font-weight="600" fill="#4E2B4B">Browser</text>
+    <text x="79" y="89" font-size="14" fill="#5f5466">the visitor</text>
+    <rect x="192" y="30" width="150" height="80" rx="16" fill="#fff" stroke="#5B3460" stroke-width="2"/>
+    <text x="267" y="66" font-size="17" font-weight="600" fill="#4E2B4B">Next.js site</text>
+    <text x="267" y="89" font-size="14" fill="#5f5466">Vercel</text>
+    <rect x="380" y="30" width="150" height="80" rx="16" fill="#fff" stroke="#5B3460" stroke-width="2"/>
+    <text x="455" y="66" font-size="17" font-weight="600" fill="#4E2B4B">NestJS API</text>
+    <text x="455" y="89" font-size="14" fill="#5f5466">Render</text>
+    <rect x="568" y="30" width="148" height="80" rx="16" fill="#5B3460"/>
+    <text x="642" y="66" font-size="17" font-weight="600" fill="#fff">Postgres</text>
+    <text x="642" y="89" font-size="14" fill="#E8A134">Neon</text>
+    <line x1="156" y1="70" x2="188" y2="70" stroke="#5B3460" stroke-width="2" marker-end="url(#a)"/>
+    <line x1="344" y1="70" x2="376" y2="70" stroke="#5B3460" stroke-width="2" marker-end="url(#a)"/>
+    <line x1="532" y1="70" x2="564" y2="70" stroke="#5B3460" stroke-width="2" marker-end="url(#a)"/>
+    <path d="M79,112 C79,145 455,145 455,114" fill="none" stroke="#CA7F3A" stroke-width="2" stroke-dasharray="6 5" marker-end="url(#a)"/>
+    <text x="267" y="146" font-size="13" fill="#5f5466">live seat counts, contact form</text>
+  </g>
+</svg>
+
+<ol class="steps">
+  <li>A visitor opens a class page, and the Next.js site asks the API for that class and its dates.</li>
+  <li>The API reads Postgres and counts the seats taken by confirmed bookings and by unexpired holds. That is one query for all dates.</li>
+  <li>The site builds the page and keeps the API's answer for 60 seconds, so the next visitors are served quickly.</li>
+  <li>Once the page loads, the browser fetches the dates again, uncached, so “places left” is current.</li>
+  <li>The contact form posts straight from the browser to the API, which saves the message for Rehana.</li>
+</ol>
+
+<details>
+  <summary>Show me the code: counting seats</summary>
+  <p class="src">backend/src/catalogue/availability.ts</p>
+  <pre><code>export function seatHoldingBookings(now: Date): Prisma.BookingWhereInput {
+  return {
+    OR: [
+      { status: BookingStatus.CONFIRMED },
+      { status: BookingStatus.PENDING, holdExpiresAt: { gt: now } },
+    ],
+  };
+}
+
+/**
+ * Never negative. Capacity may be lowered below what is already booked
+ * (§ 5, ADR-012); that session is simply full, not "-2 left".
+ */
+export function seatsLeft(capacity: number, taken: number): number {
+  return Math.max(0, capacity - taken);
+}</code></pre>
+  <p class="src">backend/src/catalogue/catalogue.service.ts</p>
+  <pre><code>  /** Seats held per session, in one grouped query. */
+  private async seatsTaken(
+    sessionIds: string[],
+    now: Date,
+  ): Promise&lt;Map&lt;string, number&gt;&gt; {
+    if (sessionIds.length === 0) return new Map();
+    const rows = await this.prisma.booking.groupBy({
+      by: ['sessionId'],
+      where: { sessionId: { in: sessionIds }, ...seatHoldingBookings(now) },
+      _sum: { seats: true },
+    });
+    return new Map(rows.map((r) =&gt; [r.sessionId, r._sum.seats ?? 0]));
+  }</code></pre>
+</details>
+
+<details>
+  <summary>Show me the code: the site's 60-second cache and 8-second timeout</summary>
+  <p class="src">frontend/src/lib/catalogue.ts</p>
+  <pre><code>async function get&lt;T&gt;(path: string): Promise&lt;ApiResult&lt;T&gt;&gt; {
+  try {
+    const res = await fetch(`${apiOrigin()}/api/v1${path}`, {
+      next: { revalidate: REVALIDATE_SECONDS, tags: ["catalogue"] },
+      signal: AbortSignal.timeout(TIMEOUT_MS),
+      headers: { accept: "application/json" },
+    });
+    if (res.status === 404) return { ok: false, reason: "not-found" };
+    if (!res.ok) return { ok: false, reason: "unavailable" };
+    return { ok: true, data: (await res.json()) as T };
+  } catch {
+    return { ok: false, reason: "unavailable" };
+  }
+}</code></pre>
+  <p class="src">frontend/src/components/session-list.tsx (the browser's fresh fetch)</p>
+  <pre><code>  useEffect(() =&gt; {
+    const controller = new AbortController();
+    fetch(`/api/v1/workshops/${encodeURIComponent(slug)}/sessions`, {
+      cache: "no-store",
+      signal: controller.signal,
+      headers: { accept: "application/json" },
+    })
+      .then((res) =&gt; (res.ok ? res.json() : null))
+      .then((body: { sessions: SessionView[] } | null) =&gt; {
+        if (body) setSessions(body.sessions);
+      })
+      .catch(() =&gt; {
+        // Aborted on unmount, or the API is asleep: keep the server's list.
+      });
+    return () =&gt; controller.abort();
+  }, [slug]);</code></pre>
+</details>
+
+<h2>Three decisions worth knowing</h2>
+
+<div class="card">
+  <h3>Pages are rendered on request, and the data is cached for a minute</h3>
+  <p>A page built once at deploy time would go stale the moment Rehana adds a date, and CI has no API to build against. Instead each page is rendered when it is visited, from data that is at most 60 seconds old. Seat counts skip the cache entirely. (ADR-034)</p>
+</div>
+
+<div class="card">
+  <h3>Sold-out dates stay visible, marked “Fully booked”</h3>
+  <p>A hidden date looks as if no class was planned. A full one shows the class is popular and points the visitor to another date, or to asking Rehana. It is said in words, not only with colour. (ADR-037)</p>
+</div>
+
+<div class="card">
+  <h3>The browser sends the contact form, not the Next.js server</h3>
+  <p>The API allows 5 messages per visitor every 10 minutes. If the form went through the Next.js server, every message would arrive from Vercel's addresses, and one spammer could use up everyone's allowance. A hidden honeypot field quietly drops bots. (ADR-038)</p>
+  <details>
+    <summary>Show me the code: the rate limit and the honeypot</summary>
+    <p class="src">backend/src/enquiries/enquiries.controller.ts</p>
+    <pre><code>  @HttpCode(HttpStatus.ACCEPTED)
+  @Throttle({ default: { limit: 5, ttl: 600_000 } })
+  async create(@Body() dto: CreateEnquiryDto): Promise&lt;{ message: string }&gt; {
+    await this.enquiries.create(dto);
+    return { message: ENQUIRY_RECEIVED };
+  }</code></pre>
+    <p class="src">backend/src/enquiries/enquiries.service.ts</p>
+    <pre><code>    if (dto.website) {
+      this.logger.warn('Contact form honeypot filled; enquiry discarded');
+      return 'discarded';
+    }</code></pre>
+  </details>
+</div>
+
+<h2>What can go wrong</h2>
+
+<ul class="risks">
+  <li><b>The free API is asleep.</b> Render's free tier sleeps after 15 minutes and takes about a minute to wake. The site stops waiting after 8 seconds and shows “We couldn't load … just now” instead of hanging. Open the site a minute before a demo.</li>
+  <li><b>No email reaches Rehana yet.</b> Messages are saved in the database, but nothing notifies her until Phase 4, and her inbox screen arrives in Phase 5.</li>
+  <li><b>A server-side count can be up to a minute old.</b> The calendar's “places left” come from the cached answer. Class pages refresh in the browser, and the Phase 3 booking re-checks seats under a lock, so nobody can be sold a seat that isn't there.</li>
+  <li><b>The site's own requests share one rate limit.</b> All of the Next.js server's API calls come from Vercel, so they share the general limit of 120 per minute. That is fine for a demo, and it is an open question (SPEC § 10, item 24) before real traffic arrives.</li>
+</ul>
+
+<section class="next">
+  <h2>What's next</h2>
+  <p><b>Now:</b> the staging link, a free Vercel, Render and Neon setup, so Rehana can click through it herself.</p>
+  <p><b>Phase 3:</b> sign-up and login screens, then booking: choose a date, a seat is held for 15 minutes, pay with Stripe in test mode, get a confirmation.</p>
+</section>
+
+<footer>
+  <p>See it running: in <code>backend/</code> run <code>npm run start:dev</code>, in <code>frontend/</code> run <code>npx next dev -p 3100</code>, then open <code>localhost:3100</code>. Code excerpts are taken from the repository when this page is built.</p>
+</footer>
+
+</main>
+</body>
+</html>

@@ -288,7 +288,7 @@ describe('AppController', () => {
     // trip from Vercel to Render.
     it('answers at least two seconds before the status page gives up', () => {
       const page = readFileSync(
-        path.resolve(__dirname, '../../frontend/src/app/page.tsx'),
+        path.resolve(__dirname, '../../frontend/src/app/status/page.tsx'),
         'utf8',
       );
       const match = /const HEALTH_TIMEOUT_MS = ([\d_]+);/.exec(page);

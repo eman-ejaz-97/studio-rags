@@ -1,164 +1,146 @@
+import Image from "next/image";
 import Link from "next/link";
 import { connection } from "next/server";
-import { apiOrigin } from "@/lib/api-origin";
+import { ApiUnavailable } from "@/components/api-unavailable";
+import { ClassCard } from "@/components/class-card";
+import { buttonGold, buttonPrimary, pageWrap } from "@/components/ui";
+import { getWorkshops } from "@/lib/catalogue";
 
-/**
- * Staging status page. A placeholder until the real home page is built: it
- * proves the whole chain (Vercel, Render, Neon database, Neon storage) answers.
- */
+/** The hero is local photography, so it shows even while the API sleeps. */
+const HERO = [
+  {
+    src: "/images/classes/kids-and-parents-paint-together.jpg",
+    alt: "Children and parents holding up the bright paintings they made together.",
+    width: 940,
+    height: 470,
+  },
+  {
+    src: "/images/classes/pakistani-woodblock-printing.jpg",
+    alt: "Carved wooden printing blocks on fabric printed with teal flowers.",
+    width: 940,
+    height: 705,
+  },
+  {
+    src: "/images/classes/shibori-workshop.jpg",
+    alt: "Two guests holding up the indigo shibori cloths they dyed.",
+    width: 940,
+    height: 423,
+  },
+];
 
-type DependencyState = "up" | "down" | "not-configured";
-
-interface Readiness {
-  database: DependencyState;
-  storage: DependencyState;
-  checkedAt: string | null;
-}
-
-/**
- * Render takes about a minute to wake a sleeping free service, and holds the
- * request open meanwhile. Eight seconds is long enough for a warm API that is
- * waking Neon, short enough not to leave a visitor staring at a blank page.
- */
-const HEALTH_TIMEOUT_MS = 8_000;
-
-function isDependencyState(value: unknown): value is DependencyState {
-  return value === "up" || value === "down" || value === "not-configured";
-}
-
-/**
- * GET /api/v1/health. Called server to server, so it skips the /api/v1
- * rewrite. Returns null when the API does not answer in time or answers with
- * something that is not a readiness report, such as Render's own error page.
- */
-async function fetchReadiness(): Promise<Readiness | null> {
-  try {
-    const response = await fetch(`${apiOrigin()}/api/v1/health`, {
-      cache: "no-store",
-      signal: AbortSignal.timeout(HEALTH_TIMEOUT_MS),
-      headers: { accept: "application/json" },
-    });
-    // No response.ok check: a 503 still carries the full report, and a
-    // database that is down is exactly what this page should show.
-    const body: unknown = await response.json();
-    if (typeof body !== "object" || body === null) return null;
-
-    const { database, storage, timestamp } = body as Record<string, unknown>;
-    if (!isDependencyState(database) || !isDependencyState(storage)) {
-      return null;
-    }
-    return {
-      database,
-      storage,
-      checkedAt: typeof timestamp === "string" ? timestamp : null,
-    };
-  } catch {
-    return null;
-  }
-}
-
-// Words carry the meaning; the symbol and colour only repeat it. Each colour
-// passes AA (4.5:1 or better) on the white card.
-const STATE_DISPLAY: Record<
-  DependencyState,
-  { label: string; symbol: string; className: string }
-> = {
-  up: { label: "Up", symbol: "✓", className: "text-[#1e6b3f]" },
-  down: { label: "Down", symbol: "✕", className: "text-[#a3262a]" },
-  "not-configured": { label: "Not set up", symbol: "–", className: "text-ink" },
-};
-
-function StatusRow({
-  name,
-  state,
-}: {
-  name: string;
-  state: DependencyState;
-}) {
-  const { label, symbol, className } = STATE_DISPLAY[state];
-  return (
-    <div className="flex items-center justify-between gap-4 py-3">
-      <dt>{name}</dt>
-      <dd className={`font-semibold ${className}`}>
-        <span aria-hidden="true" className="mr-2">
-          {symbol}
-        </span>
-        {label}
-      </dd>
-    </div>
-  );
-}
-
-const adelaideTime = new Intl.DateTimeFormat("en-AU", {
-  timeZone: "Australia/Adelaide",
-  hour: "numeric",
-  minute: "2-digit",
-  second: "2-digit",
-});
+const PROMISES = [
+  "Materials included",
+  "No experience needed",
+  "Ages 7+ welcome",
+];
 
 export default async function Home() {
-  // Render on every request, never at build time: the status is only worth
-  // anything live. Outside the try/catch on purpose, because Next signals
-  // "this page is dynamic" by throwing, and a catch would swallow it.
+  // Rendered per request, never at build time: CI builds with no API running.
   await connection();
-  const readiness = await fetchReadiness();
+  const workshops = await getWorkshops();
 
   return (
-    <main className="mx-auto flex w-full max-w-xl flex-1 flex-col gap-8 px-4 py-12 sm:py-16">
-      <header className="flex flex-col gap-3">
-        <h1 className="font-display text-5xl font-black text-plum">
-          Studio Rags
-        </h1>
-        <p className="text-lg">
-          The new website is being built. This is the test site.
-        </p>
-      </header>
+    <>
+      <section className={`${pageWrap} grid items-center gap-10 py-12 md:grid-cols-[1.05fr_0.95fr] md:py-16`}>
+        <div>
+          <h1 className="font-display text-[clamp(2.6rem,6vw,4.3rem)] leading-[1.02] font-black text-balance text-plum">
+            Make something
+            <span className="block text-ochre">with your hands.</span>
+          </h1>
+          <p className="mt-5 max-w-[40ch] text-[1.15rem] text-body">
+            Batik, shibori, block printing and painting — for grown-ups, for
+            kids, and for the two of you together.
+          </p>
+          <ul className="mt-6 flex flex-wrap gap-2" aria-label="Every class">
+            {PROMISES.map((p) => (
+              <li
+                key={p}
+                className="rounded-full bg-lilac px-4 py-2 text-base font-semibold text-purple"
+              >
+                {p}
+              </li>
+            ))}
+          </ul>
+          <Link href="/classes" className={`${buttonPrimary} mt-8`}>
+            Find a class
+          </Link>
+        </div>
+
+        <div className="grid grid-cols-2 gap-3">
+          {HERO.map((img, i) => (
+            <Image
+              key={img.src}
+              src={img.src}
+              alt={img.alt}
+              width={img.width}
+              height={img.height}
+              priority={i === 0}
+              sizes="(min-width: 768px) 25vw, 50vw"
+              className={`aspect-square h-full w-full rounded-[18px] object-cover ${
+                i === 0 ? "md:row-span-2 md:aspect-auto" : ""
+              }`}
+            />
+          ))}
+        </div>
+      </section>
+
+      <section aria-labelledby="classes-heading" className={`${pageWrap} pb-16`}>
+        <div className="mb-8 text-center">
+          <h2
+            id="classes-heading"
+            className="font-display text-[2.1rem] font-semibold text-plum"
+          >
+            Pick your class
+          </h2>
+          <p className="text-muted">In the studio in Sefton Park, or at home.</p>
+        </div>
+        {workshops.ok ? (
+          <ul className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            {workshops.data.map((w) => (
+              <li key={w.slug} className="flex">
+                <ClassCard workshop={w} />
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <ApiUnavailable what="the classes" />
+        )}
+      </section>
 
       <section
-        aria-labelledby="status-heading"
-        className="rounded-2xl border border-plum/15 bg-white p-6 shadow-sm"
+        aria-labelledby="about-heading"
+        className="on-dark bg-purple py-14 text-mist"
       >
-        <h2
-          id="status-heading"
-          className="font-display text-2xl font-semibold text-plum"
-        >
-          Test server status
-        </h2>
-
-        {readiness ? (
-          <>
-            <dl className="mt-4 divide-y divide-plum/15">
-              <StatusRow name="API" state="up" />
-              <StatusRow name="Database" state={readiness.database} />
-              <StatusRow name="File storage" state={readiness.storage} />
-            </dl>
-            {readiness.checkedAt && (
-              <p className="mt-4 text-base">
-                Checked at{" "}
-                <time dateTime={readiness.checkedAt}>
-                  {adelaideTime.format(new Date(readiness.checkedAt))}
-                </time>
-                , Adelaide time.
-              </p>
-            )}
-          </>
-        ) : (
-          <p className="mt-4">
-            The test server is waking up — it sleeps after 15 minutes without
-            visitors. Refresh in about a minute.
-          </p>
-        )}
-
-        {/* prefetch off: a prefetch would call the API, and every health
-            check wakes the database. */}
-        <Link
-          href="/"
-          prefetch={false}
-          className="mt-6 inline-flex min-h-12 items-center rounded-full bg-purple px-6 font-semibold text-white underline-offset-4 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-plum"
-        >
-          Check again
-        </Link>
+        <div className={`${pageWrap} grid items-center gap-10 md:grid-cols-[0.8fr_1.2fr]`}>
+          <Image
+            src="/images/classes/batik-workshop.jpg"
+            alt="A workshop group holding up the batik scarves they made."
+            width={940}
+            height={470}
+            sizes="(min-width: 768px) 40vw, 100vw"
+            className="aspect-square w-full rounded-[var(--radius-card)] object-cover"
+          />
+          <div>
+            <h2
+              id="about-heading"
+              className="font-display text-[2rem] font-semibold text-gold"
+            >
+              Hello, I’m Rehana
+            </h2>
+            <p className="mt-4 text-[1.14rem] leading-relaxed">
+              I’ve spent twenty years in textiles, as a fashion designer and as
+              a university lecturer.
+            </p>
+            <p className="mt-3 text-[1.14rem] leading-relaxed">
+              I’m the only artist teaching Indonesian batik in the Adelaide
+              area, and I’d love to teach you.
+            </p>
+            <Link href="/classes" className={`${buttonGold} mt-7`}>
+              Book a class
+            </Link>
+          </div>
+        </div>
       </section>
-    </main>
+    </>
   );
 }

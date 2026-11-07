@@ -94,8 +94,9 @@ export async function currentDatabase(prisma: PrismaService): Promise<string> {
 }
 
 /**
- * Empties the auth tables. CASCADE follows every foreign key into users, so
- * bookings, reviews and credits go too once later suites create them.
+ * Empties the auth, catalogue and enquiry tables. CASCADE follows every
+ * foreign key into them, so sessions, images, bookings, reviews and credits go
+ * too. Public holidays are reference data and stay.
  *
  * The URL is re-checked first, and the database checks its own name inside the
  * same statement, so the truncate cannot run against a non-test database even
@@ -110,7 +111,8 @@ export async function resetDatabase(prisma: PrismaService): Promise<void> {
       IF right(current_database(), 5) <> '_test' THEN
         RAISE EXCEPTION 'Refusing to truncate non-test database %', current_database();
       END IF;
-      TRUNCATE TABLE "users", "refresh_tokens", "password_reset_tokens"
+      TRUNCATE TABLE "users", "refresh_tokens", "password_reset_tokens",
+        "workshops", "refund_policies", "enquiries"
         RESTART IDENTITY CASCADE;
     END
     $$;
