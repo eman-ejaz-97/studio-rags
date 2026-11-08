@@ -19,3 +19,18 @@ export function formatSeatsLeft(seatsLeft: number): string {
   if (seatsLeft <= 0) return "Fully booked";
   return `${seatsLeft} ${seatsLeft === 1 ? "place" : "places"} left`;
 }
+
+/** "1 place", "3 places". For the kids class a place is a child (ADR-016). */
+export function formatPlaces(count: number, children = false): string {
+  if (children) return `${count} ${count === 1 ? "child" : "children"}`;
+  return `${count} ${count === 1 ? "place" : "places"}`;
+}
+
+/** "2 places × $82", "2 children × $42". */
+export function formatPriceBreakdown(
+  count: number,
+  unitCents: number,
+  children = false,
+): string {
+  return `${formatPlaces(count, children)} × ${formatPrice(unitCents)}`;
+}

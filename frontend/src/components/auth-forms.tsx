@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
+import { COOKIES, OFFLINE, WAKING } from "@/lib/api-messages";
 import { errorMessages, isCsrfRefusal, safeNext, session } from "@/lib/session";
 import { FormAlert, FormNotice, TextField } from "./form-fields";
 import { buttonOutline, buttonPrimary, textLink } from "./ui";
@@ -13,15 +14,6 @@ const PASSWORD_MAX = 128;
 
 type Errors = Record<string, string>;
 type Failure = { message: string; details?: string[]; extra?: React.ReactNode };
-
-const OFFLINE =
-  "We couldn’t reach Studio Rags. Check your internet connection and try again.";
-const WAKING =
-  "The booking system is waking up after a quiet spell. Please try again in a minute.";
-// session.ts has already fetched a fresh security token and tried again, so
-// a browser refusing cookies is the likely reason left.
-const COOKIES =
-  "We couldn’t send this safely. Please check that cookies are allowed for this site, then try again.";
 
 /** The words for a refusal the form could not prevent itself. */
 async function describe(
