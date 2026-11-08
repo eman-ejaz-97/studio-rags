@@ -601,8 +601,8 @@ function Confirmed({ booking, focus }: { booking: BookingView; focus: boolean })
             ) : (
               <NextStep icon="pin" title="Come to the studio">
                 {placeOf(s.workshop.deliveryMode, s.location)}. Please arrive a few minutes before{" "}
-                {formatTime(s.startsAt)}.{" "}
-                {kids ? "Each child comes with one adult. " : ""}Your materials are included.
+                {formatTime(s.startsAt)}.
+                {kids ? " Each child comes with one adult." : ""}
               </NextStep>
             )}
             <NextStep icon="message" title="Need to change or cancel?">
