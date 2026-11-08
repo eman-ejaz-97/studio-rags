@@ -15,6 +15,7 @@ import {
 } from '@prisma/client';
 import * as argon2 from 'argon2';
 import { createHash } from 'node:crypto';
+import type { MailService } from '../mail/mail.service';
 import { PrismaService } from '../prisma/prisma.service';
 import {
   AuthService,
@@ -169,12 +170,26 @@ function setup(env: Record<string, string | undefined> = {}) {
   const config = configStub({ ...BASE_ENV, ...env });
   const jwt = new JwtService({});
   const tokens = new TokenService(jwt, config);
+  // MailService has its own tests; here only what AuthService hands it matters.
+  const mail = {
+    sendPasswordReset: jest.fn<
+      ReturnType<MailService['sendPasswordReset']>,
+      Parameters<MailService['sendPasswordReset']>
+    >(() =>
+      Promise.resolve({
+        status: 'sent',
+        emailLogId: 'email_1',
+        providerMessageId: 'memory-email_1',
+      }),
+    ),
+  };
   const service = new AuthService(
     prisma as unknown as PrismaService,
     tokens,
     config,
+    mail as unknown as MailService,
   );
-  return { prisma, jwt, tokens, service };
+  return { prisma, jwt, tokens, mail, service };
 }
 
 function makeUser(overrides: Partial<User> = {}): User {
@@ -1171,7 +1186,7 @@ describe('AuthService', () => {
 
   describe('requestPasswordReset', () => {
     it('quietly does nothing for an unknown email', async () => {
-      const { prisma, service } = setup();
+      const { prisma, mail, service } = setup();
       const log = spyOnLogger('log');
       prisma.user.findUnique.mockResolvedValue(null);
 
@@ -1180,7 +1195,48 @@ describe('AuthService', () => {
       ).resolves.toBeUndefined();
 
       expect(prisma.passwordResetToken.create).not.toHaveBeenCalled();
+      expect(mail.sendPasswordReset).not.toHaveBeenCalled();
       expect(log).not.toHaveBeenCalled();
+    });
+
+    it.each(['production', 'development'])(
+      'emails the account holder a link that redeems the stored token (NODE_ENV=%s)',
+      async (nodeEnv) => {
+        const { prisma, mail, service } = setup({ NODE_ENV: nodeEnv });
+        spyOnLogger('log');
+        prisma.user.findUnique.mockResolvedValue(makeUser());
+
+        await service.requestPasswordReset('jane@example.com');
+
+        expect(mail.sendPasswordReset).toHaveBeenCalledTimes(1);
+        const [email] = mail.sendPasswordReset.mock.calls[0];
+        expect(email).toMatchObject({
+          to: 'jane@example.com',
+          firstName: 'Jane',
+          expiresInMinutes: 60,
+        });
+        const url = new URL(email.resetUrl);
+        expect(`${url.origin}${url.pathname}`).toBe(
+          `${APP_URL}/reset-password`,
+        );
+        expect(sha256(url.searchParams.get('token') ?? '')).toBe(
+          prisma.passwordResetToken.create.mock.calls[0][0].data.tokenHash,
+        );
+      },
+    );
+
+    it('answers without waiting for the email to be sent', async () => {
+      // A reply that waited on the provider would come back slower for
+      // registered addresses than for unknown ones.
+      const { prisma, mail, service } = setup();
+      spyOnLogger('log');
+      prisma.user.findUnique.mockResolvedValue(makeUser());
+      mail.sendPasswordReset.mockReturnValue(new Promise(() => {}));
+
+      await expect(
+        service.requestPasswordReset('jane@example.com'),
+      ).resolves.toBeUndefined();
+      expect(mail.sendPasswordReset).toHaveBeenCalledTimes(1);
     });
 
     it('stores only a hash of the reset token, expiring in one hour', async () => {
