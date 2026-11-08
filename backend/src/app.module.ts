@@ -7,8 +7,10 @@ import { AppService } from './app.service';
 import { AuthModule } from './auth/auth.module';
 import { CatalogueModule } from './catalogue/catalogue.module';
 import { EnquiriesModule } from './enquiries/enquiries.module';
+import { CsrfExceptionFilter } from './common/filters/csrf-exception.filter';
 import { PrismaExceptionFilter } from './common/filters/prisma-exception.filter';
 import { ClientThrottlerGuard } from './common/guards/client-throttler.guard';
+import { CsrfGuard } from './common/guards/csrf.guard';
 import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
 import { RolesGuard } from './common/guards/roles.guard';
 import { validateEnv } from './config/env.validation';
@@ -43,9 +45,12 @@ import { StorageModule } from './storage/storage.module';
     // Order matters: authenticate, then check the role.
     // Counts per visitor as clientAddress() finds them (common/client-address.ts).
     { provide: APP_GUARD, useClass: ClientThrottlerGuard },
+    // Refuses forged writes before any session is looked at (common/csrf.ts).
+    { provide: APP_GUARD, useClass: CsrfGuard },
     { provide: APP_GUARD, useClass: JwtAuthGuard },
     { provide: APP_GUARD, useClass: RolesGuard },
     { provide: APP_FILTER, useClass: PrismaExceptionFilter },
+    { provide: APP_FILTER, useClass: CsrfExceptionFilter },
   ],
 })
 export class AppModule {}

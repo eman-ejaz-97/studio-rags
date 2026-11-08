@@ -1,3 +1,4 @@
+import type { Type } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import type { NestExpressApplication } from '@nestjs/platform-express';
 import { Test } from '@nestjs/testing';
@@ -6,7 +7,9 @@ import request from 'supertest';
 import { AppModule } from '../../src/app.module';
 import { configureApp } from '../../src/app.setup';
 import { TokenService } from '../../src/auth/token.service';
+import { newCsrfToken } from '../../src/common/csrf';
 import { PrismaService } from '../../src/prisma/prisma.service';
+import { sendingCsrf } from './csrf';
 import { TEST_DATABASE_SUFFIX, assertTestDatabaseUrl } from './test-db-guard';
 
 export interface TestApp {
@@ -15,11 +18,23 @@ export interface TestApp {
   prisma: PrismaService;
   tokens: TokenService;
   config: ConfigService;
-  /** A supertest request builder bound to the running server. */
+  /**
+   * A supertest request builder bound to the running server. Its writes carry
+   * a matching CSRF cookie and header, as the website's do (utils/csrf.ts).
+   */
   http: () => ReturnType<typeof request>;
+  /** The same, sending no CSRF token: another site, or a script, calling. */
+  httpWithoutCsrf: () => ReturnType<typeof request>;
+  /** The token http() sends. */
+  csrfToken: string;
   resetDatabase: () => Promise<void>;
   resetThrottling: () => void;
   close: () => Promise<void>;
+}
+
+export interface TestAppOptions {
+  /** Extra controllers mounted beside AppModule's, behind the same guards. */
+  controllers?: Type<unknown>[];
 }
 
 /**
@@ -27,7 +42,9 @@ export interface TestApp {
  * real port, against the test database. Refuses to start if anything points
  * at a database whose name does not end in "_test".
  */
-export async function createTestApp(): Promise<TestApp> {
+export async function createTestApp(
+  options: TestAppOptions = {},
+): Promise<TestApp> {
   // Second line of defence. The setup file checked DATABASE_URL before any
   // import; by now AppModule has been imported and ConfigModule has had its
   // chance to back-fill from ../.env, so check again before anything connects.
@@ -35,6 +52,7 @@ export async function createTestApp(): Promise<TestApp> {
 
   const moduleRef = await Test.createTestingModule({
     imports: [AppModule],
+    controllers: options.controllers ?? [],
   }).compile();
 
   // Errors only: the reset-link log line and the reuse-detection warning are
@@ -67,13 +85,16 @@ export async function createTestApp(): Promise<TestApp> {
   }
 
   const throttlerStorage = app.get<ThrottlerStorageService>(getStorageToken());
+  const csrfToken = newCsrfToken();
 
   return {
     app,
     prisma,
     config,
     tokens: app.get(TokenService),
-    http: () => request(app.getHttpServer()),
+    http: () => sendingCsrf(request(app.getHttpServer()), csrfToken),
+    httpWithoutCsrf: () => request(app.getHttpServer()),
+    csrfToken,
     resetDatabase: () => resetDatabase(prisma),
     resetThrottling: () => resetThrottling(throttlerStorage),
     close: async () => {
@@ -136,7 +157,7 @@ export function resetThrottling(storage: ThrottlerStorageService): void {
  * One app per test file, a clean database and clean throttle counts per test.
  * Returns a getter, because the app only exists once beforeAll has run.
  */
-export function useTestApp(): () => TestApp {
+export function useTestApp(options: TestAppOptions = {}): () => TestApp {
   let ctx: TestApp | undefined;
   const get = (): TestApp => {
     if (!ctx) throw new Error('The e2e app has not started yet.');
@@ -144,7 +165,7 @@ export function useTestApp(): () => TestApp {
   };
 
   beforeAll(async () => {
-    ctx = await createTestApp();
+    ctx = await createTestApp(options);
   });
 
   beforeEach(async () => {
