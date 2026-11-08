@@ -92,6 +92,8 @@ export function BookingConfirmationEmail(props: BookingConfirmationProps) {
     .filter(Boolean);
   // A free class owes nothing, so it gets no word about paying.
   const toPay = !props.paid && props.totalCents > 0;
+  const confirmed =
+    props.seats === 1 ? 'Your place is confirmed' : 'Your places are confirmed';
 
   return (
     <EmailLayout
@@ -101,8 +103,8 @@ export function BookingConfirmationEmail(props: BookingConfirmationProps) {
       <Text style={theme.text}>Hi {props.firstName},</Text>
       <Text style={theme.text}>
         {props.paid
-          ? 'Thank you for booking. Your place is confirmed and paid for. Here are the details to keep.'
-          : 'Thank you for booking. Your place is confirmed. Here are the details to keep.'}
+          ? `Thank you for booking. ${confirmed} and paid for. Here are the details to keep.`
+          : `Thank you for booking. ${confirmed}. Here are the details to keep.`}
       </Text>
 
       <Section style={{ margin: '8px 0 8px' }}>

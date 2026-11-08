@@ -134,7 +134,7 @@ describe('booking confirmation email', () => {
 
       for (const part of [html, text]) {
         expect(part).toContain(
-          'Thank you for booking. Your place is confirmed and paid for. Here are the details to keep.',
+          'Thank you for booking. Your places are confirmed and paid for. Here are the details to keep.',
         );
         expect(part).not.toContain(PAY_LATER);
       }
@@ -147,13 +147,21 @@ describe('booking confirmation email', () => {
 
       for (const part of [html, text]) {
         expect(part).toContain(
-          'Thank you for booking. Your place is confirmed. Here are the details to keep.',
+          'Thank you for booking. Your places are confirmed. Here are the details to keep.',
         );
         expect(part).toContain(PAY_LATER);
         expect(part).not.toMatch(/paid for/i);
       }
       expect(text).toMatch(/Price\s+\$164/);
       expect(text).not.toMatch(/\bPaid\b/);
+    });
+
+    it('speaks of one place when one was booked', () => {
+      const { text } = render({ paid: false, seats: 1 });
+
+      expect(text).toContain(
+        'Thank you for booking. Your place is confirmed. Here are the details to keep.',
+      );
     });
 
     it('says nothing about paying for a free class booked without payment', () => {
