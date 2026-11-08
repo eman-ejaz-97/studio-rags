@@ -844,7 +844,7 @@ change what gets built.
 | 11 | Plain-language explainer for **MoSCoW** and **Meta ads / pixel tracking** | Next meeting | Us |
 | 12 | **Has she approved SRS v1.0?** Issued 2026-08-04. No recorded response, and the scope has moved twice since. | Baseline for change control | Team to chase |
 | 13 | **SRS v1.1 must say production launch is outside the capstone.** v1.0 implies a live site: the domain in her name, "after launch", ongoing hosting costs. Under ADR-024 the project ends on staging plus a launch plan. Say so plainly before she expects otherwise. | Client expectations | Team |
-| 14 | **The per-visitor throttle does not hold through Vercel.** Checked 2026-11-08 with the runbook test. Through `studio-rags.vercel.app`, 14 failed logins in about a minute all returned 401; the limit is 10. Direct to `onrender.com` the same limit returns 429. Most likely `req.ip` with `TRUST_PROXY=2` lands on Vercel's outbound addresses, which change between requests, so each attempt looks like a new visitor. Render sits behind Cloudflare (`cf-ray` on its responses), so the chain probably has one hop more than `render.yaml` assumes. Affects the login limit and the contact form's 5 per 10 minutes. No exposure on staging today (no real accounts), but it must be fixed and re-tested before the phase 3 sign-in screens are on staging. Next test: `TRUST_PROXY=3` on Render, then the runbook check including the phone-hotspot step. | Login and contact throttling | Us, before phase 3 sign-in ships |
+| 14 | **The per-visitor throttle does not hold through Vercel.** Checked 2026-11-08 with the runbook test. Through `studio-rags.vercel.app`, 14 failed logins in about a minute all returned 401; the limit is 10. Direct to `onrender.com` the same limit returns 429. Most likely `req.ip` with `TRUST_PROXY=2` lands on Vercel's outbound addresses, which change between requests, so each attempt looks like a new visitor. Render sits behind Cloudflare (`cf-ray` on its responses), so the chain probably has one hop more than `render.yaml` assumes. Affects the login limit and the contact form's 5 per 10 minutes. No exposure on staging today (no real accounts), but it must be fixed and re-tested before the phase 3 sign-in screens are on staging. `TRUST_PROXY=3`, tried the same day, still let 11 tries through Vercel, and on direct calls a made-up `X-Forwarded-For` bought a fresh allowance every time. **Fixed in code 2026-11-08 (ADR-043):** the frontend proxy passes the visitor's address in a header signed with `API_PROXY_SECRET`, and `TRUST_PROXY` goes back to 2 for direct callers. Open until the secret is set on Render and Vercel and the runbook test passes on staging, phone-hotspot step included. | Login and contact throttling | Developer: set the secret, then run the test |
 | 15 | ~~**Neon migrations.**~~ **Resolved 2026-11-08.** The first Render deploy applied them at container start. The health check reports the database up, the seed ran, and the catalogue queries return the six classes from Neon. | — | Done |
 | 16 | **Local Postgres 17 vs Neon and CI 18.** Upgrade the dev container by dump and restore when convenient. Changing the image alone makes the existing volume unreadable. | Version parity | Us |
 | 17 | **Frontend refresh contract.** After a refresh 401, retry `GET /auth/me` once before sending the user to sign-in, so a winner response lost during a cold start is not mistaken for a signed-out user. Before `POST /auth/logout`, wait for any refresh still in flight. Otherwise that refresh's new session can outlive the sign-out (accepted risk, ADR-032). | Phase 2 auth UI | Us |
@@ -895,15 +895,19 @@ staging at https://studio-rags.vercel.app.** Last updated 2026-11-08.
 | Database | Neon, `aws-ap-southeast-1` | Seeded by the developer on 2026-11-08: admin account, six classes with sessions |
 | Checks | `/api/v1/health` through the Vercel address | API, database and storage all up |
 
-Open: the throttle check failed through Vercel (§ 10 item 14).
+Open: the throttle check failed through Vercel (§ 10 item 14). The fix
+(ADR-043) ships with `phase-3/sign-in`. It takes effect once `API_PROXY_SECRET`
+is set on both Render and Vercel. Until then the API counts attempts the old way.
 
 Kids & Parents pricing is settled (ADR-033): $42 covers the child and the
 accompanying adult. The class pages show it as "$42 child + adult".
 
 ### Phase 3 — booking and payment (in progress)
 
-Step 1, sign-in screens, built 2026-11-08 on branch `phase-3/sign-in`, not yet
-on staging (it waits for § 10 item 14):
+Step 1, sign-in screens, built 2026-11-08 on branch `phase-3/sign-in`. On
+2026-11-08 the developer asked for it to go to staging together with the
+throttle fix. No real accounts exist there yet. § 10 item 14 stays open until
+the runbook test passes:
 
 - `/sign-in`, `/register`, `/forgot-password`, `/reset-password`, `/account`,
   worded as in the approved mockup. A "Sign in" / "Your account" link in the header.
@@ -918,6 +922,15 @@ on staging (it waits for § 10 item 14):
   mismatched password, and the spent reset link refused.
 - Password-reset emails are not sent yet: the link is only logged in
   development until the mail module lands later in this phase.
+- Signed in, the header shows "Hi, {first name}" and the home hero says
+  "Welcome back, {first name}." (ADR-042).
+- The header's *Book a class* is now a purple pill with a gold bead and arrow
+  (ADR-041).
+- Throttle fix for § 10 item 14 (ADR-043): `frontend/src/proxy.ts`,
+  `backend/src/common/client-address.ts` and `ClientThrottlerGuard`, with unit
+  and e2e tests. `TRUST_PROXY` back to 2 in `render.yaml`.
+- Checks on 2026-11-08: backend lint, typecheck, 457 unit and 120 e2e tests;
+  frontend lint, typecheck, 52 tests and `next build`. All pass.
 
 ### Phase 2 — catalogue and public site (built 2026-11-07)
 
@@ -1165,8 +1178,9 @@ and a link to try it.
 2. **Phase 3 — booking and payment**: sign-in screens (honouring § 10 item 17),
    seat holds under the row lock, Stripe in test mode, webhook confirmation,
    confirmation email. Needs a Stripe test account; no card is ever added.
-   Fix and re-test the throttle through Vercel (§ 10 item 14) before the
-   sign-in screens reach staging.
+   Set `API_PROXY_SECRET` on Render and Vercel, then run the runbook's
+   throttle test through Vercel (§ 10 item 14). Do this before anyone
+   other than the developer signs in.
 3. Re-issue the SRS as **v1.1**: Master Class out, real catalogue and prices in,
    her refund policy in, private events decided, and production launch outside
    the capstone (§ 10 item 13). Chase the sign-off v1.0 never received.
@@ -1215,12 +1229,15 @@ and a link to try it.
 | ADR-032 | A rotated refresh token that comes back after the grace window ends every session only if its successor was used (refreshed or signed out with). Otherwise only its own session ends. Each refresh records the token it spent (`refresh_tokens.rotatedFromId`) | 2026-11-03 | § 5; amends ADR-022. Review found that a refresh whose answer never arrived left the spent token in the browser. Render cold starts make that likely (§ 10 item 17). The browser's next refresh was then treated as theft and signed the user out of every device. An unused successor is what a lost answer looks like. It is also what a stolen copy looks like before the owner refreshes again. Both cases now end that session, successor included, so neither party keeps it. A token answered as theft is marked `REUSE_DETECTED`, so replaying it cannot sign the owner out again. Accepted risks: a theft caught before the owner refreshes again ends one session, not all of them; sign-out racing a refresh in flight leaves that refresh's new session live (frontend waits, item 17; a server fix would follow `rotatedFromId` under the user lock) |
 | ADR-033 | Kids & Parents price covers the child and the accompanying adult | 2026-11-07 | § 5; one charge per child. The adult attends on that ticket and is not a second seat. Capacity stays a count of children (ADR-016). Confirmed by the developer; no separate client email is on file |
 | ADR-034 | Catalogue pages render per request; the data behind them is cached for 60 s (`fetch` with `revalidate: 60`) | 2026-11-07 | § 7; a page built once at deploy time would need the API during CI's build, which has none, and would go stale when she changes a date. Per-request rendering with a short data cache keeps pages current for the cost of one API call a minute per page. Live seat counts never use the cache (`no-store`) |
-| ADR-035 | The header's *Book a class* button is purple, not the mockup's gold | 2026-11-07 | § 7; the header sits on cream paper, where gold is 2.19:1 and fails AA. Gold appears on the purple sections instead, at 4.55:1 or better. Keeps the colour rule in `CLAUDE.md` without dropping gold from the direction |
+| ADR-035 | ~~The header's *Book a class* button is purple, not the mockup's gold~~ Superseded by ADR-041 | 2026-11-07 | § 7; the header sits on cream paper, where gold is 2.19:1 and fails AA. Gold appears on the purple sections instead, at 4.55:1 or better. Keeps the colour rule in `CLAUDE.md` without dropping gold from the direction |
 | ADR-036 | Input borders darkened from the mockup's `#E2D6E8` to `#8E7E98` | 2026-11-07 | § 8; WCAG 2.2 AA 1.4.11 needs 3:1 for a field's edge. The mockup's lilac was 1.4:1, so the boxes nearly vanished for low-vision visitors. 3.76:1 on white, 3.67:1 on paper. Card borders keep the light lilac: they are decorative, and the text inside identifies each card |
 | ADR-037 | Sold-out dates are listed and marked "Fully booked", not hidden | 2026-11-07 | § 7; a hidden date looks like no class was planned. A full one tells a visitor the class is popular and that another date, or asking her, is the way in. The API flags them (`isFull`) and the page shows it in words |
 | ADR-038 | The contact form posts from the browser to `/api/v1/contact`, not through a Next server action | 2026-11-07 | § 6; the API throttles enquiries per visitor (5 per 10 minutes). A server action would make every visitor arrive from Vercel's servers, so one person could use up everyone's allowance. Catalogue lists are not cursor-paginated: six classes, and `/sessions` is bounded by its 92-day window |
 | ADR-039 | Phase explainers are built by `docs/explainers/tools/`, not the `explain-the-change` skill's template | 2026-11-08 | The developer rejected the skill's look (dark mode, sidebar, coloured callouts). The project builder keeps what mattered from the skill, excerpts read from git and checked against an expected first line, and adds what the developer asked for: each request followed hop by hop with the host it runs on, hand-drawn sequence diagrams numbered to match the steps, and a changed-files list that fails the build when a file is left undescribed |
 | ADR-040 | Staging sends real email through Resend's free plan, to the developer's own address only | 2026-11-08 | ADR-024; Resend without a verified domain delivers only to the account owner, and a domain costs money. Mail to any other address on staging is written to `email_log` as not sent, so the booking flow still completes and the record still exists. Mailpit stays the local inbox |
+| ADR-041 | The header's *Book a class* is a purple pill with a gold bead holding an arrow | 2026-11-08 | Supersedes ADR-035. The developer found the plain purple button read as one more link, not the call to action, and rejected a gold pill with a plum border as ugly. The bead sets it apart from every other purple button and points the way, while gold still only touches purple, so the colour rule in `CLAUDE.md` holds unchanged. Words 9.98:1 on purple, bead 4.55:1 on purple, arrow 6.8:1 on gold; 48px tall. Classes `buttonBook` and `bookBead` in `components/ui.ts`. Chosen from four mocked options (gold bead, gold lettering on plum, a stitched gold edge, an ochre pill) |
+| ADR-042 | Signed-in personalisation is drawn in the browser from a first-name hint in `localStorage` | 2026-11-08 | § 7; the server cannot see the session (the cookies belong to `/api/v1`), and reading them in pages would make every page per-user. The header shows "Hi, {first name}" with an initial, and the home hero greets the person by name. The hint (`sr_signed_in_as`) lets the greeting appear as soon as the page hydrates instead of after a call to a possibly sleeping API; `GET /auth/me` then confirms it. It is cleared on sign-out, on a password reset and whenever the API says the visitor is signed out. Trade-off: until hydration a signed-in person briefly sees the visitor copy, and a first name sits in that browser's storage while signed in |
+| ADR-043 | Website visitors' addresses reach the API in a header signed with a shared secret; direct callers keep `TRUST_PROXY=2` | 2026-11-08 | § 10 item 14, ADR-023. The two ways in have different numbers of middlemen: Vercel then Cloudflare then Render, or only Cloudflare then Render. So no single `TRUST_PROXY` worked. 2 counted Vercel's changing servers as the visitor, and 3 let direct callers invent an address. `frontend/src/proxy.ts` reads the visitor's address from the `X-Forwarded-For` that Vercel overwrites. It sends that address as `x-sr-client-ip`, together with `x-sr-proxy-secret`. The API trusts the address only when the secret matches (compared in constant time) and the value is a valid IP. Without the secret the API falls back to `req.ip`, so either side can be deployed first. Cost: every `/api/v1` request runs as a Vercel Function, which counts toward the Hobby plan's free usage |
 
 ---
 
