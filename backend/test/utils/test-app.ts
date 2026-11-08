@@ -8,6 +8,7 @@ import { AppModule } from '../../src/app.module';
 import { configureApp } from '../../src/app.setup';
 import { TokenService } from '../../src/auth/token.service';
 import { newCsrfToken } from '../../src/common/csrf';
+import { MailService } from '../../src/mail/mail.service';
 import { PrismaService } from '../../src/prisma/prisma.service';
 import { sendingCsrf } from './csrf';
 import { TEST_DATABASE_SUFFIX, assertTestDatabaseUrl } from './test-db-guard';
@@ -86,6 +87,7 @@ export async function createTestApp(
 
   const throttlerStorage = app.get<ThrottlerStorageService>(getStorageToken());
   const csrfToken = newCsrfToken();
+  const mail = app.get(MailService);
 
   return {
     app,
@@ -95,7 +97,12 @@ export async function createTestApp(
     http: () => sendingCsrf(request(app.getHttpServer()), csrfToken),
     httpWithoutCsrf: () => request(app.getHttpServer()),
     csrfToken,
-    resetDatabase: () => resetDatabase(prisma),
+    // Emails are sent after the response (forgot-password does not wait), so
+    // let the last test's sends finish before their rows' table is emptied.
+    resetDatabase: async () => {
+      await mail.whenIdle();
+      await resetDatabase(prisma);
+    },
     resetThrottling: () => resetThrottling(throttlerStorage),
     close: async () => {
       await app.close();
@@ -115,9 +122,9 @@ export async function currentDatabase(prisma: PrismaService): Promise<string> {
 }
 
 /**
- * Empties the auth, catalogue and enquiry tables. CASCADE follows every
- * foreign key into them, so sessions, images, bookings, reviews and credits go
- * too. Public holidays are reference data and stay.
+ * Empties the auth, catalogue, enquiry and email log tables. CASCADE follows
+ * every foreign key into them, so sessions, images, bookings, reviews and
+ * credits go too. Public holidays are reference data and stay.
  *
  * The URL is re-checked first, and the database checks its own name inside the
  * same statement, so the truncate cannot run against a non-test database even
@@ -133,7 +140,7 @@ export async function resetDatabase(prisma: PrismaService): Promise<void> {
         RAISE EXCEPTION 'Refusing to truncate non-test database %', current_database();
       END IF;
       TRUNCATE TABLE "users", "refresh_tokens", "password_reset_tokens",
-        "workshops", "refund_policies", "enquiries"
+        "workshops", "refund_policies", "enquiries", "email_logs"
         RESTART IDENTITY CASCADE;
     END
     $$;

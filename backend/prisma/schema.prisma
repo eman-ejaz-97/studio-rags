@@ -93,6 +93,10 @@ enum EmailStatus {
   QUEUED
   SENT
   FAILED
+  /// Deliberately not sent: the recipient is not on MAIL_ALLOWED_RECIPIENTS,
+  /// the staging allow-list (ADR-040). Not a failure, so it is never retried
+  /// and never counted as one. `error` says why.
+  SUPPRESSED
 }
 
 enum EnquiryKind {
