@@ -93,6 +93,28 @@ body {
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='46' height='46' viewBox='0 0 46 46'%3E%3Cg fill='none' stroke='%23ca7f3a' stroke-width='1.6'%3E%3Cpath d='M23 8c4 0 7 3 7 7s-3 8-7 8-7-3-7-8 3-7 7-7z'/%3E%3Cpath d='M23 23c4 0 7 3 7 8s-3 7-7 7-7-3-7-7 3-8 7-8z'/%3E%3Ccircle cx='23' cy='23' r='2.4'/%3E%3C/g%3E%3C/svg%3E");
 }
 
+/*
+ * The booking screens' total and main action (ActionBar). Sticky inside its
+ * form, so on a phone it waits at the foot of the screen, in thumb reach,
+ * and settles at the end of the form when that scrolls into view: it never
+ * covers the footer.
+ */
+.action-bar {
+  position: sticky;
+  bottom: 0;
+}
+/* Focused fields scroll clear of the bar rather than behind it (WCAG 2.4.11). */
+.booking-flow :is(input, textarea, button) {
+  scroll-margin-bottom: 9rem;
+}
+/* While a phone keyboard is open the bar would sit on top of it and hide the
+   field being typed in, so it steps back to its place at the end of the form. */
+@media (pointer: coarse) {
+  .booking-flow:has(:is(input[type="text"], input[inputmode], textarea):focus) .action-bar {
+    position: static;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
