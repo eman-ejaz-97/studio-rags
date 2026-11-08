@@ -1,10 +1,12 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { APP_FILTER, APP_GUARD } from '@nestjs/core';
+import { ScheduleModule } from '@nestjs/schedule';
 import { ThrottlerModule } from '@nestjs/throttler';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { AuthModule } from './auth/auth.module';
+import { BookingsModule } from './bookings/bookings.module';
 import { CatalogueModule } from './catalogue/catalogue.module';
 import { EnquiriesModule } from './enquiries/enquiries.module';
 import { PrismaExceptionFilter } from './common/filters/prisma-exception.filter';
@@ -31,11 +33,14 @@ import { StorageModule } from './storage/storage.module';
       cache: true,
     }),
     ThrottlerModule.forRoot([{ name: 'default', ttl: 60_000, limit: 120 }]),
+    // Runs @Cron jobs in any module: the hold expiry sweep (bookings).
+    ScheduleModule.forRoot(),
     PrismaModule,
     StorageModule,
     AuthModule,
     CatalogueModule,
     EnquiriesModule,
+    BookingsModule,
   ],
   controllers: [AppController],
   providers: [
