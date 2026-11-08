@@ -178,6 +178,34 @@ describe('validateEnv', () => {
     });
   });
 
+  describe('API_PROXY_SECRET', () => {
+    const SECRET = 'unit-test-only-proxy-secret-0123456789';
+
+    it('is unset by default, so no forwarded address is believed', () => {
+      expect(validateEnv(REQUIRED).API_PROXY_SECRET).toBeUndefined();
+    });
+
+    it('treats an empty value as unset', () => {
+      expect(
+        validateEnv(envWith({ API_PROXY_SECRET: '' })).API_PROXY_SECRET,
+      ).toBeUndefined();
+    });
+
+    it('accepts a value of 32 characters or more', () => {
+      expect(
+        validateEnv(envWith({ API_PROXY_SECRET: SECRET })).API_PROXY_SECRET,
+      ).toBe(SECRET);
+    });
+
+    it('refuses a short value, and says how to make a good one', () => {
+      expect(() =>
+        validateEnv(envWith({ API_PROXY_SECRET: 'too-short' })),
+      ).toThrow(
+        'API_PROXY_SECRET must be at least 32 characters when set; generate one with `openssl rand -hex 32`',
+      );
+    });
+  });
+
   describe('PORT', () => {
     it('coerces the string every env var arrives as into a number', () => {
       const config = validateEnv(envWith({ PORT: '4000' }));
