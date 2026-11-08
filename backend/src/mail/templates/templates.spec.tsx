@@ -17,6 +17,7 @@ const RESET_URL =
   'http://localhost:3000/reset-password?token=AbC123-the-raw-token';
 
 const BOOKING: BookingConfirmationProps = {
+  paid: true,
   firstName: 'Ada',
   reference: 'SR-7K4M2',
   workshopTitle: 'Batik for Beginners',
@@ -124,6 +125,46 @@ describe('booking confirmation email', () => {
     expect(text).toContain('http://localhost:3000/contact');
   });
 
+  describe('payment', () => {
+    const PAY_LATER =
+      'Payment is not taken online yet, and Rehana will let you know how to pay.';
+
+    it('says the place is paid for, and what was paid, when payment was taken', () => {
+      const { html, text } = render({ paid: true });
+
+      for (const part of [html, text]) {
+        expect(part).toContain(
+          'Thank you for booking. Your place is confirmed and paid for. Here are the details to keep.',
+        );
+        expect(part).not.toContain(PAY_LATER);
+      }
+      expect(text).toMatch(/Paid\s+\$164/);
+      expect(text).not.toMatch(/Price\s+\$/);
+    });
+
+    it('says the place is confirmed, gives the price and how paying will work, when nothing was paid', () => {
+      const { html, text } = render({ paid: false });
+
+      for (const part of [html, text]) {
+        expect(part).toContain(
+          'Thank you for booking. Your place is confirmed. Here are the details to keep.',
+        );
+        expect(part).toContain(PAY_LATER);
+        expect(part).not.toMatch(/paid for/i);
+      }
+      expect(text).toMatch(/Price\s+\$164/);
+      expect(text).not.toMatch(/\bPaid\b/);
+    });
+
+    it('says nothing about paying for a free class booked without payment', () => {
+      const { text } = render({ paid: false, totalCents: 0 });
+
+      expect(text).toMatch(/Price\s+\$0/);
+      expect(text).not.toContain(PAY_LATER);
+      expect(text).not.toMatch(/paid for/i);
+    });
+  });
+
   it('counts children, each with an adult, for the kids class', () => {
     expect(render({ requiresAccompanyingAdult: true }).text).toContain(
       '2 children, each with one accompanying adult',
@@ -162,6 +203,7 @@ describe('booking confirmation email', () => {
 
   it('follows the house rules', () => {
     expectHouseRules(render().html);
+    expectHouseRules(render({ paid: false }).html);
     expectHouseRules(
       render({
         deliveryMode: DeliveryMode.ONLINE,

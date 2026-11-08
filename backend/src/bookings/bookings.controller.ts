@@ -3,6 +3,7 @@ import {
   Controller,
   Get,
   Header,
+  HttpCode,
   HttpStatus,
   Param,
   Post,
@@ -18,6 +19,7 @@ import { BookingsService } from './bookings.service';
 import type { BookingPage, BookingView } from './bookings.types';
 import { CreateBookingDto, toBookingRequest } from './dto/create-booking.dto';
 import { DEFAULT_PAGE_SIZE, ListBookingsDto } from './dto/list-bookings.dto';
+import { UnpaidConfirmationService } from './unpaid-confirmation.service';
 
 /**
  * Signed-in customers only: the global JwtAuthGuard covers every route here,
@@ -26,7 +28,10 @@ import { DEFAULT_PAGE_SIZE, ListBookingsDto } from './dto/list-bookings.dto';
 @Controller('bookings')
 @UseFilters(ProblemDetailsFilter)
 export class BookingsController {
-  constructor(private readonly bookings: BookingsService) {}
+  constructor(
+    private readonly bookings: BookingsService,
+    private readonly unpaid: UnpaidConfirmationService,
+  ) {}
 
   /**
    * FR-C6. Holds places for 15 minutes. 201 with a new hold, or 200 with the
@@ -73,5 +78,24 @@ export class BookingsController {
     return {
       booking: await this.bookings.get(userId, reference, new Date()),
     };
+  }
+
+  /**
+   * Interim, while Stripe is on hold: confirms the caller's hold without
+   * payment (PAYMENT_MODE=none, never on a live site). 200 with the booking
+   * as GET returns it, now CONFIRMED, and the same for one already
+   * confirmed. 404 as for GET. 409 as application/problem+json when the
+   * hold's places have gone, the booking was cancelled or replaced, the date
+   * is not on sale, or the site takes payment (PAYMENT_MODE=stripe).
+   */
+  @Post(':reference/confirm')
+  @HttpCode(HttpStatus.OK)
+  @Header('Cache-Control', 'private, no-store')
+  @Throttle({ default: { limit: 10, ttl: 60_000 } })
+  async confirm(
+    @CurrentUser('id') userId: string,
+    @Param('reference') reference: string,
+  ): Promise<{ booking: BookingView }> {
+    return { booking: await this.unpaid.confirm(userId, reference) };
   }
 }

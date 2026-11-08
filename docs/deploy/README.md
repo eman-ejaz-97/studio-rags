@@ -50,6 +50,7 @@ Each call to `/api/v1/health` wakes Neon, so never point an uptime monitor at it
 | File storage | Not set up | Not set up | Neon storage | S3 |
 | Email | Mailpit, port 1025 | In-memory outbox, nothing sent | Resend free, to your own address only | To be decided |
 | `SITE_ENV` | unset | `staging` | `staging` | `production` |
+| Payment (`PAYMENT_MODE`) | `none`: confirm without paying | `none`, and `stripe` in one test file | `none`, set in `render.yaml` | `stripe` only: the API refuses `none` |
 | Cost | Nothing | Nothing | Nothing | Paid by the client |
 
 Production is **not part of the capstone**.
@@ -74,7 +75,7 @@ Staging costs nothing, and it must stay that way.
 
 ## One-time setup
 
-Do Render first, then Vercel, then seed the admin, then email.
+Do Render first, then Vercel, then seed the admin, then email, then check the payment settings.
 Each needs the other's address, so expect to fix one value at the end.
 
 ### Before you start
@@ -252,6 +253,36 @@ The free plan allows 100 emails a day and 3,000 a month, and the allow-list keep
 Set `MAIL_ALLOWED_RECIPIENTS` to `*` only once a verified domain exists and mail to anyone is intended.
 That is a production decision, outside the capstone.
 
+### 5. Bookings without payment (interim)
+
+Stripe is on hold, decided 2026-11-08.
+Until the payments step is built, a signed-in customer confirms a held booking without paying.
+The website calls `POST /api/v1/bookings/:reference/confirm`, and the booking becomes **Confirmed**.
+The confirmation email goes out as usual: to your own address, and as a `SUPPRESSED` row for anyone else.
+SPEC FR-P2 ("no confirmed booking without full payment") is paused on staging only.
+
+`render.yaml` sets both variables, so there is nothing to type in:
+
+| Variable | Value | Meaning |
+| --- | --- | --- |
+| `PAYMENT_MODE` | `none` | Customers confirm without paying. `stripe` is for the payments step, and until it is built the confirm route refuses |
+| `SITE_ENV` | `staging` | Which deployment this is. The API reads it only for the rule below |
+
+The rule, checked when the API starts (`backend/src/config/env.validation.ts`):
+
+- `SITE_ENV=production` with `PAYMENT_MODE=none`: refused. A live site always takes payment.
+- `NODE_ENV=production` (Render sets it) with `PAYMENT_MODE=none`: allowed only with `SITE_ENV=staging`.
+  So a live server that forgot `SITE_ENV` cannot hand out free bookings either.
+- Locally and in tests, `PAYMENT_MODE` defaults to `none` and `SITE_ENV` can stay unset.
+
+**Check this once, when the change reaches `main`.**
+Render should add both variables from `render.yaml` when the Blueprint syncs.
+Open `studio-rags-api`, then **Environment**, and check `SITE_ENV` is `staging` and `PAYMENT_MODE` is `none`.
+If either is missing, add it there by hand and redeploy.
+Without `SITE_ENV=staging` the new API refuses to start, and Render keeps the previous deploy serving.
+
+When the payments step lands, `render.yaml` changes `PAYMENT_MODE` to `stripe`.
+
 ## Check it works
 
 1. Open the Vercel address followed by `/status`.
@@ -286,6 +317,11 @@ That is a production decision, outside the capstone.
    The reset email arrives from `onboarding@resend.dev` within a minute, and Resend's **Emails** page lists it.
    The Render log shows `Sent password-reset email <id>`; the address itself is never logged.
    A start-up line names the transport: `Mail goes through resend, to 1 allowed recipient`.
+7. Check a booking, once the booking screens are on staging.
+   Signed in with your Resend address, book a class and confirm it.
+   The booking shows **Confirmed**, and the confirmation email arrives.
+   `email_logs` has a `booking-confirmation` row whose `booking_id` is that booking's id.
+   Nothing is charged: payment is off on staging ([step 5](#5-bookings-without-payment-interim)).
 
 ## Before a demo
 
@@ -329,6 +365,8 @@ Two causes are common:
   The log starts with `Invalid environment configuration` and names each bad variable.
   A mail setting is checked separately: look for `MailConfigError`, which names the variable, for example `RESEND_API_KEY is required when MAIL_TRANSPORT=resend`.
   See [step 4](#4-email-through-resend).
+  A line starting `PAYMENT_MODE: PAYMENT_MODE=none confirms bookings without payment` means `SITE_ENV` is missing or wrong on Render.
+  See [step 5](#5-bookings-without-payment-interim).
 - A migration failed.
   The log shows Prisma's error just after `Applying database migrations`.
 

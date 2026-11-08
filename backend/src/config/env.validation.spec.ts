@@ -4,6 +4,8 @@
 import {
   EnvironmentVariables,
   NodeEnv,
+  PaymentMode,
+  SiteEnv,
   bareOriginProblem,
   validateEnv,
 } from './env.validation';
@@ -45,6 +47,8 @@ describe('validateEnv', () => {
     expect(config.MAIL_FROM).toBeUndefined();
     expect(config.HOST).toBe('0.0.0.0');
     expect(config.TRUST_PROXY).toBe(0);
+    expect(config.SITE_ENV).toBeUndefined();
+    expect(config.PAYMENT_MODE).toBe(PaymentMode.None);
   });
 
   it('ignores unrelated variables, since it is handed the whole of process.env', () => {
@@ -206,6 +210,125 @@ describe('validateEnv', () => {
     });
   });
 
+  describe('SITE_ENV', () => {
+    it.each(Object.values(SiteEnv))('accepts %s', (site) => {
+      expect(
+        validateEnv(envWith({ SITE_ENV: site, PAYMENT_MODE: 'stripe' }))
+          .SITE_ENV,
+      ).toBe(site);
+    });
+
+    it('treats an empty value as unset', () => {
+      expect(validateEnv(envWith({ SITE_ENV: '' })).SITE_ENV).toBeUndefined();
+    });
+
+    // A typo here would otherwise read as "not production" and let
+    // PAYMENT_MODE=none through on a live site.
+    it.each(['prod', 'Production', 'live', 'development'])(
+      'refuses %p',
+      (site) => {
+        expect(() => validateEnv(envWith({ SITE_ENV: site }))).toThrow(
+          'SITE_ENV must be staging or production when set',
+        );
+      },
+    );
+  });
+
+  describe('PAYMENT_MODE', () => {
+    const NONE_ON_PRODUCTION =
+      'PAYMENT_MODE=none confirms bookings without payment and is refused when SITE_ENV=production';
+    const NONE_NEEDS_STAGING =
+      'with NODE_ENV=production it needs SITE_ENV=staging';
+
+    it.each(Object.values(PaymentMode))('accepts %s', (mode) => {
+      expect(
+        validateEnv(envWith({ PAYMENT_MODE: mode, SITE_ENV: 'staging' }))
+          .PAYMENT_MODE,
+      ).toBe(mode);
+    });
+
+    it.each(['', 'None', 'free', 'paypal'])('refuses %p', (mode) => {
+      expect(() => validateEnv(envWith({ PAYMENT_MODE: mode }))).toThrow(
+        'PAYMENT_MODE must be none (confirm bookings without payment: local, tests and staging) or stripe',
+      );
+    });
+
+    it.each([NodeEnv.Development, NodeEnv.Test])(
+      'allows none under NODE_ENV=%s with no SITE_ENV, for local work and tests',
+      (nodeEnv) => {
+        expect(
+          validateEnv(envWith({ NODE_ENV: nodeEnv, PAYMENT_MODE: 'none' }))
+            .PAYMENT_MODE,
+        ).toBe(PaymentMode.None);
+      },
+    );
+
+    it('allows none on the staging site, which runs with NODE_ENV=production', () => {
+      const config = validateEnv(
+        envWith({
+          NODE_ENV: 'production',
+          SITE_ENV: 'staging',
+          PAYMENT_MODE: 'none',
+        }),
+      );
+
+      expect(config.PAYMENT_MODE).toBe(PaymentMode.None);
+      expect(config.SITE_ENV).toBe(SiteEnv.Staging);
+    });
+
+    it.each([NodeEnv.Development, NodeEnv.Test, NodeEnv.Production])(
+      'refuses none on a site that says it is production, under NODE_ENV=%s',
+      (nodeEnv) => {
+        expect(() =>
+          validateEnv(
+            envWith({
+              NODE_ENV: nodeEnv,
+              SITE_ENV: 'production',
+              PAYMENT_MODE: 'none',
+            }),
+          ),
+        ).toThrow(`  - PAYMENT_MODE: ${NONE_ON_PRODUCTION}`);
+      },
+    );
+
+    it('refuses the default too: a live site cannot start without payment by leaving it out', () => {
+      expect(() =>
+        validateEnv(
+          envWith({ NODE_ENV: 'production', SITE_ENV: 'production' }),
+        ),
+      ).toThrow(NONE_ON_PRODUCTION);
+    });
+
+    it.each([
+      ['left out', {}],
+      ['empty', { SITE_ENV: '' }],
+    ])(
+      'refuses none under NODE_ENV=production when SITE_ENV is %s',
+      (_, site) => {
+        expect(() =>
+          validateEnv(envWith({ NODE_ENV: 'production', ...site })),
+        ).toThrow(
+          `  - PAYMENT_MODE: PAYMENT_MODE=none confirms bookings without payment, so ${NONE_NEEDS_STAGING}`,
+        );
+      },
+    );
+
+    it.each([SiteEnv.Production, SiteEnv.Staging, undefined])(
+      'allows stripe anywhere (SITE_ENV=%s, NODE_ENV=production)',
+      (site) => {
+        expect(
+          validateEnv(
+            envWith({
+              NODE_ENV: 'production',
+              SITE_ENV: site,
+              PAYMENT_MODE: 'stripe',
+            }),
+          ).PAYMENT_MODE,
+        ).toBe(PaymentMode.Stripe);
+      },
+    );
+  });
+
   describe('PORT', () => {
     it('coerces the string every env var arrives as into a number', () => {
       const config = validateEnv(envWith({ PORT: '4000' }));
@@ -222,10 +345,13 @@ describe('validateEnv', () => {
   });
 
   describe('NODE_ENV', () => {
+    // stripe, so that production is judged on NODE_ENV alone; PAYMENT_MODE
+    // below covers what none needs there.
     it.each(Object.values(NodeEnv))('accepts %s', (nodeEnv) => {
-      expect(validateEnv(envWith({ NODE_ENV: nodeEnv })).NODE_ENV).toBe(
-        nodeEnv,
-      );
+      expect(
+        validateEnv(envWith({ NODE_ENV: nodeEnv, PAYMENT_MODE: 'stripe' }))
+          .NODE_ENV,
+      ).toBe(nodeEnv);
     });
 
     it.each(['staging', 'prod', 'Production'])('rejects %p', (nodeEnv) => {

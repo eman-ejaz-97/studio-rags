@@ -139,8 +139,9 @@ export class MailService implements OnModuleInit, OnModuleDestroy {
   }
 
   /**
-   * For the payments slice, once Stripe confirms a booking. Not called from
-   * anywhere yet.
+   * Once a booking is confirmed. Sent today by the interim no-payment
+   * confirmation (bookings/unpaid-confirmation.service.ts); the payments
+   * slice sends it once Stripe confirms one.
    */
   sendBookingConfirmation(
     email: BookingConfirmationEmail,

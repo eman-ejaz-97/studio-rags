@@ -23,6 +23,26 @@ export enum NodeEnv {
   Production = 'production',
 }
 
+/** Which deployment this is. The same values the frontend reads. */
+export enum SiteEnv {
+  Staging = 'staging',
+  Production = 'production',
+}
+
+/**
+ * How a held booking becomes a confirmed one.
+ *
+ *   none    the customer confirms it, and nothing is paid. The interim step
+ *           while Stripe is on hold (decided 2026-11-08): SPEC FR-P2 is
+ *           paused on staging, never dropped.
+ *   stripe  reserved for the payments step. Until it is built, nothing
+ *           confirms a hold.
+ */
+export enum PaymentMode {
+  None = 'none',
+  Stripe = 'stripe',
+}
+
 /** The shape TokenService parses: a whole number, then s, m, h or d. */
 const DURATION = /^\s*\d+\s*[smhd]\s*$/;
 
@@ -34,6 +54,12 @@ const TRUST_PROXY_MESSAGE =
 
 const API_PROXY_SECRET_MESSAGE =
   'API_PROXY_SECRET must be at least 32 characters when set; generate one with `openssl rand -hex 32` and give the frontend the same value';
+
+const SITE_ENV_MESSAGE =
+  'SITE_ENV must be staging or production when set; leave it unset locally';
+
+const PAYMENT_MODE_MESSAGE =
+  'PAYMENT_MODE must be none (confirm bookings without payment: local, tests and staging) or stripe';
 
 /**
  * Why a CORS origin is unusable, or null when it is fine. The browser sends
@@ -162,6 +188,26 @@ export class EnvironmentVariables {
   @IsOptional()
   @IsString()
   MAIL_FROM?: string;
+
+  /**
+   * Set on deployed sites only: staging on Render, production later. The API
+   * reads it for one thing, keeping PAYMENT_MODE=none off a live site, so it
+   * is checked strictly: a typo such as "prod" must not read as "not
+   * production". Empty counts as unset, as for API_PROXY_SECRET.
+   */
+  @Transform(({ value }: { value: unknown }) =>
+    value === '' ? undefined : value,
+  )
+  @IsOptional()
+  @IsEnum(SiteEnv, { message: SITE_ENV_MESSAGE })
+  SITE_ENV?: SiteEnv;
+
+  /**
+   * none by default, for local work and tests. crossFieldProblems decides
+   * where none may run.
+   */
+  @IsEnum(PaymentMode, { message: PAYMENT_MODE_MESSAGE })
+  PAYMENT_MODE: PaymentMode = PaymentMode.None;
 }
 
 /**
@@ -184,7 +230,35 @@ function crossFieldProblems(config: EnvironmentVariables): string[] {
     );
   }
 
+  problems.push(...paymentModeProblems(config));
+
   return problems;
+}
+
+/**
+ * PAYMENT_MODE=none lets customers confirm bookings for nothing, which is
+ * only acceptable off a live site. A site that says it is production is
+ * refused outright. Any other NODE_ENV=production deploy must say it is
+ * staging: SITE_ENV has only ever been a frontend setting, so a live API
+ * that forgot it would otherwise slip through on the default.
+ */
+function paymentModeProblems(config: EnvironmentVariables): string[] {
+  if (config.PAYMENT_MODE !== PaymentMode.None) return [];
+
+  if (config.SITE_ENV === SiteEnv.Production) {
+    return [
+      '  - PAYMENT_MODE: PAYMENT_MODE=none confirms bookings without payment and is refused when SITE_ENV=production; set PAYMENT_MODE=stripe',
+    ];
+  }
+  if (
+    config.NODE_ENV === NodeEnv.Production &&
+    config.SITE_ENV !== SiteEnv.Staging
+  ) {
+    return [
+      '  - PAYMENT_MODE: PAYMENT_MODE=none confirms bookings without payment, so with NODE_ENV=production it needs SITE_ENV=staging (the demo site); on a live site set PAYMENT_MODE=stripe',
+    ];
+  }
+  return [];
 }
 
 export function validateEnv(raw: Record<string, unknown>) {

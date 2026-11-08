@@ -1,4 +1,5 @@
 import type { BookingStatus, DeliveryMode, ProductType } from '@prisma/client';
+import type { NotOnSaleReason } from './booking-rules';
 
 /**
  * What the bookings API returns. Built by hand from explicit selects, like the
@@ -92,16 +93,19 @@ export interface PayableHold {
 }
 
 /**
- * Why a paid booking could not be confirmed. Each one means the customer's
- * money must go back (SPEC § 5 step 5): the payments slice refunds and tells
- * the admin.
+ * Why a booking could not be confirmed. For a paid one, each means the
+ * customer's money must go back (SPEC § 5 step 5): the payments slice
+ * refunds and tells the admin.
  */
 export type ConfirmRefusal =
   /** No booking has that id. */
   | 'not-found'
   /** The booking was cancelled or refunded, or replaced by a newer hold. */
   | 'cancelled'
-  /** The studio cancelled the session, or it has been marked completed. */
+  /**
+   * The studio cancelled the session, or it has been marked completed, or
+   * (only when the caller asks, see ConfirmOptions) it has started.
+   */
   | 'session-unavailable'
   /** The hold ran out and its places have since gone to someone else. */
   | 'no-seats';
@@ -110,4 +114,25 @@ export type ConfirmOutcome =
   | { kind: 'confirmed'; bookingId: string; reference: string }
   /** A repeat of a confirmation that already happened. Nothing changed. */
   | { kind: 'already-confirmed'; bookingId: string; reference: string }
-  | { kind: 'refused'; reason: ConfirmRefusal; bookingId: string };
+  | {
+      kind: 'refused';
+      reason: Exclude<ConfirmRefusal, 'session-unavailable'>;
+      bookingId: string;
+    }
+  | {
+      kind: 'refused';
+      reason: 'session-unavailable';
+      /** Which, in the words POST /bookings uses for the same refusal. */
+      notOnSale: NotOnSaleReason;
+      bookingId: string;
+    };
+
+export interface ConfirmOptions {
+  /**
+   * Refuse once the session has started. Off for a payment: the customer
+   * paid before its webhook arrived, and that may be after the start. On
+   * when the customer confirms there and then (PAYMENT_MODE=none), so a hold
+   * left open in a tab cannot be confirmed for a class already under way.
+   */
+  refuseStarted?: boolean;
+}
