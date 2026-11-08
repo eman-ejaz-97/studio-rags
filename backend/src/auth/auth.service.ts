@@ -7,6 +7,7 @@ import {
 import { ConfigService } from '@nestjs/config';
 import { Prisma, RefreshTokenRevocation, Role, User } from '@prisma/client';
 import * as argon2 from 'argon2';
+import { MailService } from '../mail/mail.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { RegisterDto } from './dto/register.dto';
 import { TokenService } from './token.service';
@@ -36,6 +37,9 @@ const RESET_LINK_LOGGED_IN: ReadonlySet<string> = new Set([
   'development',
   'test',
 ]);
+
+/** How long a password reset link works. The email states it too. */
+const RESET_LINK_TTL_MINUTES = 60;
 
 const SESSION_EXPIRED = 'Session expired, please sign in again';
 const INVALID_CREDENTIALS = 'Email or password is incorrect';
@@ -108,6 +112,7 @@ export class AuthService {
     private readonly prisma: PrismaService,
     private readonly tokens: TokenService,
     private readonly config: ConfigService,
+    private readonly mail: MailService,
   ) {}
 
   toPublicUser(user: User): PublicUser {
@@ -438,15 +443,26 @@ export class AuthService {
       data: {
         userId: user.id,
         tokenHash: this.tokens.hash(token),
-        expiresAt: new Date(Date.now() + 60 * 60 * 1000), // one hour
+        expiresAt: new Date(Date.now() + RESET_LINK_TTL_MINUTES * 60 * 1000),
       },
     });
 
     const url = `${this.config.getOrThrow<string>('APP_URL')}/reset-password?token=${token}`;
 
-    // TODO(phase-3): send through the mail module. Until that exists, the link
-    // is logged in development so the flow is testable end to end. The link is
-    // a live credential for the account, so only named environments log it.
+    // Not awaited. The provider call can take a second or more, and a reply
+    // that came back that much slower for registered addresses would tell a
+    // visitor which ones exist. MailService never rejects: it records the
+    // outcome in email_logs, and a failed send leaves this request a 202.
+    void this.mail.sendPasswordReset({
+      to: user.email,
+      firstName: user.firstName,
+      resetUrl: url,
+      expiresInMinutes: RESET_LINK_TTL_MINUTES,
+    });
+
+    // Also logged in development, so the flow works without opening Mailpit.
+    // The link is a live credential for the account, so only named
+    // environments log it.
     if (RESET_LINK_LOGGED_IN.has(this.config.get<string>('NODE_ENV') ?? '')) {
       this.logger.log(`Password reset link for ${email}: ${url}`);
     }

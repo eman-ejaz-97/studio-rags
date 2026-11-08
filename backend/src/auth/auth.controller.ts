@@ -2,6 +2,7 @@ import {
   Body,
   Controller,
   Get,
+  Header,
   HttpCode,
   HttpStatus,
   NotFoundException,
@@ -13,6 +14,12 @@ import { ConfigService } from '@nestjs/config';
 import { Throttle } from '@nestjs/throttler';
 import type { Request, Response } from 'express';
 import { clientAddress } from '../common/client-address';
+import {
+  CSRF_COOKIE,
+  isCsrfToken,
+  newCsrfToken,
+  setCsrfCookie,
+} from '../common/csrf';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import type { AuthenticatedUser } from '../common/decorators/current-user.decorator';
 import { Public } from '../common/decorators/public.decorator';
@@ -49,6 +56,7 @@ export class AuthController {
     const user = await this.auth.register(dto);
     const session = await this.auth.issueSession(user, this.contextOf(req));
     this.applySession(res, session);
+    this.issueCsrfToken(res);
     return { user: this.auth.toPublicUser(user) };
   }
 
@@ -64,6 +72,7 @@ export class AuthController {
     const user = await this.auth.validateCredentials(dto.email, dto.password);
     const session = await this.auth.issueSession(user, this.contextOf(req));
     this.applySession(res, session);
+    this.issueCsrfToken(res);
     return { user: this.auth.toPublicUser(user) };
   }
 
@@ -106,6 +115,7 @@ export class AuthController {
       req.cookies?.[REFRESH_COOKIE] as string | undefined,
     );
     clearAuthCookies(res, this.isProduction);
+    this.issueCsrfToken(res);
   }
 
   @Public()
@@ -134,6 +144,20 @@ export class AuthController {
     return { message: 'Your password has been changed. Please sign in.' };
   }
 
+  /**
+   * The CSRF token every write must repeat in x-csrf-token (common/csrf.ts).
+   * The website asks here before its first write, when the cookie is
+   * missing, and again after a refusal. A token the browser already holds is
+   * kept, so tabs sharing it do not knock each other's requests out.
+   */
+  @Public()
+  @Get('csrf')
+  @Header('Cache-Control', 'no-store')
+  csrf(@Req() req: Request, @Res({ passthrough: true }) res: Response) {
+    const held: unknown = req.cookies?.[CSRF_COOKIE];
+    return { csrfToken: isCsrfToken(held) ? held : this.issueCsrfToken(res) };
+  }
+
   @Get('me')
   async me(@CurrentUser() current: AuthenticatedUser) {
     const user = await this.auth.findById(current.id);
@@ -158,6 +182,19 @@ export class AuthController {
       this.tokens.refreshTtlMs(),
       this.isProduction,
     );
+  }
+
+  /**
+   * A new CSRF token whenever who is signed in on this browser changes, so a
+   * token from before sign-in, or from the person who just signed out, stops
+   * working. Not on refresh: that runs every 15 minutes, and each change
+   * sends a request already on its way from another tab round a second time.
+   * Lives as long as the refresh cookie, so a returning visitor still has one.
+   */
+  private issueCsrfToken(res: Response): string {
+    const token = newCsrfToken();
+    setCsrfCookie(res, token, this.tokens.refreshTtlMs(), this.isProduction);
+    return token;
   }
 
   private contextOf(req: Request) {

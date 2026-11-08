@@ -1,14 +1,18 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { APP_FILTER, APP_GUARD } from '@nestjs/core';
+import { ScheduleModule } from '@nestjs/schedule';
 import { ThrottlerModule } from '@nestjs/throttler';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { AuthModule } from './auth/auth.module';
+import { BookingsModule } from './bookings/bookings.module';
 import { CatalogueModule } from './catalogue/catalogue.module';
 import { EnquiriesModule } from './enquiries/enquiries.module';
+import { CsrfExceptionFilter } from './common/filters/csrf-exception.filter';
 import { PrismaExceptionFilter } from './common/filters/prisma-exception.filter';
 import { ClientThrottlerGuard } from './common/guards/client-throttler.guard';
+import { CsrfGuard } from './common/guards/csrf.guard';
 import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
 import { RolesGuard } from './common/guards/roles.guard';
 import { validateEnv } from './config/env.validation';
@@ -31,11 +35,14 @@ import { StorageModule } from './storage/storage.module';
       cache: true,
     }),
     ThrottlerModule.forRoot([{ name: 'default', ttl: 60_000, limit: 120 }]),
+    // Runs @Cron jobs in any module: the hold expiry sweep (bookings).
+    ScheduleModule.forRoot(),
     PrismaModule,
     StorageModule,
     AuthModule,
     CatalogueModule,
     EnquiriesModule,
+    BookingsModule,
   ],
   controllers: [AppController],
   providers: [
@@ -43,9 +50,12 @@ import { StorageModule } from './storage/storage.module';
     // Order matters: authenticate, then check the role.
     // Counts per visitor as clientAddress() finds them (common/client-address.ts).
     { provide: APP_GUARD, useClass: ClientThrottlerGuard },
+    // Refuses forged writes before any session is looked at (common/csrf.ts).
+    { provide: APP_GUARD, useClass: CsrfGuard },
     { provide: APP_GUARD, useClass: JwtAuthGuard },
     { provide: APP_GUARD, useClass: RolesGuard },
     { provide: APP_FILTER, useClass: PrismaExceptionFilter },
+    { provide: APP_FILTER, useClass: CsrfExceptionFilter },
   ],
 })
 export class AppModule {}

@@ -93,6 +93,10 @@ enum EmailStatus {
   QUEUED
   SENT
   FAILED
+  /// Deliberately not sent: the recipient is not on MAIL_ALLOWED_RECIPIENTS,
+  /// the staging allow-list (ADR-040). Not a failure, so it is never retried
+  /// and never counted as one. `error` says why.
+  SUPPRESSED
 }
 
 enum EnquiryKind {
@@ -321,7 +325,9 @@ model Booking {
   review        Review?
 
   /// Seat counting reads (sessionId, status, holdExpiresAt) inside the locking
-  /// transaction — see § 5, FR-A5.
+  /// transaction — see § 5, FR-A5. The database also refuses any write that
+  /// would take a session over capacity: trigger bookings_session_capacity_*,
+  /// migration 20261108120000_booking_capacity_backstop. Prisma does not show it.
   @@index([sessionId, status, holdExpiresAt])
   @@index([userId, createdAt])
   @@index([status, holdExpiresAt])

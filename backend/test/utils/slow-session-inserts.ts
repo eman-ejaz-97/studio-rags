@@ -43,10 +43,29 @@ export function slowResetLinkUpdates(
   });
 }
 
+/**
+ * Makes every INSERT into bookings wait `ms` first. Each booking transaction
+ * then holds the session lock for that long, so concurrent attempts are sure
+ * to be queued on it at the same time; and a writer that skips the lock has
+ * time to count before anyone else commits, which is the race the capacity
+ * trigger must catch. Same guard and same clean-up as slowSessionInserts.
+ */
+export function slowBookingInserts(
+  prisma: PrismaService,
+  ms: number,
+): Promise<() => Promise<void>> {
+  return slowRowWrites(prisma, {
+    name: 'e2e_slow_booking_insert',
+    table: 'bookings',
+    event: 'INSERT',
+    ms,
+  });
+}
+
 interface SlowRowWrites {
   /** The trigger and its function share this name. */
   name: string;
-  table: 'refresh_tokens' | 'password_reset_tokens';
+  table: 'refresh_tokens' | 'password_reset_tokens' | 'bookings';
   event: 'INSERT' | 'UPDATE';
   ms: number;
 }
@@ -61,8 +80,8 @@ async function slowRowWrites(
   }
 
   // Interpolated rather than bound: DDL takes no parameters. The value was
-  // checked to be a small integer above, and the names come from the two
-  // fixed callers in this file, never from a test.
+  // checked to be a small integer above, and the names come from the fixed
+  // callers in this file, never from a test.
   await prisma.$executeRawUnsafe(`
     DO $$
     BEGIN

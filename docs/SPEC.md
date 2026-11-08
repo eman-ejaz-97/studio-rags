@@ -265,12 +265,17 @@ provider: it keeps customer PII on infrastructure the business owns (relevant to
 the Australian Privacy Act posture in NFR-7), avoids per-MAU cost on a small
 business, and gives the capstone report something substantive to document.
 httpOnly cookies rather than `localStorage` because XSS then cannot exfiltrate
-the session. CSRF handled by `SameSite=Lax` plus a double-submit token on
-state-changing routes. Recorded as ADR-003.
+the session. CSRF handled by `SameSite=Lax` plus a double-submit token (the
+`sr_csrf` cookie repeated in an `x-csrf-token` header) on every route except
+GET, HEAD and OPTIONS, sign-in included (ADR-044). Recorded as ADR-003.
 
-**Email — React Email templates**, rendered by Nest. Mailpit in development
-(nothing can escape to a real inbox), Resend in production. Every send is
-recorded in an `email_log` row so the admin can prove a confirmation went out.
+**Email — React Email templates**, rendered by Nest with React's static
+renderer, with a plain-text part (ADR-045). Mailpit in development (nothing can
+escape to a real inbox), Resend on staging (ADR-040) and in production.
+`MAIL_TRANSPORT` selects `smtp` (Mailpit), `resend` or `memory` (tests). Every
+send is recorded in an `email_logs` row so the admin can prove a confirmation
+went out: QUEUED, then SENT or FAILED, or SUPPRESSED for a recipient not on
+`MAIL_ALLOWED_RECIPIENTS` (ADR-046).
 
 **Hosting — staging decided (ADR-025); production is outside the capstone
 (ADR-024).** The capstone deploys nothing to production and runs nothing that
@@ -282,7 +287,7 @@ costs the client. What exists is a free **staging** environment for demos:
 | API | Render free web service, Docker | Singapore |
 | Database | Neon free, Postgres 18 | `aws-ap-southeast-1` (Singapore) |
 | File storage | Neon object storage (S3-compatible), private bucket `assets` | Singapore |
-| Email | none yet — Mailpit locally | — |
+| Email | Resend free plan, to the developer's own address only (ADR-040); Mailpit locally | — |
 
 The browser only ever talks to the frontend's origin. Next.js rewrites
 `/api/v1/*` to the API (ADR-026), so the auth cookies stay first-party.
@@ -622,6 +627,7 @@ Auth
   POST   /auth/reset-password
   POST   /auth/verify-email
   GET    /auth/me
+  GET    /auth/csrf                     CSRF token (cookie + body); keeps a valid one
 
 Catalog (public)
   GET    /workshops                     FR-C1  — published only
@@ -852,10 +858,26 @@ change what gets built.
 | 19 | **Her full class descriptions.** Only the short Eventbrite summaries exist, so the class pages repeat the summary. She edits them herself in the admin (phase 5), or sends text sooner. | Class page content | Client |
 | 20 | **Figma access.** The connected Figma account (the student address) has no access to file `WRSDQ8L6iHupgt77wpV0iP`. Tokens were taken from `docs/design/mockups/directions.html`, the source the Figma styles were built from. Share the file with that account, then reconcile. | Token fidelity | Developer |
 | 21 | **The "Hello, I'm Rehana" text** on the home page is ours, drawn from her emails: twenty years in textiles, fashion designer and lecturer, the only batik teacher in the Adelaide area. She approves or rewrites it before the site is shown publicly. | Home page copy | Client |
-| 22 | **Enquiries are stored but nobody is told.** `POST /contact` saves the row; the email to her arrives with the mail module (phase 4). Until then she would only see them in the database. | Contact form usefulness on staging | Us, phase 4 |
+| 22 | **Enquiries are stored but nobody is told.** `POST /contact` saves the row. The mail module exists since 2026-11-08, but the admin notification email is still phase 4. Until then she would only see them in the database. | Contact form usefulness on staging | Us, phase 4 |
 | 23 | **Cancellation wording on class pages** shows her terms (§ 5) but stays silent on cash or voucher for late cancellations until item 4 is answered. | Class page copy | Client, via item 4 |
 | 24 | **Server-side catalogue fetches share one throttle key.** Pages fetch the catalogue from Vercel's servers, so on staging every visitor's page render arrives from Vercel. The global throttle (120 a minute, `app.module.ts`) could be hit by a busy minute of page views. Data is cached for 60 s, which keeps the real rate low. Exempt catalogue reads from the throttle, or key them differently, if it ever shows up. | Staging under load | Us, phase 8 |
-| 25 | **The CSRF double-submit token in § 3 is not built.** Cookies are `SameSite=Lax`, and `*.vercel.app` is on the public suffix list, so another site cannot send a signed-in POST today. The double-submit token is the second layer § 3 promises, and must be in place before `POST /bookings` takes payment. | Booking routes | Us, phase 3 |
+| ~~25~~ | ~~**The CSRF double-submit token in § 3 is not built.**~~ **Closed 2026-11-08 (ADR-044).** Every request other than GET, HEAD and OPTIONS must repeat the `sr_csrf` cookie in `x-csrf-token`, or the API answers 403 problem+json. Sign-in is covered too. The website fetches a token from `GET /auth/csrf` when it has none, and retries once after a refusal. Still to check through Vercel on staging (item 27). | — | Done in code |
+| 26 | **API errors are not problem+json everywhere.** § 6 promises RFC 9457, but only the CSRF refusal and the two booking 409s use it, each through its own filter. Everything else is Nest's `{ statusCode, message, error }`. Either convert globally (one filter, plus the frontend's `errorMessages`) or amend § 6. | API contract | Us |
+| 27 | **Check the CSRF token through Vercel on staging.** Locally both proxy routes pass `x-csrf-token` and `sr_csrf` through. Confirm in a browser on staging: sign in, refresh, sign out and send a contact message, with `API_PROXY_SECRET` set. | Phase 3 sign-off | Developer, with item 14's runbook test |
+| 28 | **The email wording is ours.** The reset and booking-confirmation emails are signed "Studio Rags". She approves or rewrites them before real customers receive them. | Email copy | Client |
+| 29 | **No reply address.** On staging, mail comes from `onboarding@resend.dev`, so replies go nowhere. Production needs the verified domain (item 9) and a Reply-To for her inbox. | Production email | Us, then client |
+| 30 | **Nothing retries email.** A FAILED row, or one stuck at QUEUED after a crash, stays that way. Resend's setup guide recommends retrying password-reset sends after network errors, 5xx and 429, with backoff. Add retries, a sweeper, or a "send again" button in the admin email log (phase 4 or 5). | Email reliability | Us |
+| 31 | **`email_logs` keeps addresses and subjects indefinitely.** Set a retention period under the Privacy Act posture (NFR-7). | Privacy | Us |
+| 32 | **The confirmation email is missing two things:** the photography note (ADR-018), and cash-or-voucher wording for late cancellations (item 4). For now it says changes and cancellations follow the terms shown on the class page. An in-person session with no location shows "The studio in Sefton Park". | Email copy | Client, via item 4 |
+| 33 | **A late payment for a lapsed hold.** Built: the booking is confirmed if its places are still free, whether or not the sweep has marked it EXPIRED. It is refunded only when confirming would overbook, or the booking or session was cancelled. § 5 step 5 says every late payment is refunded. The build differs because otherwise the outcome would depend on whether the sweep happened to run, and Render's free instance sleeps. Approve this, or keep § 5 as written, before the payments step. | Payments step | Developer |
+| 34 | **The minute sweep keeps Neon awake while the API is awake.** That lasts up to Render's 15-minute idle. Seat counts do not need the sweep. If CU-hours run short, sweep less often. | Neon free usage | Us |
+| 35 | **Hold hoarding.** Limits today: one live hold per customer per session, 8 places, 10 attempts a minute. One account can still hold across many sessions, and a few accounts could hold a class full for 15 minutes. Options: cap live holds per account, or require a verified email before booking. | Booking fairness | Us |
+| 36 | **Timestamps are not `timestamptz`.** § 5 says they are, but the columns are `TIMESTAMP(3)` without a time zone, holding UTC. Raw SQL must use `now() AT TIME ZONE 'UTC'`. Fix the spec or migrate the columns. | Data model | Us |
+| 37 | **An online session with no Zoom link can be booked.** Nothing stops it until the admin screens require the link. | Online sessions | Us, phase 5 |
+| 38 | **Admins can book like customers.** Confirm that is fine. | Roles | Developer |
+| 39 | **A free session has `totalCents` 0,** which Stripe cannot charge. The payments step should confirm those directly. | Payments step | Us |
+| 40 | **§ 6 lists `POST /bookings/:id/cancel`,** but customers only ever see the reference. Use `:reference`. | API contract | Us |
+| 41 | **The auth cookies are not all scoped to `/api/v1`.** ADR-042 says they are. In fact `sr_access` is at `Path=/`, so every page request to Vercel carries the access token; only `sr_refresh` is at `/api/v1/auth`. Either scope `sr_access` to `/api/v1` (less exposure, and ADR-042's reasoning then holds) or correct ADR-042. | Auth cookies | Us |
 
 ### Closed by the second email of 2026-09-12
 
@@ -920,8 +942,6 @@ the runbook test passes:
 - Checked in a browser against the local API: register, wrong and right
   password, sign-out, refresh through the rewrite, reset with a matching and a
   mismatched password, and the spent reset link refused.
-- Password-reset emails are not sent yet: the link is only logged in
-  development until the mail module lands later in this phase.
 - Signed in, the header shows "Hi, {first name}" and the home hero says
   "Welcome back, {first name}." (ADR-042).
 - The header's *Book a class* is now a purple pill with a gold bead and arrow
@@ -934,6 +954,43 @@ the runbook test passes:
   and e2e tests. `TRUST_PROXY` back to 2 in `render.yaml`.
 - Checks on 2026-11-08: backend lint, typecheck, 457 unit and 120 e2e tests;
   frontend lint, typecheck, 52 tests and `next build`. All pass.
+
+Steps 2 to 4 were built on 2026-11-08 by three agents in parallel, each on its
+own branch and test database. They were then combined on `phase-3/core`.
+
+**Step 2, CSRF (ADR-044), branch `phase-3/csrf`.**
+- `CsrfGuard` runs globally after the throttler and before JWT.
+- `GET /api/v1/auth/csrf` hands out the token.
+- Sign-in, registration and sign-out issue a new one.
+- `@CsrfExempt()` is reserved for the Stripe webhook.
+- On the website, `withCsrf` in `session.ts` adds the header to every write. It fetches a token when the cookie is missing, and retries once after a refusal. The contact form and all auth calls go through it.
+- If the API has no token route yet, the website sends the write without a token. So a Vercel deploy that lands before Render's is safe.
+- Checked locally through `next start`, with and without `API_PROXY_SECRET`. Not yet checked on Vercel or in a browser (§ 10 item 27).
+
+**Step 3, email (ADR-045 to ADR-048), branch `phase-3/mail`.**
+- `MailService` sends through Mailpit locally and Resend on staging. It records every attempt in `email_logs`.
+- Forgot-password now emails the reset link. The link is still logged in development.
+- The booking-confirmation template and `sendBookingConfirmation()` are built for the payments step, but not called yet.
+- Migration `20261108150000_email_status_suppressed` adds the SUPPRESSED status.
+- Staging email needs `RESEND_API_KEY` and `MAIL_ALLOWED_RECIPIENTS` on Render before this reaches `main`. Without them the API refuses to start.
+- `npm run test:mailpit` sends a real email to local Mailpit and reads it back.
+
+**Step 4, bookings core (ADR-049 to ADR-051), branch `phase-3/bookings`.**
+- `POST /bookings` holds places for 15 minutes as a PENDING booking. One transaction locks the session row, reads the database clock, counts with the catalogue's `seatHoldingBookings`, and inserts.
+- Not enough places is a 409 problem+json with `seatsLeft`. A cancelled, completed or started date is a 409 `session-not-on-sale`.
+- The price is snapshotted.
+- The kids class takes one place per child, with name and age checked against the class's range. The photography answer is required.
+- `GET /bookings` is cursor-paginated (`{ bookings, nextCursor }`).
+- `GET /bookings/:reference` answers 404 for anyone else's booking.
+- The Zoom link appears only on CONFIRMED bookings.
+- The expiry sweep runs every minute (`@nestjs/schedule`).
+- The backstop trigger is migration `20261108120000_booking_capacity_backstop`.
+- The payment seam is `BookingsService.findPayableHold` and `confirmBooking`.
+- Verified: 50 concurrent bookings on a 10-place session gave exactly 10 holds, and the trigger was never needed. With the service's lock removed, the trigger alone still held it to 10. Eight lockless writers on a 3-place session: 3 inserted, 5 refused.
+- The trigger test found a deadlock between `FOR UPDATE` and the foreign key's `KEY SHARE` lock. The trigger locks `FOR NO KEY UPDATE` instead.
+
+Not yet built in Phase 3: Stripe payments, the booking screens (no mockup
+yet), and the phase explainer.
 
 ### Phase 2 — catalogue and public site (built 2026-11-07)
 
@@ -1178,12 +1235,12 @@ and a link to try it.
 
 1. **Send her the progress note** (`docs/client/2026-11-07_progress-note.md`,
    draft) with the staging link, and ask about § 10 items 4, 19 and 21.
-2. **Phase 3 — booking and payment**: sign-in screens (honouring § 10 item 17),
-   seat holds under the row lock, Stripe in test mode, webhook confirmation,
-   confirmation email. Needs a Stripe test account; no card is ever added.
-   Set `API_PROXY_SECRET` on Render and Vercel, then run the runbook's
-   throttle test through Vercel (§ 10 item 14). Do this before anyone
-   other than the developer signs in.
+2. **Phase 3 — booking and payment.**
+   - Done: sign-in, CSRF, email and the bookings core.
+   - Next: Stripe in test mode (needs a Stripe test account; no card is ever added). Webhook confirmation through `confirmBooking`, with the confirmation email.
+   - Then the booking screens, which need a design first, and the phase explainer.
+   - Decide § 10 item 33 before the payments step.
+   - Finish the throttle check: the phone step of § 10 item 14.
 3. Re-issue the SRS as **v1.1**: Master Class out, real catalogue and prices in,
    her refund policy in, private events decided, and production launch outside
    the capstone (§ 10 item 13). Chase the sign-off v1.0 never received.
@@ -1241,6 +1298,14 @@ and a link to try it.
 | ADR-041 | The header's *Book a class* is a purple pill with a gold bead holding an arrow | 2026-11-08 | Supersedes ADR-035. The developer found the plain purple button read as one more link, not the call to action, and rejected a gold pill with a plum border as ugly. The bead sets it apart from every other purple button and points the way, while gold still only touches purple, so the colour rule in `CLAUDE.md` holds unchanged. Words 9.98:1 on purple, bead 4.55:1 on purple, arrow 6.8:1 on gold; 48px tall. Classes `buttonBook` and `bookBead` in `components/ui.ts`. Chosen from four mocked options (gold bead, gold lettering on plum, a stitched gold edge, an ochre pill) |
 | ADR-042 | Signed-in personalisation is drawn in the browser from a first-name hint in `localStorage` | 2026-11-08 | § 7; the server cannot see the session (the cookies belong to `/api/v1`), and reading them in pages would make every page per-user. The header shows "Hi, {first name}" with an initial, and the home hero greets the person by name. The hint (`sr_signed_in_as`) lets the greeting appear as soon as the page hydrates instead of after a call to a possibly sleeping API; `GET /auth/me` then confirms it. It is cleared on sign-out, on a password reset and whenever the API says the visitor is signed out. Trade-off: until hydration a signed-in person briefly sees the visitor copy, and a first name sits in that browser's storage while signed in |
 | ADR-043 | Website visitors' addresses reach the API in a header signed with a shared secret; direct callers keep `TRUST_PROXY=2` | 2026-11-08 | § 10 item 14, ADR-023. The two ways in have different numbers of middlemen: Vercel then Cloudflare then Render, or only Cloudflare then Render. So no single `TRUST_PROXY` worked. 2 counted Vercel's changing servers as the visitor, and 3 let direct callers invent an address. `frontend/src/proxy.ts` reads the visitor's address from the `X-Forwarded-For` that Vercel overwrites. It sends that address as `x-sr-client-ip`, together with `x-sr-proxy-secret`. The API trusts the address only when the secret matches (compared in constant time) and the value is a valid IP. Without the secret the API falls back to `req.ip`, so either side can be deployed first. Cost: every `/api/v1` request runs as a Vercel Function, which counts toward the Hobby plan's free usage |
+| ADR-044 | CSRF: a plain double-submit token in a readable cookie, checked by a global guard, handed out by `GET /auth/csrf` | 2026-11-08 | § 3, § 10 item 25, ADR-003, ADR-026. Another site cannot read our cookie, or add a custom header without CORS approval, so a random token repeated in a header is enough. A session-bound signed token would only add a secret to manage. The token is fetched when the cookie is missing rather than set on every response: pages fetch the catalogue on Vercel's servers, and setting it in Next's proxy would make every page run as a Vercel Function. A token the browser holds is reused, so tabs do not invalidate each other. A new one is issued on sign-in, registration and sign-out, not on refresh. Sign-in is not exempt (login CSRF). Relies on ADR-026: page script can read the cookie only because the API answers on the website's own address |
+| ADR-045 | Emails are React Email components rendered with `react-dom/server`'s `renderToStaticMarkup`, not React Email's `render()` | 2026-11-08 | § 3. `render()` loads React with a dynamic `import()` that Jest cannot run, so the templates could not be tested. These emails have no Suspense or data loading, which is all the async renderer adds. React Email's `toPlainText` makes the plain-text part. Templates stay in code, not in Resend, so they are tested and move to production unchanged |
+| ADR-046 | Mail held back by the staging allow-list is recorded as `email_logs.status = SUPPRESSED`, a new enum value | 2026-11-08 | ADR-040. Rejected: `FAILED` with the reason in `error`. A deliberate skip must never be counted, alerted on or retried as a failure. The allow-list is required when `MAIL_TRANSPORT=resend`: a forgotten variable stops the deploy rather than mailing strangers. `*` allows everyone, and only once a domain is verified |
+| ADR-047 | Email is a side effect that never fails the request: `MailService` never throws, and forgot-password does not wait for the send | 2026-11-08 | A reply that waited on the provider would come back slower for registered addresses, which reveals which accounts exist. Sends in flight finish at shutdown. Trade-off: a crash mid-send leaves the row QUEUED, and nothing retries yet (§ 10 item 30) |
+| ADR-048 | Resend is called over HTTP with `fetch`, not its SDK | 2026-11-08 | One endpoint, so the SDK adds a dependency and little else. A 10-second timeout, and the `email_logs` id as Resend's `Idempotency-Key`, so one row can never send twice |
+| ADR-049 | One live hold per customer per session: the identical request returns it, a different one replaces it | 2026-11-08 | § 5 FR-A5. Refusing would leave a customer stuck for 15 minutes with no way to change the number of places. Always replacing would let a double-click cancel the hold the first response pointed to. A replaced hold becomes CANCELLED ("Replaced by SR-…"), so a payment from a stale checkout tab is refused and refunded. If the new request does not fit, everything rolls back and the old hold stands |
+| ADR-050 | Hold timing uses the database clock; the capacity trigger fires only on writes that add places, and locks `FOR NO KEY UPDATE` | 2026-11-08 | § 5 FR-A5 steps 2 and 6. The booking transaction, the sweep, confirmation and the trigger read the same `now()`, so Render and Neon cannot disagree about a hold expiring at that instant. The trigger skips writes that free places, so the sweep and cancellations never wait on the session lock. `FOR UPDATE` in the trigger deadlocked against the foreign key's `KEY SHARE` lock; `FOR NO KEY UPDATE` still queues writers and still conflicts with the service's `FOR UPDATE` |
+| ADR-051 | At most 8 places per booking | 2026-11-08 | ADR-019. A bigger group is a private event, quoted offline through the enquiry form. Attendees are required for the kids class or any class with an age limit, and refused for other classes rather than silently dropped |
 
 ---
 

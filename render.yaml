@@ -65,6 +65,22 @@ services:
       # The private bucket declared in neon.ts.
       - key: STORAGE_BUCKET
         value: assets
+      # Email through Resend's free plan (ADR-040). With no verified domain,
+      # Resend only sends from its onboarding address and only to the account
+      # owner, so the allow-list names that one address; anyone else gets an
+      # email_logs row marked SUPPRESSED instead of an email. The API refuses
+      # to start on resend without the key, the sender and the allow-list.
+      # Setup: docs/deploy/README.md, "Email through Resend".
+      - key: MAIL_TRANSPORT
+        value: resend
+      - key: MAIL_FROM
+        value: "Studio Rags <onboarding@resend.dev>"
+      # A Resend API key with sending access, starting re_.
+      - key: RESEND_API_KEY
+        sync: false
+      # The address the Resend account was created with.
+      - key: MAIL_ALLOWED_RECIPIENTS
+        sync: false
       # sync: false = secrets and per-deploy URLs, never stored in git.
       # Render asks for each value once, when the Blueprint is first created.
       # Neon's pooled connection, used by the running API.
