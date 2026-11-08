@@ -65,6 +65,17 @@ services:
       # The private bucket declared in neon.ts.
       - key: STORAGE_BUCKET
         value: assets
+      # Which deployment this is. The API reads it for one rule: bookings
+      # without payment (PAYMENT_MODE=none, below) need SITE_ENV=staging when
+      # NODE_ENV=production, and SITE_ENV=production refuses them outright.
+      # Without this line the API refuses to start.
+      - key: SITE_ENV
+        value: staging
+      # Interim, decided 2026-11-08: Stripe is on hold, so a customer confirms
+      # a held booking without paying. SPEC FR-P2 is paused here, on staging
+      # only. The payments step changes this to stripe.
+      - key: PAYMENT_MODE
+        value: none
       # Email through Resend's free plan (ADR-040). With no verified domain,
       # Resend only sends from its onboarding address and only to the account
       # owner, so the allow-list names that one address; anyone else gets an
