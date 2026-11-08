@@ -383,6 +383,7 @@ sleep 65
 for i in $(seq 14); do
   curl -s -D - -o /dev/null -X POST "$API/api/v1/auth/login" \
     -H 'content-type: application/json' \
+    -H "cookie: sr_csrf=$csrf" -H "x-csrf-token: $csrf" \
     -d '{"email":"nobody@example.com","password":"not-the-password"}' \
     -H "X-Forwarded-For: 198.51.100.$i" \
     -H "x-sr-client-ip: 198.51.100.$i" -H 'x-sr-proxy-secret: guessed' |
