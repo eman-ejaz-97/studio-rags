@@ -2,10 +2,12 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { formatLongDay, formatTime } from "@/lib/adelaide";
+import { formatLongDay, formatTime, formatTimeRange } from "@/lib/adelaide";
+import { bookPath } from "@/lib/booking";
 import type { DeliveryMode, SessionView } from "@/lib/catalogue-types";
 import { formatPrice, formatSeatsLeft } from "@/lib/format";
-import { buttonOutline } from "./ui";
+import { DateTile } from "./booking-parts";
+import { buttonPrimary } from "./ui";
 
 /**
  * The dates for one class. The server renders them from a cache up to a
@@ -67,41 +69,47 @@ export function SessionList({
         return (
           <li
             key={s.id}
-            className="flex flex-col gap-3 rounded-[var(--radius-card)] border-2 border-line bg-card p-5 sm:flex-row sm:items-center sm:justify-between"
+            className="flex flex-col gap-4 rounded-[var(--radius-card)] border-2 border-line bg-card p-5 sm:flex-row sm:items-center sm:justify-between"
           >
-            <div className="flex flex-col gap-1">
-              <p className="font-semibold text-plum">
-                <time dateTime={s.startsAt}>{formatLongDay(s.startsAt)}</time>
-              </p>
-              <p className="text-muted">
-                {formatTime(s.startsAt)} – {formatTime(s.endsAt)} ·{" "}
-                {deliveryMode === "ONLINE"
-                  ? "Live on Zoom"
-                  : (s.location ?? "Studio Rags, Sefton Park")}
-                {s.priceCents !== basePriceCents &&
-                  ` · ${formatPrice(s.priceCents)}`}
-              </p>
-            </div>
-            <div className="flex flex-wrap items-center gap-3">
-              <span
-                className={
-                  s.isFull
-                    ? "rounded-full bg-lilac px-3 py-1 font-semibold text-muted"
-                    : "rounded-full bg-sand px-3 py-1 font-semibold text-sand-ink"
-                }
-              >
-                {formatSeatsLeft(s.seatsLeft)}
-              </span>
-              {!s.isFull && (
-                <Link
-                  href={`/contact?class=${encodeURIComponent(slug)}&date=${encodeURIComponent(s.startsAt)}`}
-                  className={buttonOutline}
-                  aria-label={`Ask about ${title} on ${when}`}
+            <div className="flex gap-4">
+              <DateTile iso={s.startsAt} />
+              <div className="flex flex-col items-start gap-1">
+                <p className="font-semibold text-plum">
+                  <time dateTime={s.startsAt}>{formatLongDay(s.startsAt)}</time>
+                </p>
+                <p className="text-muted">
+                  {formatTimeRange(s.startsAt, s.endsAt)} ·{" "}
+                  {deliveryMode === "ONLINE"
+                    ? "Live on Zoom"
+                    : (s.location ?? "Studio Rags, Sefton Park")}
+                  {s.priceCents !== basePriceCents &&
+                    ` · ${formatPrice(s.priceCents)}`}
+                </p>
+                <span
+                  className={
+                    s.isFull
+                      ? "rounded-full bg-lilac px-3 py-0.5 font-semibold text-muted"
+                      : "rounded-full bg-sand px-3 py-0.5 font-semibold text-sand-ink"
+                  }
                 >
-                  Ask about this date
-                </Link>
-              )}
+                  {formatSeatsLeft(s.seatsLeft)}
+                </span>
+              </div>
             </div>
+            {/* A full date stays listed, in words, with nothing to press
+                (ADR-037). The visible words start the link's name, and the
+                date completes it for anyone hearing a list of these. */}
+            {!s.isFull && (
+              <Link
+                href={bookPath(slug, s.id)}
+                className={`${buttonPrimary} w-full shrink-0 sm:w-auto`}
+              >
+                Book this date
+                <span className="sr-only">
+                  : {title}, {when}
+                </span>
+              </Link>
+            )}
           </li>
         );
       })}
