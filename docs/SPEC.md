@@ -640,6 +640,9 @@ Bookings (customer)
   POST   /bookings                      FR-C6 — creates PENDING hold + intent
   GET    /bookings                      FR-C10 — own history
   GET    /bookings/:reference
+  POST   /bookings/:reference/confirm   interim (PAYMENT_MODE=none, ADR-052): confirm own hold
+                                        without payment; 409 hold-lapsed | booking-cancelled |
+                                        session-not-on-sale | payment-required
   POST   /bookings/:id/cancel
 
 Payments
@@ -757,6 +760,28 @@ each swatch carrying its hex and its measured contrast ratio. Every screen in th
 file is bound to those styles, so the palette changes in one place. It gets
 mirrored into Tailwind tokens when the frontend build starts.
 
+### Booking screens (designed in code, 2026-11-08)
+
+There are no mockups for the booking screens. The developer decided they are
+designed in code, in Fabric Fun, with no Figma step.
+
+- **Routes (ADR-055):** each class date links to
+  `/classes/[slug]/book/[sessionId]` (step 1, your details). Holding places goes
+  to `/bookings/[reference]`, one permanent page per booking that shows the
+  hold, then "You're booked", or a refusal. A step indicator ("Your details →
+  Confirm") says holding is not booking; "Confirm" becomes "Pay" when payments
+  switch on.
+- **Shared parts:** a sand calendar tile marks every date (class page,
+  summaries, account, home). On phones, the total and main action sit in a bar
+  at the foot of the screen, in thumb reach (ADR-056). The booked ticket is
+  purple with the reference in gold: the only gold in the flow.
+- **The form (ADR-058):** places by stepper. For the kids class, each child's
+  first name and age are typed and checked against the class's range. The
+  photography question has two answers and no default.
+- **The hold (ADR-057):** counts down calmly, in whole minutes. Screen readers
+  hear only the 5-minute and 1-minute marks.
+- **Refusals:** each says what happened, in words, and offers a way forward.
+
 ### Admin dashboard
 
 FR-A10 asks for "a simpler ClassBento". Design intent: Rehana opens it and
@@ -864,12 +889,12 @@ change what gets built.
 | ~~25~~ | ~~**The CSRF double-submit token in § 3 is not built.**~~ **Closed 2026-11-08 (ADR-044).** Every request other than GET, HEAD and OPTIONS must repeat the `sr_csrf` cookie in `x-csrf-token`, or the API answers 403 problem+json. Sign-in is covered too. The website fetches a token from `GET /auth/csrf` when it has none, and retries once after a refusal. Still to check through Vercel on staging (item 27). | — | Done in code |
 | 26 | **API errors are not problem+json everywhere.** § 6 promises RFC 9457, but only the CSRF refusal and the two booking 409s use it, each through its own filter. Everything else is Nest's `{ statusCode, message, error }`. Either convert globally (one filter, plus the frontend's `errorMessages`) or amend § 6. | API contract | Us |
 | 27 | **Check the CSRF token through Vercel on staging.** Locally both proxy routes pass `x-csrf-token` and `sr_csrf` through. Confirm in a browser on staging: sign in, refresh, sign out and send a contact message, with `API_PROXY_SECRET` set. | Phase 3 sign-off | Developer, with item 14's runbook test |
-| 28 | **The email wording is ours.** The reset and booking-confirmation emails are signed "Studio Rags". She approves or rewrites them before real customers receive them. | Email copy | Client |
+| 28 | **The wording in her name is ours.** She approves or rewrites it before real customers see it. It covers the reset and booking-confirmation emails, signed "Studio Rags"; the line "Payment is not taken online yet, and Rehana will let you know how to pay"; and the booking screens' photo answers, e.g. "Rehana will keep you out of photos and videos". Also ask whether materials are included: the screens no longer say so, because nothing confirms it. | Copy | Client |
 | 29 | **No reply address.** On staging, mail comes from `onboarding@resend.dev`, so replies go nowhere. Production needs the verified domain (item 9) and a Reply-To for her inbox. | Production email | Us, then client |
 | 30 | **Nothing retries email.** A FAILED row, or one stuck at QUEUED after a crash, stays that way. Resend's setup guide recommends retrying password-reset sends after network errors, 5xx and 429, with backoff. Add retries, a sweeper, or a "send again" button in the admin email log (phase 4 or 5). | Email reliability | Us |
 | 31 | **`email_logs` keeps addresses and subjects indefinitely.** Set a retention period under the Privacy Act posture (NFR-7). | Privacy | Us |
-| 32 | **The confirmation email is missing two things:** the photography note (ADR-018), and cash-or-voucher wording for late cancellations (item 4). For now it says changes and cancellations follow the terms shown on the class page. An in-person session with no location shows "The studio in Sefton Park". | Email copy | Client, via item 4 |
-| 33 | **A late payment for a lapsed hold.** Built: the booking is confirmed if its places are still free, whether or not the sweep has marked it EXPIRED. It is refunded only when confirming would overbook, or the booking or session was cancelled. § 5 step 5 says every late payment is refunded. The build differs because otherwise the outcome would depend on whether the sweep happened to run, and Render's free instance sleeps. Approve this, or keep § 5 as written, before the payments step. | Payments step | Developer |
+| 32 | **The confirmation email should match the "You're booked" page.** It lacks the photography choice (ADR-018) and cash-or-voucher wording for late cancellations (item 4). For now it says changes and cancellations follow the terms shown on the class page. An in-person session with no location shows "The studio in Sefton Park". | Email copy | Client, via item 4 |
+| ~~33~~ | ~~**A late payment for a lapsed hold.**~~ **Closed 2026-11-08 (ADR-053).** The developer approved what is built: a late confirmation succeeds if its places are still free. § 5 step 5 is amended by that ADR. | — | Closed |
 | 34 | **The minute sweep keeps Neon awake while the API is awake.** That lasts up to Render's 15-minute idle. Seat counts do not need the sweep. If CU-hours run short, sweep less often. | Neon free usage | Us |
 | 35 | **Hold hoarding.** Limits today: one live hold per customer per session, 8 places, 10 attempts a minute. One account can still hold across many sessions, and a few accounts could hold a class full for 15 minutes. Options: cap live holds per account, or require a verified email before booking. | Booking fairness | Us |
 | 36 | **Timestamps are not `timestamptz`.** § 5 says they are, but the columns are `TIMESTAMP(3)` without a time zone, holding UTC. Raw SQL must use `now() AT TIME ZONE 'UTC'`. Fix the spec or migrate the columns. | Data model | Us |
@@ -878,6 +903,12 @@ change what gets built.
 | 39 | **A free session has `totalCents` 0,** which Stripe cannot charge. The payments step should confirm those directly. | Payments step | Us |
 | 40 | **§ 6 lists `POST /bookings/:id/cancel`,** but customers only ever see the reference. Use `:reference`. | API contract | Us |
 | 41 | **The auth cookies are not all scoped to `/api/v1`.** ADR-042 says they are. In fact `sr_access` is at `Path=/`, so every page request to Vercel carries the access token; only `sr_refresh` is at `/api/v1/auth`. Either scope `sr_access` to `/api/v1` (less exposure, and ADR-042's reasoning then holds) or correct ADR-042. | Auth cookies | Us |
+| 42 | **Payment wording on the hold page.** It says "Online payment isn't switched on yet, so there's nothing to pay here. Confirming books your places." Approve it, or say how a real customer pays before Stripe. | Staging copy | Developer |
+| 43 | **WCAG 2.2.1 (timing): the 15-minute hold cannot be extended.** Either record the limit as essential (places are limited) and rely on "Start again", which keeps the answers, or add a one-off `POST /bookings/:reference/extend`. | Accessibility | Developer |
+| 44 | **Render must have `SITE_ENV=staging` and `PAYMENT_MODE=none`** before the booking branch reaches `main`. `render.yaml` sets both, but Render has not always applied Blueprint values to the existing service. Without `SITE_ENV` the new API refuses to start, and Render keeps the previous deploy. | Staging deploy | Developer |
+| 45 | **Bookings confirmed without payment have no `payments` row,** and nothing marks them unpaid. Before payment reporting in the admin (phase 4 or 5), wipe or mark staging's free confirmations. | Admin reports | Us |
+| 46 | **§ 5 FR-A5 step 4 ("CONFIRMED solely in the webhook") does not hold on staging** while ADR-052 is in force. Restore it when Stripe lands. | Payments | Us |
+| 47 | **Home and account read the newest 50 bookings** and pick the upcoming ones in the browser. An upcoming filter on the API (`GET /bookings?upcoming=1`) would remove that limit. | Bookings list | Us |
 
 ### Closed by the second email of 2026-09-12
 
@@ -989,8 +1020,50 @@ own branch and test database. They were then combined on `phase-3/core`.
 - Verified: 50 concurrent bookings on a 10-place session gave exactly 10 holds, and the trigger was never needed. With the service's lock removed, the trigger alone still held it to 10. Eight lockless writers on a 3-place session: 3 inserted, 5 refused.
 - The trigger test found a deadlock between `FOR UPDATE` and the foreign key's `KEY SHARE` lock. The trigger locks `FOR NO KEY UPDATE` instead.
 
-Not yet built in Phase 3: Stripe payments, the booking screens (no mockup
-yet), and the phase explainer.
+**Step 5, confirm without payment (ADR-052 to ADR-054), branch
+`phase-3/confirm-booking`.** Stripe is on hold by the developer's decision.
+- `POST /bookings/:reference/confirm` confirms the caller's own hold through `confirmBooking`, the same call the Stripe webhook will make.
+- It emails the confirmation. The `email_logs` row is linked to the booking.
+- The email says "Price", not "Paid", and that Rehana will say how to pay.
+- `PAYMENT_MODE=none` on staging (`render.yaml`, with `SITE_ENV=staging`). The API refuses to start with `none` on a live site.
+- 20 e2e tests cover it, plus a file for `PAYMENT_MODE=stripe`.
+
+**Step 6, booking screens (§ 7, ADR-055 to ADR-058), branch
+`phase-3/booking-screens`.**
+- The class page books dates directly. Full dates stay listed with no action.
+- `/classes/[slug]/book/[sessionId]` holds places:
+  - visitors are asked to sign in and come back;
+  - places by stepper (8 at most, live count);
+  - children and ages for the kids class;
+  - the photo choice;
+  - notes.
+- `/bookings/[reference]` shows:
+  - the hold, with its countdown and "Confirm booking";
+  - then the booked ticket and "What happens next";
+  - or the lapsed, replaced, cancelled, not-on-sale and payment-required states.
+- `/account` lists bookings, coming up and past, with "Finish booking" for a live hold. The home hero shows the next booked class.
+- Checked by the agent in headless Chrome at 360, 390 and 1280px:
+  - no sideways scroll;
+  - targets at least 44px and pills at least 48px;
+  - the action in the lower third of a phone screen;
+  - no text under 16px.
+
+**Combined on `phase-3/booking` and run end to end locally on 2026-11-08.** The run used the real API, the real site and Mailpit; the confirm click was real, not mocked. 13 of 13 checks passed:
+- register;
+- the form held 2 places;
+- the API showed PENDING, then CONFIRMED after the click;
+- "You're booked!";
+- one email in Mailpit with the reference, "Price" and the payment sentence;
+- confirming again gave 200 and no second email;
+- `/account` and the home card showed the booking.
+
+Two fixes came out of the review:
+- an unconfirmed "Your materials are included" was removed;
+- the email says "Your places are confirmed" when more than one place was booked.
+
+Checks: backend lint, typecheck, 761 unit and 247 e2e tests; frontend lint, typecheck, 105 tests and `next build`. All pass.
+
+Not yet built in Phase 3: Stripe payments (on hold), and the phase explainer.
 
 ### Phase 2 — catalogue and public site (built 2026-11-07)
 
@@ -1236,11 +1309,9 @@ and a link to try it.
 1. **Send her the progress note** (`docs/client/2026-11-07_progress-note.md`,
    draft) with the staging link, and ask about § 10 items 4, 19 and 21.
 2. **Phase 3 — booking and payment.**
-   - Done: sign-in, CSRF, email and the bookings core.
-   - Next: Stripe in test mode (needs a Stripe test account; no card is ever added). Webhook confirmation through `confirmBooking`, with the confirmation email.
-   - Then the booking screens, which need a design first, and the phase explainer.
-   - Decide § 10 item 33 before the payments step.
-   - Finish the throttle check: the phone step of § 10 item 14.
+   - Done: sign-in, CSRF, email, the bookings core, confirming without payment, and the booking screens.
+   - On hold (developer, 2026-11-08): Stripe in test mode. It replaces the confirm step (ADR-052) and needs a Stripe test account; no card is ever added.
+   - Next: the phase explainer; the staging checks in § 10 items 14, 27 and 44.
 3. Re-issue the SRS as **v1.1**: Master Class out, real catalogue and prices in,
    her refund policy in, private events decided, and production launch outside
    the capstone (§ 10 item 13). Chase the sign-off v1.0 never received.
@@ -1306,6 +1377,13 @@ and a link to try it.
 | ADR-049 | One live hold per customer per session: the identical request returns it, a different one replaces it | 2026-11-08 | § 5 FR-A5. Refusing would leave a customer stuck for 15 minutes with no way to change the number of places. Always replacing would let a double-click cancel the hold the first response pointed to. A replaced hold becomes CANCELLED ("Replaced by SR-…"), so a payment from a stale checkout tab is refused and refunded. If the new request does not fit, everything rolls back and the old hold stands |
 | ADR-050 | Hold timing uses the database clock; the capacity trigger fires only on writes that add places, and locks `FOR NO KEY UPDATE` | 2026-11-08 | § 5 FR-A5 steps 2 and 6. The booking transaction, the sweep, confirmation and the trigger read the same `now()`, so Render and Neon cannot disagree about a hold expiring at that instant. The trigger skips writes that free places, so the sweep and cancellations never wait on the session lock. `FOR UPDATE` in the trigger deadlocked against the foreign key's `KEY SHARE` lock; `FOR NO KEY UPDATE` still queues writers and still conflicts with the service's `FOR UPDATE` |
 | ADR-051 | At most 8 places per booking | 2026-11-08 | ADR-019. A bigger group is a private event, quoted offline through the enquiry form. Attendees are required for the kids class or any class with an age limit, and refused for other classes rather than silently dropped |
+| ADR-052 | **Interim:** a held booking can be confirmed without payment, behind `PAYMENT_MODE=none`. FR-P2 is paused on staging, never dropped | 2026-11-08 | The developer put Stripe on hold and wants bookings completable on staging. `POST /bookings/:reference/confirm` goes through `confirmBooking`, the call the Stripe webhook will make. The API refuses `none` when `SITE_ENV=production`, or when `NODE_ENV=production` without `SITE_ENV=staging`. That fails closed, because `SITE_ENV` had been a frontend-only setting. `stripe` is reserved, and the route then answers 409 `payment-required`. The confirmation email takes an explicit `paid` flag, so it never claims a payment that was not taken |
+| ADR-053 | A late confirmation of a lapsed hold succeeds if its places are still free; amends § 5 FR-A5 step 5 | 2026-11-08 | § 10 item 33, approved by the developer. The outcome holds whether or not the sweep has marked the hold EXPIRED. It is refused (and, for a payment, refunded) only when confirming would overbook, or the booking or session was cancelled. Otherwise the outcome would depend on whether the sweep happened to run, and Render's free instance sleeps |
+| ADR-054 | A customer's own confirmation is refused once the class has started; a payment's is not | 2026-11-08 | `confirmBooking(id, { refuseStarted })`. A stale tab must not confirm a class already under way. A payment made before the start, whose webhook arrives after it, is still honoured, not refunded |
+| ADR-055 | Booking routes: `/classes/[slug]/book/[sessionId]`, then `/bookings/[reference]`, one page per booking drawn from its status | 2026-11-08 | § 7. No API returns a session with its class by id, so nesting under the class reuses the cached catalogue reads (ADR-034). One address per booking serves the email, the account list and a refresh. Rejected: `/book/[sessionId]`, and a separate `/confirmed` page |
+| ADR-056 | On phones the total and main action stay at the foot of the screen, sticky within the page column | 2026-11-08 | CLAUDE.md: the booking flow completes one-handed. The bar steps back into place while a text field has focus on a touch screen, and focused fields scroll clear of it (WCAG 2.4.11). Rejected: a `position: fixed` bar, which covers the footer, and a button only at the end of a long kids form |
+| ADR-057 | The hold counts down in whole minutes, calmly | 2026-11-08 | No seconds and no red. Screen readers hear only "less than 5 minutes" and "less than a minute", from a polite live region. At zero the page becomes "Your hold has run out" and focus moves to its heading. The device clock is corrected from the response's `Date` header. Rejected: a ticking mm:ss timer or a draining bar, which is stressful and noisy when announced |
+| ADR-058 | Places by stepper; ages typed and checked; busy buttons `aria-disabled`, not `disabled` | 2026-11-08 | A stepper never opens the phone keyboard. Rejected: a places dropdown, and 1–8 pills, which do not fit 320px. An age dropdown limited to 7–15 would hide why a 5-year-old cannot come. `aria-disabled` keeps keyboard focus on the button |
 
 ---
 
