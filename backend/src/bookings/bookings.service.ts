@@ -4,12 +4,7 @@ import {
   Logger,
   NotFoundException,
 } from '@nestjs/common';
-import {
-  BookingStatus,
-  Prisma,
-  SessionStatus,
-  WorkshopStatus,
-} from '@prisma/client';
+import { BookingStatus, Prisma, WorkshopStatus } from '@prisma/client';
 import {
   holdsSeats,
   seatHoldingBookings,
@@ -40,6 +35,7 @@ import type {
   BookingPage,
   BookingRequest,
   BookingView,
+  ConfirmOptions,
   ConfirmOutcome,
   CreatedBooking,
   PayableHold,
@@ -385,8 +381,15 @@ export class BookingsService {
    *
    * Locks the session before touching the booking, the same order as create,
    * so the two cannot deadlock.
+   *
+   * The interim no-payment confirmation (UnpaidConfirmationService) calls it
+   * too, with refuseStarted. Every other rule is shared, so nothing about
+   * seats changes when Stripe takes over.
    */
-  async confirmBooking(bookingId: string): Promise<ConfirmOutcome> {
+  async confirmBooking(
+    bookingId: string,
+    options: ConfirmOptions = {},
+  ): Promise<ConfirmOutcome> {
     const found = await this.prisma.booking.findUnique({
       where: { id: bookingId },
       select: { sessionId: true },
@@ -405,7 +408,9 @@ export class BookingsService {
           status: true,
           seats: true,
           holdExpiresAt: true,
-          session: { select: { status: true, capacity: true } },
+          session: {
+            select: { status: true, startsAt: true, capacity: true },
+          },
         },
       });
       const { reference } = booking;
@@ -419,8 +424,16 @@ export class BookingsService {
       ) {
         return { kind: 'refused', reason: 'cancelled', bookingId };
       }
-      if (booking.session.status !== SessionStatus.SCHEDULED) {
-        return { kind: 'refused', reason: 'session-unavailable', bookingId };
+      // The same rule as POST /bookings, except that a start already passed
+      // only counts when the caller asks (ConfirmOptions).
+      const closed = notOnSaleReason(booking.session, now);
+      if (closed && (closed !== 'started' || options.refuseStarted)) {
+        return {
+          kind: 'refused',
+          reason: 'session-unavailable',
+          notOnSale: closed,
+          bookingId,
+        };
       }
       // A live hold already counts in seatsTaken; a lapsed one must fit again.
       if (!holdsSeats(booking, now)) {

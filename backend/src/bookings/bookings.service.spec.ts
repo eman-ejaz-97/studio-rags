@@ -521,3 +521,123 @@ describe('BookingsService.expireLapsedHolds', () => {
     });
   });
 });
+
+describe('BookingsService.confirmBooking', () => {
+  const MINUTE_MS = 60_000;
+
+  function confirmSetup(
+    booking: {
+      status?: BookingStatus;
+      session?: Partial<{
+        status: SessionStatus;
+        startsAt: Date;
+        capacity: number;
+      }>;
+    } = {},
+  ) {
+    const row = {
+      reference: 'SR-7K4M2',
+      status: booking.status ?? BookingStatus.PENDING,
+      seats: 1,
+      holdExpiresAt: new Date(NOW.getTime() + 5 * MINUTE_MS),
+      session: {
+        status: SessionStatus.SCHEDULED,
+        startsAt: new Date(NOW.getTime() + 7 * 24 * 60 * MINUTE_MS),
+        capacity: 8,
+        ...booking.session,
+      },
+    };
+    const tx = {
+      $queryRaw: jest.fn().mockResolvedValue([{ id: 'session_1', now: NOW }]),
+      booking: {
+        findUniqueOrThrow: jest.fn().mockResolvedValue(row),
+        aggregate: jest.fn().mockResolvedValue({ _sum: { seats: 0 } }),
+        update: jest.fn().mockResolvedValue({}),
+      },
+    };
+    const prisma = {
+      booking: {
+        findUnique: jest.fn().mockResolvedValue({ sessionId: 'session_1' }),
+      },
+      $transaction: jest.fn((fn: (client: typeof tx) => unknown) => fn(tx)),
+    };
+    const service = new BookingsService(prisma as unknown as PrismaService);
+    return { service, tx };
+  }
+
+  const started = { startsAt: new Date(NOW.getTime() - MINUTE_MS) };
+
+  it('confirms a live hold at the database’s instant', async () => {
+    const { service, tx } = confirmSetup();
+
+    await expect(service.confirmBooking('booking_1')).resolves.toEqual({
+      kind: 'confirmed',
+      bookingId: 'booking_1',
+      reference: 'SR-7K4M2',
+    });
+    expect(tx.booking.update).toHaveBeenCalledWith({
+      where: { id: 'booking_1' },
+      data: { status: BookingStatus.CONFIRMED, confirmedAt: NOW },
+    });
+  });
+
+  it('still honours a payment once the session has started, unless asked not to', async () => {
+    const { service } = confirmSetup({ session: started });
+
+    await expect(service.confirmBooking('booking_1')).resolves.toMatchObject({
+      kind: 'confirmed',
+    });
+  });
+
+  it('refuses a started session when asked, saying so, and changes nothing', async () => {
+    const { service, tx } = confirmSetup({ session: started });
+
+    await expect(
+      service.confirmBooking('booking_1', { refuseStarted: true }),
+    ).resolves.toEqual({
+      kind: 'refused',
+      reason: 'session-unavailable',
+      notOnSale: 'started',
+      bookingId: 'booking_1',
+    });
+    expect(tx.booking.update).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    [SessionStatus.CANCELLED, 'cancelled', false],
+    [SessionStatus.CANCELLED, 'cancelled', true],
+    [SessionStatus.COMPLETED, 'completed', false],
+    [SessionStatus.COMPLETED, 'completed', true],
+  ] as const)(
+    'refuses a %s session as %s (refuseStarted: %s)',
+    async (status, notOnSale, refuseStarted) => {
+      const { service, tx } = confirmSetup({ session: { status } });
+
+      await expect(
+        service.confirmBooking('booking_1', { refuseStarted }),
+      ).resolves.toEqual({
+        kind: 'refused',
+        reason: 'session-unavailable',
+        notOnSale,
+        bookingId: 'booking_1',
+      });
+      expect(tx.booking.update).not.toHaveBeenCalled();
+    },
+  );
+
+  it('answers a booking already confirmed as such, even after the start', async () => {
+    const { service, tx } = confirmSetup({
+      status: BookingStatus.CONFIRMED,
+      session: started,
+    });
+
+    await expect(
+      service.confirmBooking('booking_1', { refuseStarted: true }),
+    ).resolves.toEqual({
+      kind: 'already-confirmed',
+      bookingId: 'booking_1',
+      reference: 'SR-7K4M2',
+    });
+    expect(tx.booking.update).not.toHaveBeenCalled();
+  });
+});

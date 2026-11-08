@@ -213,6 +213,33 @@ describe('bookings: the expiry sweep and the payment seam', () => {
       ).resolves.toMatchObject({
         kind: 'refused',
         reason: 'session-unavailable',
+        notOnSale: 'cancelled',
+      });
+    });
+
+    it('honours a payment that arrives after the class started, but refuses a confirmation asked for then', async () => {
+      const t = ctx();
+      const paid = await heldBooking(t);
+      const asked = await heldBooking(t);
+      for (const { session } of [paid, asked]) {
+        await t.prisma.session.update({
+          where: { id: session.id },
+          data: { startsAt: inMinutes(-1) },
+        });
+      }
+
+      await expect(
+        bookingsService(t).confirmBooking(paid.row.id),
+      ).resolves.toMatchObject({ kind: 'confirmed' });
+      await expect(
+        bookingsService(t).confirmBooking(asked.row.id, {
+          refuseStarted: true,
+        }),
+      ).resolves.toEqual({
+        kind: 'refused',
+        reason: 'session-unavailable',
+        notOnSale: 'started',
+        bookingId: asked.row.id,
       });
     });
 

@@ -5,7 +5,7 @@ import { MAIL_TRANSPORT, createMailTransport } from './mail.transport';
 import { MailService } from './mail.service';
 
 /**
- * Imported by each module that sends email (auth now, payments next), rather
+ * Imported by each module that sends email (auth, bookings, payments next), rather
  * than global like PrismaModule. That is deliberate: Nest shuts global modules
  * down last, so a non-global MailService finishes its sends in flight before
  * PrismaService closes the connection their rows are written over.

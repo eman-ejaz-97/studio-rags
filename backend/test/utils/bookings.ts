@@ -114,6 +114,14 @@ export async function listBookings(
   return res.body as BookingPage;
 }
 
+/** POST /bookings/:reference/confirm, the interim no-payment step. */
+export function postConfirm(t: TestApp, customer: Customer, reference: string) {
+  return t
+    .http()
+    .post(`${BOOKINGS}/${encodeURIComponent(reference)}/confirm`)
+    .set('Cookie', customer.cookie);
+}
+
 export function bookingsService(t: TestApp): BookingsService {
   return t.app.get(BookingsService);
 }

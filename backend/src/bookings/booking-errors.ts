@@ -1,7 +1,8 @@
-import { HttpStatus } from '@nestjs/common';
+import { HttpStatus, NotFoundException } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { ProblemException } from '../common/filters/problem-details.filter';
 import type { NotOnSaleReason } from './booking-rules';
+import type { ConfirmOutcome } from './bookings.types';
 
 /**
  * Problem types for refusals a client acts on (RFC 9457). Identifiers, not
@@ -10,6 +11,9 @@ import type { NotOnSaleReason } from './booking-rules';
 export const PROBLEM_TYPES = {
   sessionFull: '/problems/session-full',
   sessionNotOnSale: '/problems/session-not-on-sale',
+  holdLapsed: '/problems/hold-lapsed',
+  bookingCancelled: '/problems/booking-cancelled',
+  paymentRequired: '/problems/payment-required',
 } as const;
 
 /** A missing session and a session of an unpublished class read the same. */
@@ -62,6 +66,68 @@ export function sessionNotOnSale(reason: NotOnSaleReason): ProblemException {
     detail: NOT_ON_SALE[reason],
     reason,
   });
+}
+
+/**
+ * 409 when a hold ran out and its places have since gone to someone else.
+ * A lapsed hold whose places are still free is confirmed instead (§ 10
+ * item 33), so this only ever means the places are really gone.
+ */
+export function holdLapsed(): ProblemException {
+  return new ProblemException({
+    type: PROBLEM_TYPES.holdLapsed,
+    title: 'Your hold has run out',
+    status: HttpStatus.CONFLICT,
+    detail:
+      'Your hold ran out and those places have been taken. Please choose a date again.',
+  });
+}
+
+/**
+ * 409 for a booking that was cancelled or refunded, or a hold replaced by a
+ * newer one when the customer changed their places (ADR-049).
+ */
+export function bookingCancelled(): ProblemException {
+  return new ProblemException({
+    type: PROBLEM_TYPES.bookingCancelled,
+    title: 'This booking is no longer active',
+    status: HttpStatus.CONFLICT,
+    detail:
+      'This booking was cancelled, or replaced when the places were changed, so it cannot be confirmed. Please check your bookings.',
+  });
+}
+
+/**
+ * 409 when this site confirms bookings by payment (PAYMENT_MODE=stripe), so
+ * confirming without paying is not on offer.
+ */
+export function paymentRequired(): ProblemException {
+  return new ProblemException({
+    type: PROBLEM_TYPES.paymentRequired,
+    title: 'Payment is needed',
+    status: HttpStatus.CONFLICT,
+    detail: 'This booking is confirmed once it is paid for.',
+  });
+}
+
+/**
+ * What a customer is told when confirmBooking refuses. not-found cannot
+ * normally happen, since the caller has just found the booking, and reads
+ * like every other missing booking.
+ */
+export function confirmRefusal(
+  outcome: Extract<ConfirmOutcome, { kind: 'refused' }>,
+): ProblemException | NotFoundException {
+  switch (outcome.reason) {
+    case 'no-seats':
+      return holdLapsed();
+    case 'cancelled':
+      return bookingCancelled();
+    case 'session-unavailable':
+      return sessionNotOnSale(outcome.notOnSale);
+    case 'not-found':
+      return new NotFoundException(BOOKING_NOT_FOUND);
+  }
 }
 
 /**
