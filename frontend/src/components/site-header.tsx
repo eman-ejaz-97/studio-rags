@@ -3,7 +3,10 @@ import Link from "next/link";
 import { AccountLink } from "./account";
 import { bookBead, buttonBook, pageWrap } from "./ui";
 
+// Home is spelled out, not left to the logo: not every visitor knows the logo
+// goes home.
 const NAV = [
+  { href: "/", label: "Home" },
   { href: "/classes", label: "Classes" },
   { href: "/calendar", label: "Calendar" },
   { href: "/classes?type=kids", label: "Kids" },
@@ -36,12 +39,14 @@ export function SiteHeader() {
           aria-label="Main"
           className="order-last w-full sm:order-none sm:w-auto"
         >
-          <ul className="-mx-3 flex flex-wrap sm:mx-0 sm:gap-2">
+          {/* On phones the five links share one row edge to edge, so their
+              padding shrinks; min-w-11 keeps "Kids" a 44px target. */}
+          <ul className="-mx-1.5 flex flex-wrap justify-between sm:mx-0 sm:justify-start sm:gap-2">
             {NAV.map((item) => (
               <li key={item.href}>
                 <Link
                   href={item.href}
-                  className="inline-flex min-h-11 items-center rounded-full px-3 font-semibold text-purple hover:bg-lilac"
+                  className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-full px-1 font-semibold text-purple hover:bg-lilac sm:px-3"
                 >
                   {item.label}
                 </Link>
