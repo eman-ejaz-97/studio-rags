@@ -325,7 +325,9 @@ The proxy reads the visitor's address from `x-forwarded-for`, which Vercel overw
 **Direct callers: `TRUST_PROXY=2`.**
 Anyone can call `studio-rags-api.onrender.com` directly, skipping Vercel.
 Those requests pass two proxies on Render's side (Cloudflare, then Render's own), and the API believes the last `TRUST_PROXY` entries of `X-Forwarded-For`.
-With 2 it finds the caller.
+With 2 it finds the caller on most requests.
+Some requests pass one extra middleman, and for those it lands on that server instead (measured 2026-11-08).
+That weakens the limit for direct callers but never lets them choose their own address.
 Measured on 2026-11-08: with 3, a made-up `X-Forwarded-For` bought a fresh allowance on every try.
 
 **Why not just a hop count for both.** Through Vercel, no `TRUST_PROXY` value worked.
@@ -371,11 +373,15 @@ login $WEB; echo
 login $WEB -H 'X-Forwarded-For: 198.51.100.7' -H 'x-sr-client-ip: 198.51.100.7'; echo
 
 # 4. Wait out the block, then call the API directly with a new made-up address on
-#    every try, and a guessed secret. Expect ten 401s, then 429.
+#    every try, and a guessed secret. Print the allowance left after each call.
 sleep 65
-for i in $(seq 11); do
-  login $API -H "X-Forwarded-For: 198.51.100.$i" \
-    -H "x-sr-client-ip: 198.51.100.$i" -H 'x-sr-proxy-secret: guessed'
+for i in $(seq 14); do
+  curl -s -D - -o /dev/null -X POST "$API/api/v1/auth/login" \
+    -H 'content-type: application/json' \
+    -d '{"email":"nobody@example.com","password":"not-the-password"}' \
+    -H "X-Forwarded-For: 198.51.100.$i" \
+    -H "x-sr-client-ip: 198.51.100.$i" -H 'x-sr-proxy-secret: guessed' |
+    tr -d '\r' | awk 'tolower($1)=="x-ratelimit-remaining:"{printf "%s ", $2}'
 done; echo
 ```
 
@@ -386,8 +392,12 @@ done; echo
 - Step 2 gives 429: every visitor shares one allowance. Same checks as above.
 - Step 3 gives 401: a visitor can choose their own address through the website.
   Something between the browser and the proxy is passing a visitor's `X-Forwarded-For` through. Stop and investigate before signing anyone in.
-- Step 4 gives 401 on the eleventh try: a direct caller can choose their own address.
+- Step 4 prints `9 9 9 9 ...` every time: each made-up address got a fresh allowance, so a direct caller can choose their own address.
   `TRUST_PROXY` on Render is too high. Set it to 2.
+- Step 4 counts down, `9 8 7 6 ...`, with the odd number out of step: correct.
+  The steady countdown is you. The numbers out of step are requests that passed one extra middleman on Render's side, which the API counted against that server instead (measured 2026-11-08, SPEC § 10 item 14).
+  That weakens the limit for direct callers but never lets them choose an address.
+  Eleven 401s are expected here, so don't read them as a failure.
 - All four as expected: both routes are right.
 
 **Still keyed on Vercel's servers.** Pages that fetch the catalogue on the server (`frontend/src/lib/catalogue.ts`) call the Render address directly, not through the proxy.
