@@ -352,10 +352,15 @@ Raising the count far enough to reach the visitor would let direct callers choos
 **The test.** Run it after switching it on, and again if Vercel or Render change how they route traffic.
 
 ```sh
+# The API refuses any write whose x-csrf-token header does not repeat the
+# sr_csrf cookie (403). It only compares the two, so any 43-character token
+# made here works. Without it, every try below reads 403 instead of 401.
+csrf=$(openssl rand -base64 32 | tr '+/' '-_' | tr -d '=')
 login() {
   site=$1; shift
   curl -s -o /dev/null -w '%{http_code} ' -X POST "$site/api/v1/auth/login" \
     -H 'content-type: application/json' \
+    -H "cookie: sr_csrf=$csrf" -H "x-csrf-token: $csrf" \
     -d '{"email":"nobody@example.com","password":"not-the-password"}' "$@"
 }
 WEB=https://<project-name>.vercel.app

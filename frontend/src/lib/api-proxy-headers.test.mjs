@@ -65,4 +65,14 @@ describe("apiProxyHeaders", () => {
     assert.equal(out.get("cookie"), "sr_access=abc");
     assert.equal(out.get("content-type"), "application/json");
   });
+
+  it("passes the CSRF cookie and header through untouched, or every write would be refused", () => {
+    const out = apiProxyHeaders(
+      new Headers({ cookie: "sr_access=abc; sr_csrf=tok", "x-csrf-token": "tok" }),
+      ON,
+    );
+
+    assert.equal(out.get("cookie"), "sr_access=abc; sr_csrf=tok");
+    assert.equal(out.get("x-csrf-token"), "tok");
+  });
 });
