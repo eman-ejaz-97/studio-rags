@@ -48,6 +48,7 @@ Each call to `/api/v1/health` wakes Neon, so never point an uptime monitor at it
 | API | `nest start`, port 3001 | Tests, then `docker build` | Render free, Singapore | AWS, Sydney |
 | Database | Docker Postgres, port 5433 | Postgres 18 service container | Neon free, Singapore | RDS or Lightsail Postgres |
 | File storage | Not set up | Not set up | Neon storage | S3 |
+| Email | Mailpit, port 1025 | In-memory outbox, nothing sent | Resend free, to your own address only | To be decided |
 | `SITE_ENV` | unset | `staging` | `staging` | `production` |
 | Cost | Nothing | Nothing | Nothing | Paid by the client |
 
@@ -73,7 +74,7 @@ Staging costs nothing, and it must stay that way.
 
 ## One-time setup
 
-Do Render first, then Vercel, then seed the admin.
+Do Render first, then Vercel, then seed the admin, then email.
 Each needs the other's address, so expect to fix one value at the end.
 
 ### Before you start
@@ -107,6 +108,8 @@ Each needs the other's address, so expect to fix one value at the end.
    | `CORS_ORIGIN` | The Vercel address, e.g. `https://studio-rags.vercel.app` |
    | `APP_URL` | The same Vercel address |
    | `API_PROXY_SECRET` | The output of `openssl rand -hex 32`. Vercel gets the same value in step 2 ([why](#check-trust_proxy)) |
+   | `RESEND_API_KEY` | Your Resend API key, from [step 4](#4-email-through-resend) |
+   | `MAIL_ALLOWED_RECIPIENTS` | The email address you signed up to Resend with |
 
    Notes on those values:
    - `connect_timeout=15` gives a sleeping Neon database time to wake. Prisma's default is 5 seconds.
@@ -211,6 +214,44 @@ An admin that already exists keeps its password when the seed runs again.
 To replace it, add `SEED_ADMIN_ROTATE=1`.
 That also signs out every session the old password opened.
 
+### 4. Email through Resend
+
+Staging sends real email through Resend's free plan, to your own address only (ADR-040).
+Resend without a verified domain only delivers to the address that owns the account, and only from `onboarding@resend.dev`.
+A domain costs money, so staging has none.
+
+**Do this before the mail module reaches `main`.**
+From that commit on, the API refuses to start with `MAIL_TRANSPORT=resend` unless the key and the allow-list are set.
+Render then keeps the previous deploy serving, but staging stops updating until you fix it.
+Render only asks for `sync: false` values when a Blueprint is first created, so on the existing service you add them yourself.
+
+1. Sign up at [resend.com](https://resend.com) with your own email address.
+   Use the free plan. Do not add a card, and do not add a domain.
+2. Under **API Keys**, create a key with **Sending access**. Copy it; Resend shows it once.
+3. On Render, open `studio-rags-api`, then **Environment**, and add:
+
+   | Variable | Value | Meaning |
+   | --- | --- | --- |
+   | `RESEND_API_KEY` | The key from step 2, starting `re_` | Lets the API send through your Resend account |
+   | `MAIL_ALLOWED_RECIPIENTS` | Your Resend sign-up address | The only address that gets real email. Several addresses go comma-separated |
+
+4. Save. Render redeploys with them.
+
+`render.yaml` sets the other two, so leave them alone:
+
+| Variable | Value | Meaning |
+| --- | --- | --- |
+| `MAIL_TRANSPORT` | `resend` | Send through Resend's HTTP API. Locally it is `smtp`, to Mailpit |
+| `MAIL_FROM` | `Studio Rags <onboarding@resend.dev>` | The sender. Resend's onboarding address is the only one allowed without a domain |
+
+What happens to mail for anyone else, a customer who registers on staging say:
+the API writes an `email_logs` row with status `SUPPRESSED` and does not call Resend.
+Their request still succeeds.
+The free plan allows 100 emails a day and 3,000 a month, and the allow-list keeps staging far below that.
+
+Set `MAIL_ALLOWED_RECIPIENTS` to `*` only once a verified domain exists and mail to anyone is intended.
+That is a production decision, outside the capstone.
+
 ## Check it works
 
 1. Open the Vercel address followed by `/status`.
@@ -241,6 +282,10 @@ That also signs out every session the old password opened.
    It writes one test file to the bucket and deletes it again.
    It never prints a secret.
 5. Once, after the first deploy, [check `TRUST_PROXY`](#check-trust_proxy).
+6. Check email. Register on staging with your Resend address, sign out, and use **Forgot password**.
+   The reset email arrives from `onboarding@resend.dev` within a minute, and Resend's **Emails** page lists it.
+   The Render log shows `Sent password-reset email <id>`; the address itself is never logged.
+   A start-up line names the transport: `Mail goes through resend, to 1 allowed recipient`.
 
 ## Before a demo
 
@@ -282,6 +327,8 @@ Two causes are common:
 
 - The environment check failed at start-up.
   The log starts with `Invalid environment configuration` and names each bad variable.
+  A mail setting is checked separately: look for `MailConfigError`, which names the variable, for example `RESEND_API_KEY is required when MAIL_TRANSPORT=resend`.
+  See [step 4](#4-email-through-resend).
 - A migration failed.
   The log shows Prisma's error just after `Applying database migrations`.
 
@@ -309,6 +356,25 @@ Browsers drop them over plain `http`, for example a local `docker run` on `http:
 Browser code should never see CORS on staging, because it only calls its own address.
 A CORS error means some code calls the Render address directly.
 Change it to call `/api/v1/...` instead.
+
+### No email arrived on staging
+
+Every send has a row in `email_logs`, and its `status` says what happened.
+Look in the Neon console's SQL editor:
+
+```sql
+SELECT created_at, template, status, error
+FROM email_logs ORDER BY created_at DESC LIMIT 5;
+```
+
+- `SUPPRESSED`: the address is not in `MAIL_ALLOWED_RECIPIENTS`. Expected for anyone but you.
+- `FAILED`: `error` holds Resend's answer.
+  `HTTP 403 validation_error` means the address is not the Resend account's own, or `MAIL_FROM` is not `onboarding@resend.dev`.
+  `HTTP 429` means the free plan's limit for the day is used up.
+  `HTTP 401` or `403` naming the key means `RESEND_API_KEY` is wrong.
+- `QUEUED` for more than a minute: the container stopped mid-send, or the final write failed. The Render log says which.
+- `SENT`: Resend accepted it. Check your spam folder, then Resend's **Emails** page.
+- No row at all: the address has no account, which is correct; forgot-password sends nothing then.
 
 ### Check TRUST_PROXY
 
