@@ -74,8 +74,8 @@ async function customer(t: TestApp) {
 }
 
 /**
- * A booking straight into the table. The booking flow does not exist until
- * Phase 3; these rows stand in for what it will write.
+ * A booking straight into the table, past the booking service, so a test can
+ * set up any mix of statuses. The capacity trigger still applies.
  */
 export async function createBooking(
   t: TestApp,
