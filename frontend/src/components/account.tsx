@@ -3,40 +3,59 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { SESSION_CHANGED, hintedSignedIn, session, type User } from "@/lib/session";
+import { session, type User } from "@/lib/session";
+import { useSignedInName } from "@/lib/use-signed-in-name";
 import { ApiUnavailable } from "./api-unavailable";
 import { buttonOutline, textLink } from "./ui";
 
 /**
- * "Sign in" for visitors, "Your account" once signed in. It starts as "Sign
- * in" because the server cannot see the session: the cookies belong to the
- * API's routes, and reading them here would make every page dynamic.
+ * "Sign in" for visitors. Once signed in, a pill with the first name's initial
+ * and "Hi, Eman", so it is plain at a glance that the site knows who you are.
+ * The server cannot see the session (the cookies belong to the API's routes),
+ * so the server-rendered header always starts as "Sign in".
  */
 export function AccountLink() {
-  const [signedIn, setSignedIn] = useState(false);
+  const name = useSignedInName();
+  const base = "inline-flex min-h-11 items-center rounded-full font-semibold text-purple hover:bg-lilac";
 
-  useEffect(() => {
-    let live = true;
-    session
-      .meIfHinted()
-      .then((user) => live && setSignedIn(Boolean(user)))
-      .catch(() => live && setSignedIn(hintedSignedIn()));
-    const onChange = () => setSignedIn(hintedSignedIn());
-    window.addEventListener(SESSION_CHANGED, onChange);
-    return () => {
-      live = false;
-      window.removeEventListener(SESSION_CHANGED, onChange);
-    };
-  }, []);
-
+  if (name === null) {
+    return (
+      <Link href="/sign-in" className={`${base} px-3`}>
+        Sign in
+      </Link>
+    );
+  }
+  if (name === "") {
+    return (
+      <Link href="/account" className={`${base} px-3`}>
+        Your account
+      </Link>
+    );
+  }
+  // On a phone only the initial shows, so the header stays on one row beside
+  // the logo; the home page greets by name in its heading instead.
   return (
-    <Link
-      href={signedIn ? "/account" : "/sign-in"}
-      className="inline-flex min-h-11 items-center rounded-full px-3 font-semibold text-purple hover:bg-lilac"
-    >
-      {signedIn ? "Your account" : "Sign in"}
+    <Link href="/account" className={`${base} gap-2 p-1 sm:pr-3`}>
+      <span
+        aria-hidden="true"
+        className="grid size-9 shrink-0 place-items-center rounded-full bg-plum text-base font-bold text-white"
+      >
+        {initialOf(name)}
+      </span>
+      {/* The visible words lead the accessible name ("Hi, Eman, your account"). */}
+      <span className="sr-only sm:not-sr-only">
+        <span className="block max-w-[14ch] truncate">
+          Hi, {name}
+          <span className="sr-only">, your account</span>
+        </span>
+      </span>
     </Link>
   );
+}
+
+/** The first letter, whole even when it is two UTF-16 units (an emoji, say). */
+function initialOf(name: string): string {
+  return Array.from(name.trim())[0]?.toUpperCase() ?? "";
 }
 
 type State =

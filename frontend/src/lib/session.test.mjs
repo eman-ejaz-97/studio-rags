@@ -21,8 +21,9 @@ function fakeApi(routes) {
   return { fetch, calls };
 }
 
-function memoryHint(on = false) {
-  return { value: on, get() { return this.value; }, set(v) { this.value = v; } };
+/** The hint holds the signed-in first name, or null for a visitor. */
+function memoryHint(name = null) {
+  return { value: name, get() { return this.value; }, set(v) { this.value = v; } };
 }
 
 describe("request", () => {
@@ -41,11 +42,11 @@ describe("request", () => {
       "GET /auth/me": [{ status: 401 }],
       "POST /auth/refresh": [{ status: 401 }],
     });
-    const hint = memoryHint(true);
+    const hint = memoryHint("A");
     const client = createSessionClient(api.fetch, hint);
     assert.equal(await client.me(), null);
     assert.deepEqual(api.calls, ["GET /auth/me", "POST /auth/refresh", "GET /auth/me"]);
-    assert.equal(hint.value, false);
+    assert.equal(hint.value, null);
   });
 
   it("finds the session another tab stored when this tab's refresh lost the race", async () => {
@@ -90,7 +91,7 @@ describe("signOut", () => {
       "POST /auth/refresh": [async () => (await gate, { status: 200, body: { ok: true } })],
       "POST /auth/logout": [{ status: 204 }],
     });
-    const client = createSessionClient(api.fetch, memoryHint(true));
+    const client = createSessionClient(api.fetch, memoryHint("A"));
     const pending = client.request("/bookings");
     await new Promise((r) => setTimeout(r, 10));
     const out = client.signOut();
@@ -102,32 +103,71 @@ describe("signOut", () => {
       api.calls.indexOf("POST /auth/logout") > api.calls.indexOf("POST /auth/refresh"),
     );
   });
+
+  it("forgets the first name", async () => {
+    const api = fakeApi({ "POST /auth/logout": [{ status: 204 }] });
+    const hint = memoryHint("A");
+    await createSessionClient(api.fetch, hint).signOut();
+    assert.equal(hint.value, null);
+  });
 });
 
 describe("meIfHinted", () => {
   it("makes no request for a visitor who never signed in", async () => {
     const api = fakeApi({});
-    const client = createSessionClient(api.fetch, memoryHint(false));
+    const client = createSessionClient(api.fetch, memoryHint());
     assert.equal(await client.meIfHinted(), null);
     assert.deepEqual(api.calls, []);
   });
 
-  it("sets the hint after a successful sign-in", async () => {
-    const api = fakeApi({ "POST /auth/login": [{ status: 200, body: { user: USER } }] });
-    const hint = memoryHint(false);
+  it("checks with the API even when the hinted name is unknown", async () => {
+    const api = fakeApi({ "GET /auth/me": [{ status: 200, body: { user: USER } }] });
+    const hint = memoryHint("");
     const client = createSessionClient(api.fetch, hint);
-    await client.post("/auth/login", {});
-    assert.equal(hint.value, true);
+    assert.deepEqual(await client.meIfHinted(), USER);
+    assert.equal(hint.value, "A");
+  });
+
+  it("stores the first name after a successful sign-in, and the caller can still read the answer", async () => {
+    const api = fakeApi({ "POST /auth/login": [{ status: 200, body: { user: USER } }] });
+    const hint = memoryHint();
+    const client = createSessionClient(api.fetch, hint);
+    const res = await client.post("/auth/login", {});
+    assert.equal(hint.value, "A");
+    assert.equal((await res.json()).user.firstName, "A");
+  });
+
+  it("stores the first name after registering", async () => {
+    const api = fakeApi({ "POST /auth/register": [{ status: 201, body: { user: USER } }] });
+    const hint = memoryHint();
+    await createSessionClient(api.fetch, hint).post("/auth/register", {});
+    assert.equal(hint.value, "A");
+  });
+
+  it("leaves the hint alone after a failed sign-in", async () => {
+    const api = fakeApi({ "POST /auth/login": [{ status: 401 }] });
+    const hint = memoryHint();
+    await createSessionClient(api.fetch, hint).post("/auth/login", {});
+    assert.equal(hint.value, null);
+  });
+
+  it("keeps the hinted name when the API cannot be reached", async () => {
+    const hint = memoryHint("A");
+    const client = createSessionClient(async () => {
+      throw new TypeError("fetch failed");
+    }, hint);
+    await assert.rejects(client.meIfHinted());
+    assert.equal(hint.value, "A");
   });
 });
 
 describe("password reset", () => {
   it("clears the hint, because the API signs the account out everywhere", async () => {
     const api = fakeApi({ "POST /auth/reset-password": [{ status: 200, body: {} }] });
-    const hint = memoryHint(true);
+    const hint = memoryHint("A");
     const client = createSessionClient(api.fetch, hint);
     await client.post("/auth/reset-password", { token: "t", password: "p" });
-    assert.equal(hint.value, false);
+    assert.equal(hint.value, null);
   });
 });
 

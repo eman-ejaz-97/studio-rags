@@ -48,31 +48,33 @@ const NO_REFRESH = new Set([
 /**
  * Remembered in localStorage so pages can skip the session check for visitors
  * who never signed in: for them it would be three requests to a sleeping API
- * on every page view, all answered 401. Only a hint, never trusted; the API
- * decides.
+ * on every page view, all answered 401. It holds the first name, so the header
+ * and home page can greet someone as soon as the page loads instead of after
+ * the API answers. Only a hint, never trusted; the API decides.
  */
-export const SIGNED_IN_HINT = "sr_signed_in";
+export const SIGNED_IN_HINT = "sr_signed_in_as";
 
 /** Fired on window whenever this tab signs in or out. */
 export const SESSION_CHANGED = "sr-session-changed";
 
+/** The first name of whoever is signed in on this browser, or null for a visitor. */
 type Hint = {
-  get(): boolean;
-  set(on: boolean): void;
+  get(): string | null;
+  set(firstName: string | null): void;
 };
 
 const browserHint: Hint = {
   get: () => {
     try {
-      return globalThis.localStorage?.getItem(SIGNED_IN_HINT) === "1";
+      return globalThis.localStorage?.getItem(SIGNED_IN_HINT) ?? null;
     } catch {
-      return false;
+      return null;
     }
   },
-  set: (on) => {
+  set: (firstName) => {
     try {
-      if (on) globalThis.localStorage?.setItem(SIGNED_IN_HINT, "1");
-      else globalThis.localStorage?.removeItem(SIGNED_IN_HINT);
+      if (firstName === null) globalThis.localStorage?.removeItem(SIGNED_IN_HINT);
+      else globalThis.localStorage?.setItem(SIGNED_IN_HINT, firstName);
     } catch {
       // Private browsing can refuse storage; the hint is only an optimisation.
     }
@@ -81,8 +83,15 @@ const browserHint: Hint = {
   },
 };
 
-export function hintedSignedIn(): boolean {
+/** The hinted first name, or null. An empty string means signed in, name unknown. */
+export function hintedFirstName(): string | null {
   return browserHint.get();
+}
+
+/** The first name in a sign-in or register answer, read without using up the body. */
+async function firstNameOf(res: Response): Promise<string> {
+  const body = (await res.clone().json().catch(() => null)) as { user?: Partial<User> } | null;
+  return body?.user?.firstName ?? "";
 }
 
 export function createSessionClient(fetchImpl: Fetch, hint: Hint = browserHint) {
@@ -125,11 +134,11 @@ export function createSessionClient(fetchImpl: Fetch, hint: Hint = browserHint) 
     const res = await request("/auth/me");
     if (res.ok) {
       const { user } = (await res.json()) as { user: User };
-      hint.set(true);
+      hint.set(user.firstName);
       return user;
     }
     if (res.status === 401 || res.status === 404) {
-      hint.set(false);
+      hint.set(null);
       return null;
     }
     throw new Error(`Session check failed with ${res.status}`);
@@ -137,20 +146,22 @@ export function createSessionClient(fetchImpl: Fetch, hint: Hint = browserHint) 
 
   /** As `me`, but skips the API entirely for a visitor who never signed in. */
   function meIfHinted(): Promise<User | null> {
-    return hint.get() ? me() : Promise.resolve(null);
+    return hint.get() !== null ? me() : Promise.resolve(null);
   }
 
   async function post(path: string, body: unknown): Promise<Response> {
     const res = await request(path, { method: "POST", body: JSON.stringify(body) });
-    if (res.ok && (path === "/auth/login" || path === "/auth/register")) hint.set(true);
+    if (res.ok && (path === "/auth/login" || path === "/auth/register")) {
+      hint.set(await firstNameOf(res));
+    }
     // The API ends every session of the account when its password changes.
-    if (res.ok && path === "/auth/reset-password") hint.set(false);
+    if (res.ok && path === "/auth/reset-password") hint.set(null);
     return res;
   }
 
   async function signOut(): Promise<void> {
     if (refreshing) await refreshing;
-    hint.set(false);
+    hint.set(null);
     await send("/auth/logout", { method: "POST" }).catch(() => undefined);
   }
 
