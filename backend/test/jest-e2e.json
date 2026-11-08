@@ -7,7 +7,7 @@
     "^.+\\.(t|j)sx?$": "ts-jest"
   },
   "transformIgnorePatterns": [
-    "/node_modules/(?!@nestjs/(config|jwt|passport)/)"
+    "/node_modules/(?!@nestjs/(config|jwt|passport|schedule)/)"
   ],
   "setupFiles": ["<rootDir>/utils/assert-test-env.ts"],
   "restoreMocks": true,

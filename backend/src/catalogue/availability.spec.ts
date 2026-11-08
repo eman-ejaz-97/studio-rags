@@ -1,5 +1,6 @@
 import { BookingStatus } from '@prisma/client';
 import {
+  holdsSeats,
   seatHoldingBookings,
   seatsLeft,
   sessionPriceCents,
@@ -39,4 +40,55 @@ describe('seatHoldingBookings', () => {
       ],
     });
   });
+});
+
+describe('holdsSeats', () => {
+  const now = new Date('2026-11-14T00:00:00.000Z');
+  const at = (ms: number) => new Date(now.getTime() + ms);
+
+  /**
+   * Evaluates the filter above against one row, for exactly the shape it
+   * has. If seatHoldingBookings changes shape this throws, and the test says
+   * the two definitions need looking at together.
+   */
+  function filterMatches(booking: {
+    status: BookingStatus;
+    holdExpiresAt: Date | null;
+  }): boolean {
+    const where = seatHoldingBookings(now) as {
+      OR: { status: BookingStatus; holdExpiresAt?: { gt: Date } }[];
+    };
+    return where.OR.some((clause) => {
+      const keys = Object.keys(clause).sort().join(',');
+      if (keys !== 'status' && keys !== 'holdExpiresAt,status') {
+        throw new Error(`Unexpected clause shape: ${keys}`);
+      }
+      if (clause.status !== booking.status) return false;
+      if (!clause.holdExpiresAt) return true;
+      return (
+        booking.holdExpiresAt !== null &&
+        booking.holdExpiresAt > clause.holdExpiresAt.gt
+      );
+    });
+  }
+
+  it.each([
+    [BookingStatus.CONFIRMED, null, true],
+    [BookingStatus.CONFIRMED, at(-60_000), true],
+    [BookingStatus.PENDING, at(1), true],
+    [BookingStatus.PENDING, at(0), false],
+    [BookingStatus.PENDING, at(-1), false],
+    [BookingStatus.PENDING, null, false],
+    [BookingStatus.EXPIRED, at(60_000), false],
+    [BookingStatus.CANCELLED, at(60_000), false],
+    [BookingStatus.REFUNDED, null, false],
+  ])(
+    '%s with a hold ending %s: %s, the same answer as the query filter',
+    (status, holdExpiresAt, expected) => {
+      const booking = { status, holdExpiresAt };
+
+      expect(holdsSeats(booking, now)).toBe(expected);
+      expect(filterMatches(booking)).toBe(expected);
+    },
+  );
 });
