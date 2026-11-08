@@ -12,6 +12,7 @@ import {
 import { ConfigService } from '@nestjs/config';
 import { Throttle } from '@nestjs/throttler';
 import type { Request, Response } from 'express';
+import { clientAddress } from '../common/client-address';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import type { AuthenticatedUser } from '../common/decorators/current-user.decorator';
 import { Public } from '../common/decorators/public.decorator';
@@ -160,6 +161,10 @@ export class AuthController {
   }
 
   private contextOf(req: Request) {
-    return { userAgent: req.get('user-agent') ?? undefined, ip: req.ip };
+    return {
+      userAgent: req.get('user-agent') ?? undefined,
+      // The same visitor address the rate limiter counts (ClientThrottlerGuard).
+      ip: clientAddress(req, this.config.get<string>('API_PROXY_SECRET')),
+    };
   }
 }

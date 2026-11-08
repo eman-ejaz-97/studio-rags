@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
-import { buttonPrimary, pageWrap } from "./ui";
+import { AccountLink } from "./account";
+import { bookBead, buttonBook, pageWrap } from "./ui";
 
 const NAV = [
   { href: "/classes", label: "Classes" },
@@ -10,9 +11,9 @@ const NAV = [
 ];
 
 /**
- * The approved mockup shows a gold "Book a class" here, on the cream header.
- * Gold on paper is 2.19:1, so the header uses the purple button; gold appears
- * on the purple sections instead (ADR-035).
+ * "Book a class" is the call to action on every page. It is the only button
+ * with a gold bead, which sets it apart from the other purple buttons while
+ * keeping gold off the cream paper (ADR-041).
  */
 export function SiteHeader() {
   return (
@@ -49,9 +50,25 @@ export function SiteHeader() {
           </ul>
         </nav>
 
-        <Link href="/classes" className={buttonPrimary}>
-          Book a class
-        </Link>
+        <div className="flex items-center gap-2">
+          <AccountLink />
+          <Link href="/classes" className={buttonBook}>
+            Book a class
+            <span aria-hidden="true" className={bookBead}>
+              <svg
+                viewBox="0 0 20 20"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.25"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className="size-5 transition-transform group-hover:translate-x-0.5"
+              >
+                <path d="M4 10h11.5M11 5.5 15.5 10 11 14.5" />
+              </svg>
+            </span>
+          </Link>
+        </div>
       </div>
       <div className="motif" aria-hidden="true" />
     </header>

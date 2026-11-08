@@ -3,7 +3,8 @@ import Link from "next/link";
 import { connection } from "next/server";
 import { ApiUnavailable } from "@/components/api-unavailable";
 import { ClassCard } from "@/components/class-card";
-import { buttonGold, buttonPrimary, pageWrap } from "@/components/ui";
+import { HomeHero } from "@/components/home-hero";
+import { buttonGold, pageWrap } from "@/components/ui";
 import { getWorkshops } from "@/lib/catalogue";
 
 /** The hero is local photography, so it shows even while the API sleeps. */
@@ -28,12 +29,6 @@ const HERO = [
   },
 ];
 
-const PROMISES = [
-  "Materials included",
-  "No experience needed",
-  "Ages 7+ welcome",
-];
-
 export default async function Home() {
   // Rendered per request, never at build time: CI builds with no API running.
   await connection();
@@ -42,29 +37,7 @@ export default async function Home() {
   return (
     <>
       <section className={`${pageWrap} grid items-center gap-10 py-12 md:grid-cols-[1.05fr_0.95fr] md:py-16`}>
-        <div>
-          <h1 className="font-display text-[clamp(2.6rem,6vw,4.3rem)] leading-[1.02] font-black text-balance text-plum">
-            Make something
-            <span className="block text-ochre">with your hands.</span>
-          </h1>
-          <p className="mt-5 max-w-[40ch] text-[1.15rem] text-body">
-            Batik, shibori, block printing and painting — for grown-ups, for
-            kids, and for the two of you together.
-          </p>
-          <ul className="mt-6 flex flex-wrap gap-2" aria-label="Every class">
-            {PROMISES.map((p) => (
-              <li
-                key={p}
-                className="rounded-full bg-lilac px-4 py-2 text-base font-semibold text-purple"
-              >
-                {p}
-              </li>
-            ))}
-          </ul>
-          <Link href="/classes" className={`${buttonPrimary} mt-8`}>
-            Find a class
-          </Link>
-        </div>
+        <HomeHero />
 
         <div className="grid grid-cols-2 gap-3">
           {HERO.map((img, i) => (

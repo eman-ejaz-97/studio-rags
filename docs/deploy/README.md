@@ -106,6 +106,7 @@ Each needs the other's address, so expect to fix one value at the end.
    | `AWS_REGION` | From `.env.local`, unchanged |
    | `CORS_ORIGIN` | The Vercel address, e.g. `https://studio-rags.vercel.app` |
    | `APP_URL` | The same Vercel address |
+   | `API_PROXY_SECRET` | The output of `openssl rand -hex 32`. Vercel gets the same value in step 2 ([why](#check-trust_proxy)) |
 
    Notes on those values:
    - `connect_timeout=15` gives a sleeping Neon database time to wake. Prisma's default is 5 seconds.
@@ -150,6 +151,9 @@ The steps stay here for rebuilding it from scratch.
    | --- | --- |
    | `API_ORIGIN` | The Render address from step 1.8, e.g. `https://studio-rags-api.onrender.com` (no `/api/v1`, no trailing slash) |
    | `SITE_ENV` | `staging` |
+
+   Then add `API_PROXY_SECRET` for **Production** only, marked **Sensitive**: the same value you gave Render in step 1.5.
+   Previews go without it and simply fall back (see [Check TRUST_PROXY](#check-trust_proxy)).
 
 5. Choose **Deploy**.
 6. In the project's **Settings**:
@@ -308,58 +312,88 @@ Change it to call `/api/v1/...` instead.
 
 ### Check TRUST_PROXY
 
-**What it is.** `TRUST_PROXY` is the number of proxies in front of the API.
-The API uses it to find each visitor's real address.
-The login limit (10 attempts a minute) counts attempts per address.
+**What it is.** The login limit (10 attempts a minute) and the contact form limit count attempts per visitor address.
+The API finds that address in one of two ways, depending on how the request arrived.
 
-**What counts as a proxy.** Only a proxy that adds the address it saw to the `X-Forwarded-For` header.
-Each one adds an entry, and the API believes the last `TRUST_PROXY` entries.
-A proxy that passes the header on unchanged adds nothing, so counting it would make the API believe an address the visitor typed.
-Next.js's own server is such a proxy.
-The frontend Docker image fixes that by starting it with `frontend/docker/forwarded-for.mjs`, so that container counts as one proxy.
-Vercel does not use the image; its edge writes the header itself.
+**Website visitors: `API_PROXY_SECRET`.**
+Every request from the website reaches the API from one of Vercel's servers, and that address changes from one request to the next.
+So the frontend's proxy (`frontend/src/proxy.ts`) writes the visitor's address into an `x-sr-client-ip` header and adds `x-sr-proxy-secret`.
+The API believes that address only when the secret matches its own copy (`backend/src/common/client-address.ts`).
+A visitor who writes those headers gains nothing: the proxy drops them, and without the secret the API ignores them.
+The proxy reads the visitor's address from `x-forwarded-for`, which Vercel overwrites with the visitor's own address.
 
-**Why it is 2.** The assumed chain is browser, then Vercel, then Render's proxy, then the API.
-That is two proxies.
-It is an assumption until this test confirms it.
+**Direct callers: `TRUST_PROXY=2`.**
+Anyone can call `studio-rags-api.onrender.com` directly, skipping Vercel.
+Those requests pass two proxies on Render's side (Cloudflare, then Render's own), and the API believes the last `TRUST_PROXY` entries of `X-Forwarded-For`.
+With 2 it finds the caller.
+Measured on 2026-11-08: with 3, a made-up `X-Forwarded-For` bought a fresh allowance on every try.
 
-**The test.** Run it once after the first deploy, and again if Vercel or Render change how they route traffic.
+**Why not just a hop count for both.** Through Vercel, no `TRUST_PROXY` value worked.
+With 2 (14 tries) and again with 3 (11 tries), every failed login through Vercel within a minute was allowed.
+Each attempt looked like a new visitor, because the API landed on Vercel's changing address.
+Raising the count far enough to reach the visitor would let direct callers choose their own address.
+
+**Switch it on (once).** Either order is safe: until both sides have the secret, the API falls back to `TRUST_PROXY`.
+
+1. Make a secret: `openssl rand -hex 32`.
+   Keep it out of git, chat and screenshots.
+2. Render: open `studio-rags-api`, then **Environment**.
+   Add `API_PROXY_SECRET` with that value.
+   Check `TRUST_PROXY` is `2`.
+   Choose **Save, rebuild, and deploy**. **Save only** does not reach the running API.
+3. Vercel: open the project, then **Settings**, then **Environment Variables**.
+   Add `API_PROXY_SECRET` with the same value, for **Production** only, marked **Sensitive**.
+4. Vercel: **Deployments**, then **Redeploy** on the latest production deployment.
+   A deployment keeps the variables it started with.
+5. Wait until both deploys are live, then run the test below.
+
+**The test.** Run it after switching it on, and again if Vercel or Render change how they route traffic.
 
 ```sh
-SITE=https://<project-name>.vercel.app
 login() {
-  curl -s -o /dev/null -w '%{http_code}\n' -X POST "$SITE/api/v1/auth/login" \
+  site=$1; shift
+  curl -s -o /dev/null -w '%{http_code} ' -X POST "$site/api/v1/auth/login" \
     -H 'content-type: application/json' \
     -d '{"email":"nobody@example.com","password":"not-the-password"}' "$@"
 }
+WEB=https://<project-name>.vercel.app
+API=https://studio-rags-api.onrender.com
 
-# 1. Use up your allowance: ten 401s, then 429.
-for i in $(seq 11); do login; done
+# 1. Through the website: ten 401s, then 429.
+for i in $(seq 11); do login $WEB; done; echo
 
-# 2. Within a minute, switch the laptop to your phone's hotspot (a different
+# 2. Within the minute, switch the laptop to your phone's hotspot (a different
 #    public address) and try once. Expect 401, not 429.
-login
+login $WEB; echo
 
 # 3. Back on the first network, still within the minute, pretend to be
-#    someone else. Expect 429: the API must ignore a made-up address.
-login -H 'X-Forwarded-For: 198.51.100.7'
+#    someone else through the website. Expect 429.
+login $WEB -H 'X-Forwarded-For: 198.51.100.7' -H 'x-sr-client-ip: 198.51.100.7'; echo
+
+# 4. Wait out the block, then call the API directly with a new made-up address on
+#    every try, and a guessed secret. Expect ten 401s, then 429.
+sleep 65
+for i in $(seq 11); do
+  login $API -H "X-Forwarded-For: 198.51.100.$i" \
+    -H "x-sr-client-ip: 198.51.100.$i" -H 'x-sr-proxy-secret: guessed'
+done; echo
 ```
 
 **Reading the result.**
 
-- Step 2 gives 429: every visitor shares one allowance.
-  The API is seeing a proxy's address, so `TRUST_PROXY` is too low.
-  Raise it by one on Render and test again.
-- Step 3 gives 401: a visitor can choose their own address and get a fresh allowance.
-  `TRUST_PROXY` is too high.
-  Lower it by one on Render and test again.
-- Both as expected: the setting is right.
+- Step 1 never gives 429: the website's requests are not being told apart.
+  Check `API_PROXY_SECRET` is set on both Vercel and Render, that the two values are identical, and that both have redeployed since.
+- Step 2 gives 429: every visitor shares one allowance. Same checks as above.
+- Step 3 gives 401: a visitor can choose their own address through the website.
+  Something between the browser and the proxy is passing a visitor's `X-Forwarded-For` through. Stop and investigate before signing anyone in.
+- Step 4 gives 401 on the eleventh try: a direct caller can choose their own address.
+  `TRUST_PROXY` on Render is too high. Set it to 2.
+- All four as expected: both routes are right.
 
-**A known gap.** Anyone who calls the `onrender.com` address directly passes through one proxy fewer than a visitor coming through Vercel.
-With `TRUST_PROXY=2`, such a caller may be able to choose their own address with an `X-Forwarded-For` header.
-To see it, run the test above with `SITE=https://studio-rags-api.onrender.com`.
-It is acceptable on staging, which holds no real accounts.
-The real launch should close it, for example by only accepting API traffic from the frontend.
+**Still keyed on Vercel's servers.** Pages that fetch the catalogue on the server (`frontend/src/lib/catalogue.ts`) call the Render address directly, not through the proxy.
+They count against Vercel's servers rather than a visitor (SPEC § 10 item 24).
+
+**Cost.** The proxy runs as a Vercel Function on every `/api/v1` request. That counts toward the Hobby plan's free usage; staging traffic stays far below it.
 
 ### Vercel build is green, then the deploy fails with ENOENT
 

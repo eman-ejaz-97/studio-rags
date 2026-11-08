@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { FieldError, FormAlert, TextField, fieldClass } from "./form-fields";
 import { buttonPrimary } from "./ui";
 
 type Kind = "GENERAL" | "PRIVATE_EVENT";
@@ -185,22 +186,7 @@ export function ContactForm({
       className="flex flex-col gap-6"
     >
       {status.state === "failed" && (
-        <div
-          role="alert"
-          className="rounded-[var(--radius-field)] border-2 border-error-line bg-error-bg p-4 font-semibold text-error-ink"
-        >
-          <p>
-            <span aria-hidden="true">! </span>
-            {status.message}
-          </p>
-          {status.details && (
-            <ul className="mt-2 list-disc pl-6 font-normal">
-              {status.details.map((d) => (
-                <li key={d}>{d}</li>
-              ))}
-            </ul>
-          )}
-        </div>
+        <FormAlert message={status.message} details={status.details} />
       )}
 
       <fieldset className="flex flex-col gap-2">
@@ -300,58 +286,5 @@ export function ContactForm({
         </button>
       </div>
     </form>
-  );
-}
-
-function fieldClass(invalid: boolean) {
-  return `min-h-12 w-full rounded-[var(--radius-field)] border-2 bg-field px-4 py-3 text-ink focus:border-purple focus:shadow-[0_0_0_3px_var(--color-focus-glow)] focus:outline-none ${
-    invalid ? "border-error-ink" : "border-field-line"
-  }`;
-}
-
-function FieldError({ id, error }: { id: string; error?: string }) {
-  if (!error) return null;
-  return (
-    <p id={id} className="flex gap-2 font-semibold text-error-ink">
-      <span aria-hidden="true">!</span>
-      {error}
-    </p>
-  );
-}
-
-function TextField({
-  name,
-  label,
-  hint,
-  error,
-  ...input
-}: {
-  name: Field;
-  label: string;
-  hint?: string;
-  error?: string;
-} & Omit<React.InputHTMLAttributes<HTMLInputElement>, "name">) {
-  const hintId = hint ? `${name}-hint` : undefined;
-  const errorId = error ? `${name}-error` : undefined;
-  return (
-    <div className="flex flex-col gap-2">
-      <label htmlFor={name} className="font-semibold text-plum">
-        {label}
-      </label>
-      {hint && (
-        <p id={hintId} className="text-subtle">
-          {hint}
-        </p>
-      )}
-      <input
-        id={name}
-        name={name}
-        aria-invalid={error ? true : undefined}
-        aria-describedby={[hintId, errorId].filter(Boolean).join(" ") || undefined}
-        className={fieldClass(Boolean(error))}
-        {...input}
-      />
-      <FieldError id={`${name}-error`} error={error} />
-    </div>
   );
 }

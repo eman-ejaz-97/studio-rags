@@ -2,7 +2,7 @@
 // reads Reflect metadata while the class is being defined, so a script or test
 // importing this file on its own would crash before validateEnv could run.
 import 'reflect-metadata';
-import { Type, plainToInstance } from 'class-transformer';
+import { Transform, Type, plainToInstance } from 'class-transformer';
 import {
   IsEnum,
   IsInt,
@@ -31,6 +31,9 @@ const durationMessage = (key: string) =>
 
 const TRUST_PROXY_MESSAGE =
   'TRUST_PROXY must be a whole number of proxy hops in front of the API: 0 (the default) trusts none, 1 trusts one such as a hosting load balancer';
+
+const API_PROXY_SECRET_MESSAGE =
+  'API_PROXY_SECRET must be at least 32 characters when set; generate one with `openssl rand -hex 32` and give the frontend the same value';
 
 /**
  * Why a CORS origin is unusable, or null when it is fine. The browser sends
@@ -111,6 +114,20 @@ export class EnvironmentVariables {
   @IsInt({ message: TRUST_PROXY_MESSAGE })
   @Min(0, { message: TRUST_PROXY_MESSAGE })
   TRUST_PROXY = 0;
+
+  /**
+   * Shared with the frontend, whose proxy sends it with the visitor's address
+   * (common/client-address.ts). Unset, the API never believes that address and
+   * counts every request by req.ip. Empty counts as unset, so a blank line in
+   * an env file switches it off rather than failing the length check.
+   */
+  @Transform(({ value }: { value: unknown }) =>
+    value === '' ? undefined : value,
+  )
+  @IsOptional()
+  @IsString()
+  @MinLength(32, { message: API_PROXY_SECRET_MESSAGE })
+  API_PROXY_SECRET?: string;
 
   @IsString()
   @IsNotEmpty()

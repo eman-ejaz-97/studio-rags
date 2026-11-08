@@ -37,13 +37,21 @@ services:
       # Render routes traffic to 0.0.0.0 only; localhost would never answer.
       - key: HOST
         value: 0.0.0.0
-      # Proxy hops in front of the API, so req.ip is the visitor rather than a
-      # proxy and the login throttle limits each visitor separately. Assumes
-      # browser -> Vercel (the /api/v1 rewrite) -> Render's proxy -> API.
-      # An assumption until checked: verify it after the first deploy
-      # (docs/deploy/README.md, "Check TRUST_PROXY").
+      # Proxy hops in front of the API for a caller of the onrender.com
+      # address directly: the caller, then Render's two proxies. Measured
+      # 2026-11-08: with 2 a made-up X-Forwarded-For is ignored; with 3 it
+      # buys a fresh login allowance. Website visitors are not found this
+      # way (Vercel's outbound address changes per request); API_PROXY_SECRET
+      # below covers them. See docs/deploy/README.md, "Check TRUST_PROXY".
       - key: TRUST_PROXY
         value: "2"
+      # Shared with the Vercel project: its proxy (frontend/src/proxy.ts)
+      # signs each visitor's address with it. Never generated here, because
+      # Vercel needs the same value: make it with `openssl rand -hex 32` and
+      # set it in both places. Unset, every website visitor shares one
+      # allowance per Vercel server.
+      - key: API_PROXY_SECRET
+        sync: false
       # Two independent random values, generated once by Render. They must
       # differ: one key must never verify the other kind of token.
       - key: JWT_ACCESS_SECRET
