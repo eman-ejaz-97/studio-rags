@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
-import { errorMessages, safeNext, session } from "@/lib/session";
+import { errorMessages, isCsrfRefusal, safeNext, session } from "@/lib/session";
 import { FormAlert, FormNotice, TextField } from "./form-fields";
 import { buttonOutline, buttonPrimary, textLink } from "./ui";
 
@@ -18,12 +18,17 @@ const OFFLINE =
   "We couldn’t reach Studio Rags. Check your internet connection and try again.";
 const WAKING =
   "The booking system is waking up after a quiet spell. Please try again in a minute.";
+// session.ts has already fetched a fresh security token and tried again, so
+// a browser refusing cookies is the likely reason left.
+const COOKIES =
+  "We couldn’t send this safely. Please check that cookies are allowed for this site, then try again.";
 
 /** The words for a refusal the form could not prevent itself. */
 async function describe(
   res: Response,
   own: Partial<Record<number, string>>,
 ): Promise<Failure> {
+  if (await isCsrfRefusal(res)) return { message: COOKIES };
   if (own[res.status]) return { message: own[res.status]! };
   if (res.status >= 500) return { message: WAKING };
   return { message: "Some details need another look.", details: await errorMessages(res) };

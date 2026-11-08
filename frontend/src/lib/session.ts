@@ -14,6 +14,9 @@
  * - Sign-out waits for a refresh in flight, so that refresh cannot set a new
  *   session after the sign-out has cleared the old one.
  *
+ * Every write also carries the CSRF token (`withCsrf` below), so the refresh
+ * and sign-out calls are protected like any other.
+ *
  * Kept free of React and Next imports so `session.test.mjs` can drive it with
  * a fake fetch.
  */
@@ -168,7 +171,103 @@ export function createSessionClient(fetchImpl: Fetch, hint: Hint = browserHint) 
   return { request, me, meIfHinted, post, signOut };
 }
 
-export const session = createSessionClient((input, init) => fetch(input, init));
+/**
+ * The CSRF token (SPEC § 3, ADR-003). The API keeps it in a cookie that pages
+ * can read, and refuses any write whose x-csrf-token header does not repeat
+ * it (backend/src/common/csrf.ts). Another site can make the browser send the
+ * cookie, but cannot read it, so it cannot copy it into the header.
+ */
+export const CSRF_COOKIE = "sr_csrf";
+export const CSRF_HEADER = "x-csrf-token";
+
+/** The problem type of the API's refusal, which sets it apart from any other 403. */
+export const CSRF_PROBLEM = "tag:studio-rags.vercel.app,2026:csrf-token";
+
+/** Methods that only read. The API asks no token of these. */
+const READS = new Set(["GET", "HEAD", "OPTIONS"]);
+
+/** One cookie's value from a `document.cookie` string, or null. */
+export function cookieValue(cookies: string, name: string): string | null {
+  for (const pair of cookies.split(";")) {
+    const eq = pair.indexOf("=");
+    if (eq === -1 || pair.slice(0, eq).trim() !== name) continue;
+    const raw = pair.slice(eq + 1).trim();
+    try {
+      return decodeURIComponent(raw) || null;
+    } catch {
+      return raw || null;
+    }
+  }
+  return null;
+}
+
+function browserCsrfCookie(): string | null {
+  return cookieValue(globalThis.document?.cookie ?? "", CSRF_COOKIE);
+}
+
+/** True when the API refused a write because its CSRF token was missing or stale. */
+export async function isCsrfRefusal(res: Response): Promise<boolean> {
+  if (res.status !== 403) return false;
+  const body = (await res.clone().json().catch(() => null)) as { type?: unknown } | null;
+  return body?.type === CSRF_PROBLEM;
+}
+
+/**
+ * Wraps fetch so every write to the API carries the CSRF token.
+ * - The token is read from the cookie as each request leaves, so one that
+ *   sign-in or another tab has just replaced is picked up at once.
+ * - With no cookie yet (a first visit, or it expired), it asks the API for
+ *   one first. Writes that start together share that one request.
+ * - If the API still refuses the token, it asks again and sends the request
+ *   once more. A refusal means the API did nothing, so the retry cannot
+ *   repeat a write; bodies here are strings, so it can send the same one.
+ *   A second refusal goes back to the caller.
+ */
+export function withCsrf(
+  fetchImpl: Fetch,
+  readCookie: () => string | null = browserCsrfCookie,
+): Fetch {
+  let asking: Promise<string | null> | null = null;
+
+  function askForToken(): Promise<string | null> {
+    asking ??= fetchImpl(`${API}/auth/csrf`, {
+      credentials: "same-origin",
+      cache: "no-store",
+      headers: { accept: "application/json" },
+    })
+      .then(async (res) => {
+        if (!res.ok) return readCookie();
+        const body = (await res.json().catch(() => null)) as { csrfToken?: unknown } | null;
+        // The API answers with the token its cookie now holds.
+        return typeof body?.csrfToken === "string" ? body.csrfToken : readCookie();
+      })
+      .finally(() => {
+        asking = null;
+      });
+    return asking;
+  }
+
+  function send(input: string, init: RequestInit, token: string | null) {
+    const headers = new Headers(init.headers);
+    if (token) headers.set(CSRF_HEADER, token);
+    return fetchImpl(input, { ...init, headers });
+  }
+
+  return async (input, init = {}) => {
+    const method = (init.method ?? "GET").toUpperCase();
+    // Reads need no token, and only our own API is ever shown it.
+    if (READS.has(method) || !input.startsWith(`${API}/`)) return fetchImpl(input, init);
+
+    const first = await send(input, init, readCookie() ?? (await askForToken()));
+    if (!(await isCsrfRefusal(first))) return first;
+    return send(input, init, await askForToken());
+  };
+}
+
+/** fetch for calling the API from the browser: every write carries the CSRF token. */
+export const apiFetch = withCsrf((input, init) => fetch(input, init));
+
+export const session = createSessionClient(apiFetch);
 
 /** The message(s) a Nest error carries: one string, or a list from validation. */
 export async function errorMessages(res: Response): Promise<string[]> {

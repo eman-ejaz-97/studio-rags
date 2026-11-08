@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { apiFetch, isCsrfRefusal } from "@/lib/session";
 import { FieldError, FormAlert, TextField, fieldClass } from "./form-fields";
 import { buttonPrimary } from "./ui";
 
@@ -53,7 +54,8 @@ const ORDER: Field[] = [
  * Posts from the browser to /api/v1/contact on this site's own address, rather
  * than through a server action: the API's limit of five messages per ten
  * minutes is counted per visitor, and a server action would make every
- * visitor arrive from the same Vercel server.
+ * visitor arrive from the same Vercel server. apiFetch adds the CSRF token
+ * the API asks of every write, fetching one first on a visitor's first send.
  */
 export function ContactForm({
   initialMessage = "",
@@ -104,11 +106,21 @@ export function ContactForm({
     }
 
     try {
-      const res = await fetch("/api/v1/contact", {
+      const res = await apiFetch("/api/v1/contact", {
         method: "POST",
         headers: { "content-type": "application/json", accept: "application/json" },
         body: JSON.stringify(body),
       });
+      // apiFetch has already fetched a fresh token and tried again, so a
+      // browser refusing cookies is the likely reason left.
+      if (await isCsrfRefusal(res)) {
+        setStatus({
+          state: "failed",
+          message:
+            "We couldn’t send your message safely. Please check that cookies are allowed for this site, then try again.",
+        });
+        return;
+      }
       const json = (await res.json().catch(() => null)) as {
         message?: string | string[];
       } | null;
