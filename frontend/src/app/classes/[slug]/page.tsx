@@ -6,6 +6,7 @@ import { ApiUnavailable } from "@/components/api-unavailable";
 import { PriceTag, priceNote } from "@/components/class-card";
 import { SessionList } from "@/components/session-list";
 import { pageWrap, textLink } from "@/components/ui";
+import { HOLD_MINUTES, MAX_PLACES } from "@/lib/booking";
 import { getWorkshop, getWorkshopSessions } from "@/lib/catalogue";
 import type { WorkshopDetail } from "@/lib/catalogue-types";
 import { formatDuration, formatPrice } from "@/lib/format";
@@ -91,9 +92,13 @@ export default async function ClassPage({ params }: Props) {
         >
           Upcoming dates
         </h2>
-        <p className="mt-2 mb-6 max-w-[62ch] rounded-xl bg-lilac p-4 text-purple">
-          <strong>Online booking opens soon.</strong> Until then, choose a date
-          and send Rehana a message, and she will hold your place.
+        <p className="mt-2 mb-6 max-w-[62ch] text-body">
+          Choose a date to book. We hold your places for {HOLD_MINUTES} minutes
+          while you check the details. For a group of more than {MAX_PLACES},{" "}
+          <Link href="/contact" className={textLink}>
+            send Rehana a message
+          </Link>
+          .
         </p>
         {sessions.ok ? (
           <SessionList

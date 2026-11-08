@@ -3,9 +3,11 @@ import { describe, it } from "node:test";
 import {
   currentMonth,
   dayKey,
+  dayParts,
   formatDay,
   formatMonth,
   formatTime,
+  formatTimeRange,
   monthRange,
   parseMonth,
   shiftMonth,
@@ -19,6 +21,17 @@ describe("Adelaide dates", () => {
     assert.equal(formatDay(saturdayMorning), "Sat 14 Nov");
     assert.equal(formatTime(saturdayMorning), "10:00 am");
     assert.equal(dayKey(saturdayMorning), "2026-11-14");
+  });
+
+  it("splits a day for a calendar tile, on the Adelaide date", () => {
+    assert.deepEqual(dayParts(saturdayMorning), { weekday: "Sat", day: "14", month: "Nov" });
+  });
+
+  it("shows a class's start and end times", () => {
+    assert.equal(
+      formatTimeRange(saturdayMorning, "2026-11-14T02:30:00.000Z"),
+      "10:00 am – 1:00 pm",
+    );
   });
 
   it("bounds a summer month at Adelaide midnight (UTC+10:30)", () => {

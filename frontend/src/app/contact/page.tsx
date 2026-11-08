@@ -11,9 +11,10 @@ export const metadata: Metadata = {
 };
 
 /**
- * "Ask about this date" links here with ?class=<slug>&date=<ISO>. The message
- * is pre-filled from the real class, so a made-up slug or date in the URL only
- * ever produces a blank form, never text the visitor did not choose.
+ * A class with no dates links here with ?class=<slug>, and &date=<ISO> names
+ * one date. The message is pre-filled from the real class, so a made-up slug
+ * or date in the URL only ever produces a blank form, never text the visitor
+ * did not choose.
  */
 async function draftMessage(slug?: string, date?: string): Promise<string> {
   if (!slug) return "";

@@ -68,6 +68,17 @@ export function formatTime(iso: string): string {
   return `${p.hour}:${p.minute} ${(p.dayPeriod ?? "").toLowerCase()}`.trim();
 }
 
+/** { weekday: "Sat", day: "14", month: "Nov" }, for a calendar tile. */
+export function dayParts(iso: string): { weekday: string; day: string; month: string } {
+  const p = partsOf(dayFormat, iso);
+  return { weekday: p.weekday ?? "", day: p.day ?? "", month: p.month ?? "" };
+}
+
+/** "10:00 am – 1:00 pm" */
+export function formatTimeRange(startIso: string, endIso: string): string {
+  return `${formatTime(startIso)} – ${formatTime(endIso)}`;
+}
+
 /** "2026-11-14": the Adelaide calendar day, for grouping. */
 export function dayKey(iso: string): string {
   return ymdFormat.format(new Date(iso));

@@ -6,7 +6,8 @@ import { useEffect, useState } from "react";
 import { session, type User } from "@/lib/session";
 import { useSignedInName } from "@/lib/use-signed-in-name";
 import { ApiUnavailable } from "./api-unavailable";
-import { buttonOutline, textLink } from "./ui";
+import { buttonOutline } from "./ui";
+import { YourBookings } from "./your-bookings";
 
 /**
  * "Sign in" for visitors. Once signed in, a pill with the first name's initial
@@ -111,16 +112,7 @@ export function AccountPanel() {
         </p>
       </div>
 
-      <section className="rounded-[var(--radius-card)] border-2 border-line bg-card p-6">
-        <h2 className="font-display text-2xl font-semibold text-plum">Your bookings</h2>
-        <p className="mt-2 text-body">
-          You have no bookings yet. When you book a class, it will appear here with its date and
-          your receipt.
-        </p>
-        <Link href="/classes" className={`${textLink} mt-4 inline-flex`}>
-          Browse the classes
-        </Link>
-      </section>
+      <YourBookings />
 
       <div>
         <button
