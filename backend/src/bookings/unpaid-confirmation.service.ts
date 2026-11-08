@@ -86,8 +86,10 @@ export class UnpaidConfirmationService {
       });
       // Not awaited (ADR-047): the reply does not wait on the provider.
       // MailService never rejects, and records the outcome in email_logs
-      // with this booking's id.
-      void this.mail.sendBookingConfirmation(toConfirmationEmail(row));
+      // with this booking's id. Nothing was paid, and the email says so.
+      void this.mail.sendBookingConfirmation(
+        toConfirmationEmail(row, { paid: false }),
+      );
     } catch (error) {
       this.logger.error(
         `Booking ${bookingId} is confirmed, but its confirmation email could not be prepared`,

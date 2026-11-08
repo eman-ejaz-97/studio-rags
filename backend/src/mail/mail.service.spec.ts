@@ -23,6 +23,7 @@ const RESET = {
 const BOOKING: BookingConfirmationEmail = {
   to: DEVELOPER,
   bookingId: 'booking_1',
+  paid: true,
   firstName: 'Ada',
   reference: 'SR-7K4M2',
   workshopTitle: 'Batik for Beginners',

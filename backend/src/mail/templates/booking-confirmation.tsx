@@ -13,11 +13,18 @@ import * as theme from './theme';
 export const BOOKING_CONFIRMATION_TEMPLATE = 'booking-confirmation';
 
 /**
- * Everything the confirmation says, as the booking stood when payment
- * cleared. Values are passed in rather than read here, so the email shows
- * exactly what the customer paid for even if the class changes later.
+ * Everything the confirmation says, as the booking stood when it was
+ * confirmed. Values are passed in rather than read here, so the email shows
+ * exactly what the customer booked even if the class changes later.
  */
 export interface BookingConfirmationProps {
+  /**
+   * Whether money was taken for this booking. False for the interim
+   * confirmation without payment (PAYMENT_MODE=none); the Stripe webhook
+   * passes true. The caller says which, because only it knows: the email
+   * must never claim a payment that did not happen.
+   */
+  paid: boolean;
   firstName: string;
   /** Human-readable, e.g. SR-7K4M2. */
   reference: string;
@@ -35,7 +42,10 @@ export interface BookingConfirmationProps {
   /** Places booked. For a kids class, the number of children (ADR-016). */
   seats: number;
   requiresAccompanyingAdult: boolean;
-  /** What was paid, in cents, snapshotted on the booking. */
+  /**
+   * The booking's total in cents, snapshotted on the booking: what was paid
+   * when `paid`, otherwise the price still to pay.
+   */
   totalCents: number;
   whatToBring: string | null;
   /** The site's contact page, for changes and questions. */
@@ -80,6 +90,8 @@ export function BookingConfirmationEmail(props: BookingConfirmationProps) {
     ?.split(/\r?\n/)
     .map((line) => line.trim())
     .filter(Boolean);
+  // A free class owes nothing, so it gets no word about paying.
+  const toPay = !props.paid && props.totalCents > 0;
 
   return (
     <EmailLayout
@@ -88,8 +100,9 @@ export function BookingConfirmationEmail(props: BookingConfirmationProps) {
     >
       <Text style={theme.text}>Hi {props.firstName},</Text>
       <Text style={theme.text}>
-        Thank you for booking. Your place is confirmed and paid for. Here are
-        the details to keep.
+        {props.paid
+          ? 'Thank you for booking. Your place is confirmed and paid for. Here are the details to keep.'
+          : 'Thank you for booking. Your place is confirmed. Here are the details to keep.'}
       </Text>
 
       <Section style={{ margin: '8px 0 8px' }}>
@@ -99,9 +112,18 @@ export function BookingConfirmationEmail(props: BookingConfirmationProps) {
         <Detail label="Places">
           {describePlaces(props.seats, props.requiresAccompanyingAdult)}
         </Detail>
-        <Detail label="Paid">{formatPrice(props.totalCents)}</Detail>
+        <Detail label={props.paid ? 'Paid' : 'Price'}>
+          {formatPrice(props.totalCents)}
+        </Detail>
         <Detail label="Booking reference">{props.reference}</Detail>
       </Section>
+
+      {toPay && (
+        <Text style={theme.text}>
+          Payment is not taken online yet, and Rehana will let you know how to
+          pay.
+        </Text>
+      )}
 
       {online && props.onlineJoinUrl && (
         <>

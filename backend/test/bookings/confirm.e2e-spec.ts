@@ -124,6 +124,16 @@ describe('bookings: POST /bookings/:reference/confirm (PAYMENT_MODE=none)', () =
       });
       expect(email.text).toContain('Hi Ada,');
       expect(email.text).toContain(booking.reference);
+      // Nothing was paid, and the email must not say otherwise.
+      for (const part of [email.text, email.html]) {
+        expect(part).toContain('Your place is confirmed.');
+        expect(part).toContain(
+          'Payment is not taken online yet, and Rehana will let you know how to pay.',
+        );
+        expect(part).not.toMatch(/paid for/i);
+      }
+      expect(email.text).toMatch(/Price\s+\$82/);
+      expect(email.text).not.toMatch(/\bPaid\b/);
     });
 
     it('answers a second confirm with the same booking, and sends no second email', async () => {
@@ -209,6 +219,9 @@ describe('bookings: POST /bookings/:reference/confirm (PAYMENT_MODE=none)', () =
         totalCents: 0,
       });
       await expect(t.prisma.emailLog.count()).resolves.toBe(1);
+      // Nothing to pay, so no word about paying.
+      expect(outbox().sent[0].text).toMatch(/Price\s+\$0/);
+      expect(outbox().sent[0].text).not.toContain('how to pay');
     });
 
     it('keeps counting a confirmed booking as taken after its hold time has passed, sweep or no sweep', async () => {

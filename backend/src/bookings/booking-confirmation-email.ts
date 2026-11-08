@@ -37,14 +37,20 @@ export type ConfirmationEmailRow = Prisma.BookingGetPayload<{
 /**
  * For a CONFIRMED booking only: the email carries the Zoom link, which
  * ADR-015 releases to confirmed bookings and nobody else.
+ *
+ * `paid` comes from the caller, which knows whether money changed hands:
+ * false for the interim no-payment confirmation, true for the Stripe
+ * webhook. Nothing here guesses it from the booking or the config.
  */
 export function toConfirmationEmail(
   row: ConfirmationEmailRow,
+  { paid }: { paid: boolean },
 ): BookingConfirmationEmail {
   const { session, user } = row;
   return {
     to: user.email,
     bookingId: row.id,
+    paid,
     firstName: user.firstName,
     reference: row.reference,
     workshopTitle: session.workshop.title,

@@ -29,9 +29,10 @@ const row = (
 
 describe('toConfirmationEmail', () => {
   it('addresses the customer and carries everything the template shows, with the booking id for email_logs', () => {
-    expect(toConfirmationEmail(row())).toEqual({
+    expect(toConfirmationEmail(row(), { paid: false })).toEqual({
       to: 'ada@example.com',
       bookingId: 'booking_1',
+      paid: false,
       firstName: 'Ada',
       reference: 'SR-7K4M2',
       workshopTitle: 'Kids & Parents',
@@ -47,13 +48,24 @@ describe('toConfirmationEmail', () => {
     });
   });
 
+  it.each([true, false])(
+    'passes whether payment was taken (%s) exactly as the caller says',
+    (paid) => {
+      expect(toConfirmationEmail(row(), { paid }).paid).toBe(paid);
+    },
+  );
+
   it('passes a free booking’s total of 0 through unchanged (§ 10 item 39)', () => {
-    expect(toConfirmationEmail({ ...row(), totalCents: 0 }).totalCents).toBe(0);
+    expect(
+      toConfirmationEmail({ ...row(), totalCents: 0 }, { paid: false })
+        .totalCents,
+    ).toBe(0);
   });
 
   it('passes no list when the class has nothing to bring', () => {
     expect(
-      toConfirmationEmail(row({ whatToBring: null })).whatToBring,
+      toConfirmationEmail(row({ whatToBring: null }), { paid: false })
+        .whatToBring,
     ).toBeNull();
   });
 });

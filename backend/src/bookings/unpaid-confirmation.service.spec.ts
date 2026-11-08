@@ -124,7 +124,7 @@ describe('UnpaidConfirmationService.confirm', () => {
     );
   });
 
-  it('emails the customer once on a fresh confirmation, with the booking id for email_logs', async () => {
+  it('emails the customer once on a fresh confirmation, saying nothing was paid, with the booking id for email_logs', async () => {
     const { service, prisma, mail } = setup();
 
     await service.confirm('user_1', 'SR-7K4M2');
@@ -135,11 +135,12 @@ describe('UnpaidConfirmationService.confirm', () => {
     });
     expect(mail.sendBookingConfirmation).toHaveBeenCalledTimes(1);
     expect(mail.sendBookingConfirmation).toHaveBeenCalledWith(
-      toConfirmationEmail(emailRow),
+      toConfirmationEmail(emailRow, { paid: false }),
     );
     expect(mail.sendBookingConfirmation.mock.calls[0][0]).toMatchObject({
       to: 'ada@example.com',
       bookingId: 'booking_1',
+      paid: false,
     });
   });
 
